@@ -33,6 +33,7 @@ var ManyWhoAjax = {
 
         $.ajax({
             url: requestUrl,
+            type: requestType,
             data: requestData,
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
