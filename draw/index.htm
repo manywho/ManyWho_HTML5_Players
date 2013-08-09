@@ -1,0 +1,463 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Flow Designer</title>
+
+    <style type="text/css">
+
+        body {
+            padding-top: 60px;
+        }
+
+        input {
+            margin-bottom: 0px !important;
+        }
+
+        textarea {
+            margin-bottom: 0px !important;
+        }
+
+        select {
+            margin-bottom: 0px !important;
+        }
+
+        .tab-content {
+            overflow: hidden !important;
+        }
+
+        .manywho-wait {
+            position: absolute;
+            top: 120px;
+            left: 50%; 
+            width: 250px;
+            margin-left: -125px;
+        }
+
+        .manwho-form-field-actions {
+            padding-bottom: 5px;
+        }
+
+        .manywho-form-section-grid {
+	        background-color: #CCC;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+	        min-height: 40px;
+            padding-bottom: 5px;
+            padding-left: 5px;
+            padding-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .manywho-form-column-grid {
+	        background-color: #EEE;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+	        min-height: 40px;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .manywho-form-cell-grid-block {
+	        background-color: #FFF;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+	        min-height: 40px;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .manywho-form-field-block {
+	        background-color: #D9EDF7;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+	        min-height: 40px;
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        .manywho-sortable-placeholder { 
+	        background-color: #DFF0D8;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+	        min-height: 60px !important;
+            visibility: visible !important;
+            margin-bottom: 5px;
+        }
+
+        .manywho-sortable-placeholder * { 
+            visibility: hidden;
+        }
+
+        .manywho-form-field-sortable-placeholder { 
+            background-color: #DFF0D8;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+            border: 2px solid #FFF;
+	        border-radius: 3px;
+	        min-height: 30px !important;
+            min-width: 80px !important;
+	        line-height: 30px;
+            visibility: visible !important;
+            display: inline-block;
+        }
+
+        .manywho-formbuilder-control-left {
+            display: inline-block;
+        }
+
+        .manywho-formbuilder-control-left > i {
+            margin-top: 5px;
+            margin-left: 5px;
+            margin-bottom: 5px;
+            margin-right: 0px;
+        }
+
+        .manywho-formbuilder-control-right {
+            display: inline-block;
+            float: right;
+        }
+
+        .manywho-formbuilder-control-right > i {
+            margin-top: 5px;
+            margin-left: 5px;
+            margin-bottom: 5px;
+            margin-right: 0px;
+        }
+
+        .manywho-field {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .manywho-form-field {
+            display: inline-block;
+            margin-right: 5px;
+            background-color: #FCF8E3;
+	        -webkit-border-radius: 3px;
+	        -moz-border-radius: 3px;
+	        border-radius: 3px;
+            visibility: visible !important;
+            padding-bottom: 5px;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .manywho-formbuilder-field {
+            clear: both;
+            float: none;
+        }
+
+        .manywho-formbuilder-layout-label {
+            display: inline-block;
+        }
+
+        .manywho-runtime-table-field > tbody {
+            font-weight: normal !important;
+        }
+
+        .manywho-formeditor-scaffolding-controls {
+            margin-bottom: 5px;
+        }
+
+        .manywho-runtime-field-required > div > label {
+            font-weight: bold !important;
+        }
+
+        .manywho-runtime-field-required > div > label:after {
+            color: #ff0000;
+            content: ' *';
+            display:inline;
+        }
+
+        #manywho-flow-container { 
+            position: absolute; 
+            overflow:hidden; 
+            top:44px; 
+            left:250px; 
+            bottom:0px; 
+            right:0px; 
+            cursor:default; 
+        }
+
+        #manywho-flow-outline-container { 
+            position:absolute; 
+            overflow:hidden; 
+            top:60px; 
+            right:5px; 
+            width:200px; 
+            height:140px; 
+            background:transparent; 
+            border-style:solid; 
+            border-color:black; 
+        }
+
+        .manywho-fullscreen-modal {
+            position: absolute;
+            top: 5px !important;
+            left: 5px !important;
+            right: 5px !important;
+            /*bottom: 5px !important;*/
+            z-index: 1040 !important;
+            background-color: #fff;
+            border: 1px solid rgba(0,0,0,0.3);
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            border-radius: 6px;
+            outline: 0;
+            -webkit-box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+            -moz-box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+            -webkit-background-clip: padding-box;
+            -moz-background-clip: padding-box;
+            background-clip: padding-box;
+        }
+
+        /*.manywho-modal-footer {
+            position: absolute;
+            left: 0px !important;
+            right: 0px !important;
+            bottom: 0px !important;
+        }*/
+
+        #flow-error {
+            min-height: 0px !important;
+            z-index: 100000000;
+        }
+
+        /* CSS Specifically for the form builder START */
+
+        .page-sortable { width: auto; height: auto; min-height: 40px; padding: 5px; overflow: hidden !important; background-color: #fefbed; }
+        .page-sortable-horizontal > div { float: left; }
+        .page-sortable-inline > div { float: left; margin-right: 5px; }
+        .page-sortable-vertical > div { width: auto; margin-bottom: 5px; }
+        .page-sortable-group > div { width: auto; margin-bottom: 5px; }
+
+        .page-placeholder { width: 150px; height: auto; min-height: 40px; background-color: #dff0d8; -moz-border-radius: 3px; border-radius: 3px; }
+
+        .page-builder-heading {
+            padding-bottom: 10px;
+        }
+
+        .manywho-page-container-label {
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .manywho-page-container { overflow: hidden !important; background-color: #f1e7bc; padding: 5px; -moz-border-radius: 3px; border-radius: 3px; min-width: 100px; }
+        .manywho-page-container-controls { overflow: hidden !important; padding: 5px; }
+  
+        .manywho-page-component { overflow: hidden !important; background-color: #ffffff; padding: 5px; -moz-border-radius: 3px; border-radius: 3px; min-width: 100px; }
+        .manywho-page-component-controls { 
+            overflow: hidden !important; 
+            background-color: #6DCAEC; 
+            padding: 5px; 
+            margin-bottom: 5px; 
+            -moz-border-radius: 3px; 
+            border-radius: 3px;
+        }
+
+        /* Tell the browser to use box sizing which means the width attribute includes padding! */
+        .page-builder { 
+            overflow: hidden !important; 
+            width: auto; 
+            background-color: #f1e7bc; 
+            -moz-border-radius: 3px; 
+            border-radius: 3px;
+        }
+
+        .manywho-page-component-required { 
+            font-weight: bold !important; 
+        }
+
+        .manywho-page-component-required:after {
+            color: #ff0000;
+            content: ' *';
+            display: inline;
+        }
+
+        /* CSS Specifically for the form builder FINISH */
+
+    </style>
+
+    <link type="text/css" href="/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+
+    <link type="text/css" href="/extensions/jquery/css/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
+
+    <link type="text/css" href="/extensions/chosen/chosen.css" rel="stylesheet" />
+
+    <link type="text/css" href="/extensions/jsoneditor/jsoneditor-min.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="/extensions/jquery/js/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="/extensions/jquery/js/jquery-ui-1.9.2.custom.min.js"></script>
+
+    <script type="text/javascript" src="/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="/extensions/chosen/chosen.jquery.min.js"></script>
+
+    <script type="text/javascript" src="/extensions/wysihtml5/advanced.js"></script>
+    <script type="text/javascript" src="/extensions/wysihtml5/wysihtml5-0.4.0pre.js"></script>
+
+    <script type="text/javascript" src="/extensions/mxgraph/src/js/mxClient.js"></script>
+
+    <script type="text/javascript" src="/extensions/cookie/jquery.cookie.js"></script>
+
+    <script type="text/javascript" src="/extensions/jsoneditor/jsoneditor-min.js"></script>
+
+    <script type="text/javascript" src="/draw/js/manywho.builder.js"></script>
+    <script type="text/javascript" src="/draw/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="/js/jquery.manywho.formBootStrap.js"></script>
+    <script type="text/javascript" src="/js/jquery.manywho.mxgraph.js"></script>
+    <script type="text/javascript" src="/js/jquery.manywho.socialNetwork.js"></script>
+    <script type="text/javascript" src="/js/jquery.manywho.tagComponent.js"></script>
+    <script type="text/javascript" src="/js/jquery.manywho.formEditor.js"></script>
+
+    <script type="text/javascript" src="/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="/js/manywho.constants.js"></script>
+    <script type="text/javascript" src="/js/manywho.social.js"></script>
+    <script type="text/javascript" src="/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="/js/manywho.objectDataProxy.js"></script>
+
+    <script type="text/javascript" src="/js/tag/manywho.tag.formEditor.js"></script>
+
+    <script type="text/javascript" src="/run/js/manywho.runtime.engine.js"></script>
+
+	<script type="text/javascript">
+
+	    mxBasePath = '/mxgraph/src';
+
+	</script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            configurePage();
+        });
+
+    </script>
+</head>
+<body>
+
+<form action="#" method="get">
+
+    <div id="shared-services"></div>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="#"><img alt="ManyWho Flow Designer" src="/images/designer-logo.png" class="logo" /></a>
+            <div class="nav-collapse collapse">
+                <ul class="nav">
+                    <li><a href="#" id="manage-flows"><i class="icon-leaf icon-white"></i> Flows</a></li>
+                    <li class="divider-vertical"></li>
+                    <li><a href="#" id="manage-page-layouts"><i class="icon-list-alt icon-white"></i> Page Layouts</a></li>
+                    <li><a href="#" id="manage-tags"><i class="icon-tags icon-white"></i> Tags</a></li>
+                    <li><a href="#" id="manage-macros"><i class="icon-star icon-white"></i> Macros</a></li>
+                    <li><a href="#" id="manage-values"><i class="icon-inbox icon-white"></i> Values</a></li>
+                    <li><a href="#" id="manage-types"><i class="icon-asterisk icon-white"></i> Types</a></li>
+                    <li><a href="#" id="manage-services"><i class="icon-gift icon-white"></i> Services</a></li>
+                    <li class="divider-vertical"></li>
+                    <li><a href="http://manywho.com/wp-content/content/docs/gettingstarted.html" target="_blank"><i class="icon-book icon-white"></i> Docs</a></li>
+                    <li class="divider-vertical"></li>
+                    <li><a href="#" id="open-developer-tools"><i class="icon-wrench icon-white"></i> Dev Tools</a></li>
+                    <li class="divider-vertical"></li>
+                    <li><a href="#" id="sign-out"><i class="icon-user icon-white"></i> Sign Out</a></li>
+                </ul>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row-fluid" id="flow-error">
+        </div>
+        <div class="row-fluid">
+            <div class="span2">
+                <!--Sidebar content-->
+                <div class="media">
+                    <a class="pull-left" href="#">
+                        <img class="media-object" src="/extensions/glyphicons/glyphicons_001_leaf@2x.png" alt="Flow" />
+                    </a>
+                    <div class="media-body">
+                        <h4 id="flow-developer-name" class="media-heading text-info"></h4>
+                        <span id="flow-developer-summary" class="muted"></span>
+                    </div>
+                </div>
+
+                <br />
+
+                <a id="run-flow" class="btn btn-success flow-button" href="#"><i class="icon-play icon-white"></i> Run</a>
+                <a id="close-flow" class="btn btn-danger flow-button" href="#"><i class="icon-minus-sign icon-white"></i> Save & Close</a>
+
+                <p>&nbsp;</p>
+
+                <div id="user-elements">
+                    <h5>User Elements</h5>
+                </div>
+
+                <p>&nbsp;</p>
+
+                <div id="logic-elements">
+                    <h5>Logic Elements</h5>
+                </div>                
+
+                <p>&nbsp;</p>
+
+                <div id="data-elements">
+                    <h5>Data Elements</h5>
+                </div>                
+
+                <p>&nbsp;</p>
+ 
+                <div id="group-elements">
+                    <h5>Group Elements</h5>
+                </div>                
+            </div>
+            <div class="span10">
+                <div class="row-fluid" id="flow-getting-started">
+                    <div class="span12">
+                        <p>&nbsp;</p>
+                        <h1 align="center">Get Started</h1>
+                        <p align="center"><img src="/images/welcome_logo.png" height="178" width="178" alt="Welcome" /></p>
+                        <div class="alert">
+                            <strong>REQUIRED</strong> Make sure you read our <a href="http://manywho.com/wp-content/content/docs/gettingstarted.html" target="_blank">Getting Started</a> 
+                            guide before doing anything else. It contains a bunch of stuff you need to configure before you can begin creating flows!
+                        </div>
+                        <div class="alert alert-success">
+                            <strong>Get Going!</strong> Once that's done, click on the "Flows" button at the top left of the screen to start building!  Make sure you check out our 
+                            <a href="http://www.youtube.com/user/themanywho" target="_blank">YouTube Channel</a> also for demos and tutorials.
+                        </div>
+                    </div>
+                </div>
+                <div id="flow-graph-wrapper">
+                    <div id="flow-graph">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="is-editing" value="false" />
+    <input type="hidden" id="flow-start-map-element-id" value="" />
+    <input type="hidden" id="authorization-header" value="" />
+
+</form>
+
+</body>
+</html>
