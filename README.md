@@ -13,10 +13,14 @@ All that basically says is that if you want to use this code, make sure you use 
 
 All of the code in this project is the code that we actually use for our tooling - and it breaks out like this:
 
-- run: the code that's used when you run your flow. This is the most important code for most customers as it's the code that allows end users to interact with your flows
+- run: the code that's used when you run your flow. This is the most important code for most customers as it's the code that allows end users to interact with your flows.
 
 - draw: this is our designer tooling.  Yes, that's a player too! We built our point-and-click tooling using our own platform. The draw folder shows how you can embed flows into existing applications - in this case - a design tool.
 
 - build: this is our developer tooling.  While not technically a player, it also embeds a flow (the login flow) - again, to illustrate how you can embed flows into existing applications and tools.
 
 We'll be providing more information over time.  Please stay tuned as we develop this project out!
+
+In the mean time, make sure you check out our developer docs:
+
+http://manywho.com/wp-content/content/docs/index.html
