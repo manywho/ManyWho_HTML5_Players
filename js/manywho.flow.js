@@ -60,7 +60,7 @@ var ManyWhoFlow = {
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoginBySession', requestUrl, requestType, requestData, loginBeforeSend, loginSuccessCallback, loginErrorCallback, headers, true);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoginBySession', requestUrl, requestType, requestData, loginBeforeSend, loginSuccessCallback, loginErrorCallback, headers);
     },
     snapAndRun: function (callingFunctionName,
                           flowId,
@@ -72,6 +72,18 @@ var ManyWhoFlow = {
         var requestData = '';
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SnapAndRun', requestUrl, requestType, requestData, runBeforeSend, runSuccessCallback, runErrorCallback);
+    },
+    activateFlow: function (callingFunctionName,
+                            flowId,
+                            flowVersionId,
+                            activateFlowBeforeSend,
+                            activateFlowSuccessCallback,
+                            activateFlowErrorCallback) {
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/activation/' + flowId + '/' + flowVersionId + '/true/true';
+        var requestType = 'POST';
+        var requestData = '';
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ActivateFlow', requestUrl, requestType, requestData, activateFlowBeforeSend, activateFlowSuccessCallback, activateFlowErrorCallback);
     },
     loadByName: function (callingFunctionName,
                           tenantId,

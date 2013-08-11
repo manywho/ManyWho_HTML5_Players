@@ -276,3 +276,15 @@ select {
 }
 
 /* CSS Specifically for the form builder FINISH */
+
+#run-flow {
+    margin-bottom: 5px !important;
+}
+
+#activate-flow {
+    margin-bottom: 5px !important;
+}
+
+#close-flow {
+    margin-bottom: 5px !important;
+}

@@ -87,3 +87,7 @@ li > span.manywho-who-reference:before {
     margin-top: 5px !important;
     margin-bottom: 5px !important;
 }
+
+.modal-backdrop {
+    background-color: #ffffff !important;
+}

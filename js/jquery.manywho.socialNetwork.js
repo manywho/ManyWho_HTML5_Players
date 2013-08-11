@@ -714,6 +714,27 @@ permissions and limitations under the License.
                                   null);
     };
 
+    // Send the share message over to the social network
+    //
+    var sendShare = function (dialogElementId, postElementId, postText, users) {
+        ManyWhoSocial.shareMessage('SocialNetworkPlugin.SendShare',
+                                   currentOptions.stateId,
+                                   currentOptions.streamId,
+                                   { senderId: myData.id, messageText: postText, mentionedUsers: users },
+                                   null,
+                                   function (data, status, xhr) {
+                                       // Remove the post from the input box
+                                       $('#' + postElementId).val('');
+
+                                       // Re-enable all of the input fields
+                                       $('#' + postElementId).prop('disabled', false);
+                                         
+                                       // This bit is messy as we're calling a dialog created by the engine so we've got a cyclic dependency really
+                                       $('#' + dialogElementId).modal('hide');
+                                   },
+                                   null);
+    };
+
     // Send the post over to the social network
     //
     var sendPost = function (postElementId, postText, users) {
@@ -995,13 +1016,15 @@ permissions and limitations under the License.
 
             // Print the chassis of the feed to the parent container
             $(this).html(html);
-
+            
             // Add type ahead to the main input boxes for posting
             addTypeAhead(currentOptions.domId + '-new-post-text');
+            addTypeAhead(currentOptions.domId + '-share-post-text');
             //addTypeAhead(currentOptions.domId + '-new-file-text');
 
             // Make the main input boxes elastic
             $('#' + currentOptions.domId + '-new-post-text').elastic();
+            $('#' + currentOptions.domId + '-share-post-text').elastic();
             //$('#' + currentOptions.domId + '-new-file-text').elastic();
 
             // Hide the more button
@@ -1030,6 +1053,34 @@ permissions and limitations under the License.
 
                 // Send it over
                 sendPost(currentOptions.domId + '-new-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend);
+            });
+
+            // Add the click event for share posts
+            // The html for the share post is not actually in this plugin, it's in the runtime UI which makes it a little confusing
+            // This is so we an put it at the top of the screen rather than the bottom - we effectively inject this functionality into
+            // the runtime as with the follow and update feed buttons.
+            $('#' + currentOptions.domId + '-share-post-button').click(function (event) {
+                event.preventDefault();
+
+                var postText = null;
+                var mentionedUsersResponse = null;
+
+                // Grab the text for the post
+                postText = $('#' + currentOptions.domId + '-share-post-text').val();
+
+                // Get the list of mentioned users from the post text
+                mentionedUsersResponse = getMentionedUsers(postText);
+
+                // Make sure the post text if valid
+                if (validatePost(mentionedUsersResponse.messageText) == false) {
+                    return;
+                }
+
+                // Disable the text area for the post
+                $('#' + currentOptions.domId + '-share-post-text').prop('disabled', true);
+
+                // Send it over
+                sendShare(currentOptions.domId + '-share-flow-dialog', currentOptions.domId + '-share-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend);
             });
 
             //// Add the click event for new file posts

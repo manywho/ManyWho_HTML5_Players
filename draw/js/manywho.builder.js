@@ -43,7 +43,7 @@ function configurePage() {
     ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
 
     // Create the function for creating error alerts in the designer
-    var createErrorAlert = function (xhr, status, message) {
+    var createErrorAlert = function (xhr, status, responseMessage) {
         var html = null;
         var message = null;
         var needsLogin = false;
@@ -235,7 +235,26 @@ function configurePage() {
                                null,
                                function (data, status, xhr) {
                                    ManyWhoSharedServices.showBuildDialog(false);
-                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/run/index.htm?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/default?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+                               },
+                               createErrorAlert);
+    });
+
+    // Button to allow the user to snapshot and run the flow
+    $('#activate-flow').click(function (event) {
+        event.preventDefault();
+        ManyWhoSharedServices.showBuildDialog(true);
+        ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
+                               ManyWhoSharedServices.getFlowId(),
+                               null,
+                               function (data, status, xhr) {
+                                   ManyWhoSharedServices.showBuildDialog(false);
+
+                                   // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
+                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, null, null, null);
+
+                                   // Now we load the flow which allows the author to then share it with their friends
+                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/default?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
                                },
                                createErrorAlert);
     });
@@ -245,7 +264,7 @@ function configurePage() {
 
         if ($(this).attr('disabled') != 'disabled') {
             ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthenticationToken());
-            window.open(ManyWhoConstants.BASE_PATH_URL + '/build/index.htm?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
+            window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/build?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
         }
     });
 

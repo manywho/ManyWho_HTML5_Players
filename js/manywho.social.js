@@ -15,6 +15,23 @@ permissions and limitations under the License.
 */
 
 var ManyWhoSocial = {
+    shareMessage: function (callingFunctionName,
+                            stateId,
+                            streamId,
+                            newMessage,
+                            loadBeforeSend,
+                            loadSuccessCallback,
+                            loadErrorCallback) {
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + streamId + '/share';
+        var requestType = 'POST';
+        var requestData = JSON.stringify(newMessage);
+        var headers = null;
+
+        // Create a header for the state id
+        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.shareMessage', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
+    },
     postNewMessage: function (callingFunctionName,
                               stateId,
                               streamId,

@@ -859,12 +859,30 @@ permissions and limitations under the License.
             // Initialize the shared services
             ManyWhoSharedServices.initialize('shared-services');
 
+            // Dialog for sharing the flow with other users
+            html += '<div id="' + domId + '-share-flow-dialog" class="modal hide fade">';
+            html += '    <div class="modal-header">';
+            html += '        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
+            html += '        <h3 id="manywho-share-flow-dialog-title">Share</h3>';
+            html += '    </div>';
+            html += '    <div class="modal-body">';
+            html += '        <div class="row-fluid">';
+            html += '            <textarea id="' + domId + '-share-post-text" placeholder="Share this flow with your colleagues" class="span12 typeahead elastic"></textarea>';
+            html += '        </div>';
+            html += '    </div>';
+            html += '    <div class="modal-footer">';
+            html += '        <button id="' + domId + '-share-post-button" class="btn btn-success">Share</button>';
+            html += '        <button id="' + domId + '-cancel-post-button" class="btn">Cancel</button>';
+            html += '    </div>';
+            html += '</div>';
+
             // The buttons for following the flow and refreshing the feed
             html += '<div id="' + domId + '-social-feed-buttons" class="container-fluid">';
             html += '    <div class="row-fluid">';
             html += '        <div class="span12">';
             html += '            <div class="pull-right">';
             html += '                <button id="' + domId + '-follow-flow-button" class="btn btn-success">Loading...</button>';
+            html += '                <button id="' + domId + '-share-flow-button" class="btn btn-info"><i class="icon-heart icon-white"></i> Share</button>';
             html += '                <button id="' + domId + '-update-feed" class="btn btn-primary"><i class="icon-refresh icon-white"></i> Update Feed</button>';
             html += '            </div>';
             html += '        </div>';
@@ -933,6 +951,14 @@ permissions and limitations under the License.
             // Write the html to the parent element
             $(this).html(html);
 
+            // Make sure we register the share dialog as a dialog
+            $('#' + domId + '-share-flow-dialog').modalmanager({ backdrop: false });
+
+            $('#' + domId + '-share-flow-button').click(function (event) {
+                event.preventDefault();
+                $('#' + domId + '-share-flow-dialog').modal('show');
+            });
+
             // Create the alert html
             $('#' + domId + '-debug').html(createAlert(domId));
 
@@ -958,14 +984,10 @@ permissions and limitations under the License.
             $('#' + domId + '-tenant-id').val(opts.tenantId);
             $('#' + domId + '-rewrite-url').val(opts.rewriteUrl);
 
-            $('#' + domId + '-save-button').click(function (event) {
+            // If the user clicks the cancel button, we hide the sharing modal dialog
+            $('#' + domId + '-cancel-post-button').click(function (event) {
                 event.preventDefault();
-                execute(domId, 'SAVE', null, createFormRequest(domId));
-            });
-
-            $('#' + domId + '-follow-button').click(function (event) {
-                event.preventDefault();
-                alert('to implement!');
+                $('#' + domId + '-share-flow-dialog').modal('hide');
             });
         },
         run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl) {
