@@ -1,6 +1,7 @@
 # Ignore the files we do not have distribution rights over #
 ############################################################
 extensions/
+.idea/
 
 # OS generated files #
 ######################
