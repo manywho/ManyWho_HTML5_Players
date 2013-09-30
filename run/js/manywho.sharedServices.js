@@ -48,7 +48,7 @@ var ManyWhoSharedServices = {
             $('#manywho-model-runtime').manywhoRuntimeEngine({ enableAuthentication: false, rewriteUrl: false, tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID });
         }
     },
-    createInput: function (inputs, key, value, contentType, objectData) {
+    createInput: function (inputs, key, value, contentType, objectData, typeElementDeveloperName) {
         var input = null;
 
         if (inputs == null) {
@@ -60,6 +60,7 @@ var ManyWhoSharedServices = {
         input.contentValue = value;
         input.contentType = contentType;
         input.objectData = objectData;
+        input.typeElementDeveloperName = typeElementDeveloperName;
 
         inputs[inputs.length] = input;
 
@@ -88,16 +89,17 @@ var ManyWhoSharedServices = {
         $('#manywho-model-runtime').attr('style', 'overflow: auto; height: ' + height + 'px;');
     },
     showAuthenticationDialog: function (okCallback, loginUrl, manywhoTenantId) {
-        ManyWhoSharedServices.adjustDialog(175, 550, false);
+        ManyWhoSharedServices.adjustDialog(200, 550, false);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__AUTHENTICATION__DEFAULT__FLOW',
                                null,
+                               null,
                                function (data, status, xhr) {
                                    var inputs = null;
 
-                                   inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', loginUrl, ManyWhoConstants.CONTENT_TYPE_STRING, null);
-                                   inputs = ManyWhoSharedServices.createInput(inputs, 'ManyWhoTenantId', manywhoTenantId, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+                                   inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', loginUrl, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                                   inputs = ManyWhoSharedServices.createInput(inputs, 'ManyWhoTenantId', manywhoTenantId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
                                                                                     null,

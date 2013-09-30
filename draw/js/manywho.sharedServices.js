@@ -14,8 +14,11 @@ permissions and limitations under the License.
 
 */
 
+// The rest editor needed for the developer view on the tooling
+var restEditor = null;
+
 var ManyWhoSharedServices = {
-    createInput: function (inputs, key, value, contentType, objectData) {
+    createInput: function (inputs, key, value, contentType, objectData, typeElementDeveloperName) {
         var input = null;
 
         if (inputs == null) {
@@ -27,6 +30,7 @@ var ManyWhoSharedServices = {
         input.contentValue = value;
         input.contentType = contentType;
         input.objectData = objectData;
+        input.typeElementDeveloperName = typeElementDeveloperName;
 
         inputs[inputs.length] = input;
 
@@ -36,40 +40,41 @@ var ManyWhoSharedServices = {
         var inputs = new Array();
         var input = null;
 
-        inputs = ManyWhoSharedServices.createInput(inputs, 'Id', elementId, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'Id', elementId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
         if (includeSessionInfo == true) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'EditingToken', ManyWhoSharedServices.getEditingToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'EditingToken', ManyWhoSharedServices.getEditingToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
         if (ignoreFlowId == true) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', '', ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', '', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         } else {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', ManyWhoSharedServices.getFlowId(), ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', ManyWhoSharedServices.getFlowId(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
         if (elementType != null) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'ElementType', elementType, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'ElementType', elementType, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
         if (locationX != null &&
             locationY != null) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'X', locationX, ManyWhoConstants.CONTENT_TYPE_NUMBER, null);
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Y', locationY, ManyWhoConstants.CONTENT_TYPE_NUMBER, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'X', locationX, ManyWhoConstants.CONTENT_TYPE_NUMBER, null, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'Y', locationY, ManyWhoConstants.CONTENT_TYPE_NUMBER, null, null);
         }
 
         if (height != null &&
             width != null) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Height', height, ManyWhoConstants.CONTENT_TYPE_NUMBER, null);
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Width', width, ManyWhoConstants.CONTENT_TYPE_NUMBER, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'Height', height, ManyWhoConstants.CONTENT_TYPE_NUMBER, null, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'Width', width, ManyWhoConstants.CONTENT_TYPE_NUMBER, null, null);
         }
 
         if (nextElementId != null) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'NextMapElementId', nextElementId, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'NextMapElementId', nextElementId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
         if (groupElementId != null) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'GroupElementId', groupElementId, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'GroupElementId', groupElementId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
         return inputs;
@@ -108,6 +113,21 @@ var ManyWhoSharedServices = {
             dialogHtml += '    <div id="manywho-model-runtime" style="overflow: auto;" class="modal-body">';
             dialogHtml += '    </div>';
             dialogHtml += '    <div id="manywho-model-outcomes" class="modal-footer">';
+            dialogHtml += '    </div>';
+            dialogHtml += '</div>';
+
+            dialogHtml += '<div id="manywho-dialog-developer" class="modal container hide fade">';
+            dialogHtml += '    <div id="manywho-dialog-header-developer" class="modal-header">';
+            dialogHtml += '        <button id="manywho-dialog-close-button-developer" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
+            dialogHtml += '        <h3 id="manywho-dialog-title-developer">Developer Tooling : JSON Editor</h3>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    <div id="manywho-model-runtime-developer" style="overflow: auto; height: 550px;" class="modal-body">';
+            dialogHtml += '        <div id="manywho-dialog-developer-rest-editor" style="height: 540px;"></div>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    <div id="manywho-model-outcomes-developer" class="modal-footer">';
+            dialogHtml += '        <button id="manywho-dialog-delete-button-developer" type="button" class="btn btn-danger">DELETE</button>';
+            dialogHtml += '        <button id="manywho-dialog-save-button-developer" type="button" class="btn btn-warning">Save</button>';
+            dialogHtml += '        <button id="manywho-dialog-cancel-button-developer" type="button" class="btn">Close</button>';
             dialogHtml += '    </div>';
             dialogHtml += '</div>';
 
@@ -158,10 +178,16 @@ var ManyWhoSharedServices = {
 
             $('#' + reference).append(dialogHtml);
             $('#manywho-dialog').modalmanager();
+            $('#manywho-dialog-developer').modalmanager();
             $('#manywho-dialog-sub').modalmanager();
             $('#manywho-dialog-build').modalmanager();
             $('#manywho-dialog-loading').modalmanager();
             $('#manywho-dialog-fullscreen').hide();
+
+            // Create the rest editor for the developer tooling
+            restEditor = ace.edit('manywho-dialog-developer-rest-editor');
+            restEditor.setTheme('ace/theme/monokai');
+            restEditor.getSession().setMode('ace/mode/javascript');
 
             $('#manywho-dialog').on('hidden', function () {
                 $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
@@ -245,7 +271,7 @@ var ManyWhoSharedServices = {
         $('#manywho-model-runtime-sub').attr('style', 'overflow: auto; height: ' + height + 'px;');
     },
     showAuthenticationDialog: function (okCallback) {
-        ManyWhoSharedServices.adjustDialog(175, 550, false);
+        ManyWhoSharedServices.adjustDialog(200, 550, false);
 
         $('#manywho-dialog').on('hidden', function () {
             $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
@@ -255,6 +281,7 @@ var ManyWhoSharedServices = {
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__AUTHENTICATION__DEFAULT__FLOW',
+                               null,
                                null,
                                function (data, status, xhr) {
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -296,14 +323,16 @@ var ManyWhoSharedServices = {
 
         if (ManyWhoSharedServices.getEditingToken() != null &&
             ManyWhoSharedServices.getEditingToken().trim().length > 0) {
-            inputs = ManyWhoSharedServices.createInput(inputs, 'EditingToken', ManyWhoSharedServices.getEditingToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null);
+            inputs = ManyWhoSharedServices.createInput(inputs, 'EditingToken', ManyWhoSharedServices.getEditingToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         }
 
-        inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', ManyWhoSharedServices.getFlowId(), ManyWhoConstants.CONTENT_TYPE_STRING, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', ManyWhoSharedServices.getFlowId(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowSubConfigDialog',
-                               ManyWhoSharedServices.getTenantId(),
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                               null,
                                null,
                                function (data, status, xhr) {
                                    $('#manywho-model-runtime-sub').manywhoRuntimeEngine('run',
@@ -327,10 +356,81 @@ var ManyWhoSharedServices = {
                                },
                                null);
     },
+    showGraphElementDeveloperDialog: function (elementType, elementId, groupElementId, graphId, operation, locationX, locationY, okCallback, deleteCallback, cancelCallback) {
+        var doDelete = false;
+        var inputs = null;
+
+        if (elementId == null ||
+            (operation != null &&
+             operation.toLowerCase() == 'delete')) {
+            doDelete = true;
+        }
+
+        // Remove any existing click events from the button
+        $('#manywho-dialog-cancel-button-developer').off('click');
+        $('#manywho-dialog-save-button-developer').off('click');
+
+        // Remove and add the dialog cancel code
+        $('#manywho-dialog-developer').off('hidden');
+        $('#manywho-dialog-developer').on('hidden', function () {
+            cancelCallback.call(this, graphId, doDelete);
+        });
+
+        // Get the json for the rest editor
+        ManyWhoDeveloper.getElementJSON(elementId,
+                                        elementType,
+                                        locationX,
+                                        locationY,
+                                        groupElementId,
+                                        function (json) {
+                                            $('#manywho-dialog-developer').modal('show');
+
+                                            restEditor.setValue(json);
+                                            restEditor.gotoLine(0);
+
+                                            // Add the event for the close button
+                                            $('#manywho-dialog-cancel-button-developer').on('click', function (event) {
+                                                // Close has the same functions as the cancel button
+                                                cancelCallback.call(this, graphId, doDelete);
+
+                                                // Clear the editor
+                                                restEditor.setValue('');
+
+                                                // Close the dialog as requested
+                                                $('#manywho-dialog-developer').modal('hide');
+                                            });
+
+                                            // Add the event for the save button
+                                            $('#manywho-dialog-save-button-developer').on('click', function (event) {
+                                                // Tell the caller that the user decided to save
+                                                okCallback.call(this, restEditor.getValue(), function (callbackJSON) {
+                                                    // Put the resultant JSON back in the editor
+                                                    restEditor.setValue(callbackJSON);
+                                                });
+
+                                                // Flip the delete flag to "false" as this operation will not cause the dialog to close
+                                                doDelete = false;
+                                            });
+
+                                            // Add the event for the delete button
+                                            $('#manywho-dialog-delete-button-developer').on('click', function (event) {
+                                                // Tell the caller that the user decided to delete
+                                                deleteCallback.call(this, graphId, elementId);
+
+                                                // Clear the editor
+                                                restEditor.setValue('');
+
+                                                // Close the dialog as requested
+                                                $('#manywho-dialog-developer').modal('hide');
+                                            });
+                                        },
+                                        null);
+    },
     showPageElementConfigDialog: function (elementType, elementId, okCallback, errorFunction) {
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowPageElementConfigDialog',
-                               ManyWhoSharedServices.getTenantId(),
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                               null,
                                null,
                                function (data, status, xhr) {
                                    $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('run',
@@ -374,8 +474,9 @@ var ManyWhoSharedServices = {
         });
 
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowSharedElementConfigDialog',
-                               ManyWhoSharedServices.getTenantId(),
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                               null,
                                null,
                                function (data, status, xhr) {
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -420,12 +521,14 @@ var ManyWhoSharedServices = {
         });
 
         inputs = ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, groupElementId, elementType, locationX, locationY);
-        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
         ManyWhoSharedServices.adjustDialog(550, null, true);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowMapElementConfigDialog',
-                                ManyWhoSharedServices.getTenantId(),
+                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                 'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                                null,
                                 null,
                                 function (data, status, xhr) {
                                     $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -485,13 +588,15 @@ var ManyWhoSharedServices = {
         });
 
         inputs = ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, null, null, null, null, null, nextElementId);
-        inputs = ManyWhoSharedServices.createInput(inputs, 'OutcomeId', outcomeId, ManyWhoConstants.CONTENT_TYPE_STRING, null);
-        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'OutcomeId', outcomeId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
         ManyWhoSharedServices.adjustDialog(175, 550, true);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowMapElementOutcomeConfigDialog',
-                                ManyWhoSharedServices.getTenantId(),
+                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                 'MANYWHO__OUTCOME__DEFAULT__FLOW',
+                                null,
                                 null,
                                 function (data, status, xhr) {
                                     $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -551,13 +656,15 @@ var ManyWhoSharedServices = {
             $('#manywho-dialog-title').html('Loading...');
         });
 
-        if (operation == 'delete') {
+        if (operation != null &&
+            operation.toLowerCase() == 'delete') {
             alert('to do');
         } else {
             ManyWhoSharedServices.adjustDialog(550, null, true);
             ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowGroupElementConfigDialog',
-                                   ManyWhoSharedServices.getTenantId(),
+                                   ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                    'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                                   null,
                                    null,
                                    function (data, status, xhr) {
                                        $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -607,8 +714,9 @@ var ManyWhoSharedServices = {
         });
 
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowFlowConfigDialog',
-                               ManyWhoSharedServices.getTenantId(),
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__FLOW__DEFAULT__FLOW',
+                               null,
                                null,
                                function (data, status, xhr) {
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
@@ -699,6 +807,19 @@ var ManyWhoSharedServices = {
     },
     getTenantId: function () {
         return $('#manywho-shared-services-data').data('tenantid');
+    },
+    setAuthorAuthenticationToken: function (authenticationToken) {
+        $('#manywho-shared-services-data').data('authorauthenticationtoken', authenticationToken);
+    },
+    getAuthorAuthenticationToken: function () {
+        var authenticationToken = $('#manywho-shared-services-data').data('authorauthenticationtoken');
+
+        if (authenticationToken == null ||
+            authenticationToken == 'null') {
+            authenticationToken = '';
+        }
+
+        return authenticationToken;
     },
     setAuthenticationToken: function (authenticationToken) {
         $('#manywho-shared-services-data').data('authenticationtoken', authenticationToken);

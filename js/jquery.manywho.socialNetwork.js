@@ -33,6 +33,9 @@ permissions and limitations under the License.
     // Array of mentioned users in a particular post
     var mentionedUsers = new Array();
 
+    // Variable holding the share js state for the last post information
+    var $shareJsState;
+
     // Helper method to see if an array contains a particular object
     //
     function contains(obj, a) {
@@ -121,7 +124,7 @@ permissions and limitations under the License.
         ManyWhoSocial.postNewMessage('SocialNetworkPlugin.sendFile',
                                      currentOptions.stateId,
                                      currentOptions.streamId,
-                                     { senderId: myData.id, messageText: text, mentionedUsers: users, uploadedFiles: previouslyUploadedFiles },
+                                     { senderId: myData.id, messageText: text, mentionedWhos: users, uploadedFiles: previouslyUploadedFiles },
                                      null,
                                      function (data, status, xhr) {
                                          // Create the post for this file
@@ -231,9 +234,17 @@ permissions and limitations under the License.
         ManyWhoSocial.postNewMessage('SocialNetworkPlugin.sendComment',
                                      currentOptions.stateId,
                                      currentOptions.streamId,
-                                     { senderId: myData.id, messageText: text, mentionedUsers: users, repliedTo: messageId },
+                                     { senderId: myData.id, messageText: text, mentionedWhos: users, repliedTo: messageId },
                                      null,
                                      function (data, status, xhr) {
+                                         // Update the post id so we don't confuse the realtime updates
+                                         $('#' + currentOptions.domId + '-post-id').val(data.id);
+
+                                         // Notify subscribers of the latest post id - but only if we have an active connection to share js
+                                         if ($shareJsState != null) {
+                                             $shareJsState.insert(0, data.id);
+                                         }
+
                                          // Reset the new comments section
                                          $('#' + currentOptions.domId + '-' + messageId + '-new-comment-text').val('');
                                          $('#' + currentOptions.domId + '-' + messageId + '-new-comment-text').prop('disabled', false);
@@ -254,6 +265,21 @@ permissions and limitations under the License.
                                        follow,
                                        null,
                                        function (data, status, xhr) {
+                                           // We send through a dummy id for the update
+                                           var update = 'follow0000AAe5FCAT';
+
+                                           if (follow == true) {
+                                               update = 'unfollow00AAe5FCAT';
+                                           }
+
+                                           // Update the post id so we don't confuse the realtime updates
+                                           $('#' + currentOptions.domId + '-post-id').val(update);
+
+                                           // Notify subscribers of the latest post id - but only if we have an active connection to share js
+                                           if ($shareJsState != null) {
+                                               $shareJsState.insert(0, update);
+                                           }
+
                                            // Update the follow button appropriately
                                            setFollowingInfo(follow);
 
@@ -651,7 +677,7 @@ permissions and limitations under the License.
                     $('#' + currentOptions.domId + '-' + data.id + '-new-comment-text').prop('disabled', true);
 
                     // Send it over
-                    sendComment(mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend, data.id);
+                    sendComment(mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedWhosToSend, data.id);
                 });
 
                 // Add the click event for liking and unliking posts
@@ -720,7 +746,7 @@ permissions and limitations under the License.
         ManyWhoSocial.shareMessage('SocialNetworkPlugin.SendShare',
                                    currentOptions.stateId,
                                    currentOptions.streamId,
-                                   { senderId: myData.id, messageText: postText, mentionedUsers: users },
+                                   { senderId: myData.id, messageText: postText, mentionedWhos: users },
                                    null,
                                    function (data, status, xhr) {
                                        // Remove the post from the input box
@@ -741,9 +767,17 @@ permissions and limitations under the License.
         ManyWhoSocial.postNewMessage('SocialNetworkPlugin.SendPost',
                                      currentOptions.stateId,
                                      currentOptions.streamId,
-                                     { senderId: myData.id, messageText: postText, mentionedUsers: users },
+                                     { senderId: myData.id, messageText: postText, mentionedWhos: users },
                                      null,
                                      function (data, status, xhr) {
+                                         // Update the post id so we don't confuse the realtime updates
+                                         $('#' + currentOptions.domId + '-post-id').val(data.id);
+
+                                         // Notify subscribers of the latest post id - but only if we have an active connection to share js
+                                         if ($shareJsState != null) {
+                                             $shareJsState.insert(0, data.id);
+                                         }
+
                                          // Remove the post from the input box
                                          $('#' + postElementId).val('');
 
@@ -843,7 +877,7 @@ permissions and limitations under the License.
 
         // Return a helper object with the revised message text and the distinct users
         mentionedUsersResponse = new Object();
-        mentionedUsersResponse.mentionedUsersToSend = mentionedUsersToSend;
+        mentionedUsersResponse.mentionedWhosToSend = mentionedUsersToSend;
         mentionedUsersResponse.messageText = messageText;
 
         // Return the list of user objects and message text back to the calling function
@@ -949,6 +983,8 @@ permissions and limitations under the License.
             currentOptions = $.extend({}, $.fn.manywhoSocialNetwork.defaults, options);
 
             // Create the chassis for the social plugin
+            html += '<input type="hidden" id="' + currentOptions.domId + '-post-id" value="loading" />';
+
             html += '<div class="container-fluid">';
 
             html += '  <div class="row-fluid">';
@@ -956,41 +992,49 @@ permissions and limitations under the License.
             // The span for the main feed
             html += '    <div class="span12">';
 
+            html += '      <div class="row-fluid" id="' + currentOptions.domId + '-new-posts">';
+            html += '        <div class="alert alert-info">';
+            html += '          <strong>Feed Update</strong> You have new posts available. <a href="#" id="' + currentOptions.domId + '-update-feed-new-posts">Refresh feed now</a></strong>';
+            html += '        </div>';
+            html += '      </div>';
+
             // The tabs for the feed
-            html += '      <div class="row-fluid" class="manywho-social-new-posts">';
+            html += '      <div class="row-fluid manywho-social-new-posts">';
             html += '        <div class="span12">';
             html += '          <div class="tabbable">';
             html += '            <ul class="nav nav-tabs">';
             html += '              <li class="active"><a href="#' + currentOptions.domId + '-post-tab" data-toggle="tab">Post</a></li>';
-            //html += '              <li><a href="#' + currentOptions.domId + '-file-tab" data-toggle="tab">File</a></li>';
+            html += '              <li><a href="#' + currentOptions.domId + '-file-tab" data-toggle="tab">File</a></li>';
             html += '            </ul>';
             html += '            <div class="tab-content">';
             html += '              <div class="tab-pane active" id="' + currentOptions.domId + '-post-tab">';
             html += '                <div class="row-fluid">';
             html += '                  <textarea id="' + currentOptions.domId + '-new-post-text" placeholder="What are you working on?" class="span12 typeahead elastic"></textarea>';
             html += '                  <button id="' + currentOptions.domId + '-new-post-button" class="btn btn-success">Share</button>';
+            html += '                  <button id="' + currentOptions.domId + '-update-feed-post" class="btn"><i class="icon-refresh"></i> Refresh</button>';
             html += '                </div>';
             html += '              </div>';
-            //html += '              <div class="tab-pane" id="' + currentOptions.domId + '-file-tab">';
-            //html += '                <div class="row-fluid">';
-            //html += '                  <form id="' + currentOptions.domId + '-fileupload" method="POST" enctype="multipart/form-data">';
-            //html += '                    <div class="span12 fileupload-buttonbar">';
-            //html += '                      <span class="btn btn-success fileinput-button">';
-            //html += '                        <i class="icon-plus icon-white"></i> <span>Add files...</span>';
-            //html += '                        <input type="file" id="files[]" name="files[]">';
-            //html += '                      </span>';
-            //html += '                    </div>';
-            //html += '                    <div class="fileupload-loading"></div>';
-            //html += '                    <div role="presentation" class="span12 table table-striped">';
-            //html += '                      <div class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></div>';
-            //html += '                    </div>';
-            //html += '                  </form>';
-            //html += '                </div>';
-            //html += '                <div class="row-fluid">';
-            //html += '                  <textarea id="' + currentOptions.domId + '-new-file-text" placeholder="Say something about this file..." class="span12 typeahead"></textarea>';
-            //html += '                  <button id="' + currentOptions.domId + '-new-file-button" class="btn btn-success">Share</button>';
-            //html += '                </div>';
-            //html += '              </div>';
+            html += '              <div class="tab-pane" id="' + currentOptions.domId + '-file-tab">';
+            html += '                <div class="row-fluid">';
+            html += '                  <form id="' + currentOptions.domId + '-fileupload" method="POST" enctype="multipart/form-data">';
+            html += '                    <div class="span12 fileupload-buttonbar">';
+            html += '                      <span class="btn btn-success fileinput-button">';
+            html += '                        <i class="icon-plus icon-white"></i> <span>Add files...</span>';
+            html += '                        <input type="file" id="files[]" name="files[]">';
+            html += '                      </span>';
+            html += '                    </div>';
+            html += '                    <div class="fileupload-loading"></div>';
+            html += '                    <div role="presentation" class="span12 table table-striped">';
+            html += '                      <div class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></div>';
+            html += '                    </div>';
+            html += '                  </form>';
+            html += '                </div>';
+            html += '                <div class="row-fluid">';
+            html += '                  <textarea id="' + currentOptions.domId + '-new-file-text" placeholder="Say something about this file..." class="span12 typeahead"></textarea>';
+            html += '                  <button id="' + currentOptions.domId + '-new-file-button" class="btn btn-success">Share</button>';
+            html += '                  <button id="' + currentOptions.domId + '-update-feed-file" class="btn"><i class="icon-refresh"></i> Refresh</button>';
+            html += '                </div>';
+            html += '              </div>';
             html += '            </div>';
             html += '          </div>';
             html += '        </div>';
@@ -1017,15 +1061,50 @@ permissions and limitations under the License.
             // Print the chassis of the feed to the parent container
             $(this).html(html);
             
+            // Hide the new posts UI
+            $('#' + currentOptions.domId + '-new-posts').hide();
+
+            try {
+                // Open the realtime socket for detecting changes to the feed - based on this stream identifier
+                sharejs.open(currentOptions.streamId, 'text', ManyWhoConstants.NODE_BASE_PATH + '/nodeApp/channel', function (error, doc) {
+                    // Keep the document as a global value
+                    $shareJsState = doc;
+
+                    // Detect changes to the doc and print out to the UI to show there are new posts
+                    doc.on('insert', function (op) {
+                        var postId = null;
+
+                        // Get the document's post id value
+                        postId = doc.getText();
+
+                        // Only take the first part of the document as that's our actual id
+                        if (postId.length > 0) {
+                            postId = postId.substring(0, '0D5i000000AAe5FCAT'.length);
+                        }
+
+                        // If the post coming through on the change is not the same one we have stored, then the user needs to update their feed
+                        if (postId != null &&
+                            postId != $('#' + currentOptions.domId + '-post-id').val()) {
+                            // Show the feed update is needed
+                            $('#' + currentOptions.domId + '-new-posts').show();
+                            // Update the feed post id so we're OK with any future changes
+                            $('#' + currentOptions.domId + '-post-id').val(postId);
+                        }
+                    });
+                });
+            } catch (error) {
+                // For now, do nothing
+            }
+
             // Add type ahead to the main input boxes for posting
             addTypeAhead(currentOptions.domId + '-new-post-text');
             addTypeAhead(currentOptions.domId + '-share-post-text');
-            //addTypeAhead(currentOptions.domId + '-new-file-text');
+            addTypeAhead(currentOptions.domId + '-new-file-text');
 
             // Make the main input boxes elastic
             $('#' + currentOptions.domId + '-new-post-text').elastic();
             $('#' + currentOptions.domId + '-share-post-text').elastic();
-            //$('#' + currentOptions.domId + '-new-file-text').elastic();
+            $('#' + currentOptions.domId + '-new-file-text').elastic();
 
             // Hide the more button
             $('#' + currentOptions.domId + '-more').hide();
@@ -1052,7 +1131,7 @@ permissions and limitations under the License.
                 $('#' + currentOptions.domId + '-new-post-text').prop('disabled', true);
 
                 // Send it over
-                sendPost(currentOptions.domId + '-new-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend);
+                sendPost(currentOptions.domId + '-new-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedWhosToSend);
             });
 
             // Add the click event for share posts
@@ -1080,33 +1159,33 @@ permissions and limitations under the License.
                 $('#' + currentOptions.domId + '-share-post-text').prop('disabled', true);
 
                 // Send it over
-                sendShare(currentOptions.domId + '-share-flow-dialog', currentOptions.domId + '-share-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend);
+                sendShare(currentOptions.domId + '-share-flow-dialog', currentOptions.domId + '-share-post-text', mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedWhosToSend);
             });
 
-            //// Add the click event for new file posts
-            //$('#' + currentOptions.domId + '-new-file-button').click(function (event) {
-            //    event.preventDefault();
+            // Add the click event for new file posts
+            $('#' + currentOptions.domId + '-new-file-button').click(function (event) {
+                event.preventDefault();
 
-            //    var postText = null;
-            //    var mentionedUsersResponse = null;
+                var postText = null;
+                var mentionedUsersResponse = null;
 
-            //    // Grab the text for the post
-            //    postText = $('#' + currentOptions.domId + '-new-file-text').val();
+                // Grab the text for the post
+                postText = $('#' + currentOptions.domId + '-new-file-text').val();
 
-            //    // Get the list of mentioned users from the post text
-            //    mentionedUsersResponse = getMentionedUsers(postText);
+                // Get the list of mentioned users from the post text
+                mentionedUsersResponse = getMentionedUsers(postText);
 
-            //    // Make sure the post text if valid
-            //    if (validatePost(mentionedUsersResponse.messageText) == false) {
-            //        return;
-            //    }
+                // Make sure the post text if valid
+                if (validatePost(mentionedUsersResponse.messageText) == false) {
+                    return;
+                }
 
-            //    // Disable the text area for the post
-            //    $('#' + currentOptions.domId + '-new-file-text').prop('disabled', true);
+                // Disable the text area for the post
+                $('#' + currentOptions.domId + '-new-file-text').prop('disabled', true);
 
-            //    // Send it over
-            //    sendFile(mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedUsersToSend);
-            //});
+                // Send it over
+                sendFile(mentionedUsersResponse.messageText, mentionedUsersResponse.mentionedWhosToSend);
+            });
 
             // Add the click event to grab more messages
             $('#' + currentOptions.domId + '-more-button').click(function (event) {
@@ -1117,7 +1196,7 @@ permissions and limitations under the License.
             });
 
             // Add the click event for updating the feed with the latest posts
-            $('#' + currentOptions.domId + '-update-feed').click(function (event) {
+            $('#' + currentOptions.domId + '-update-feed-post').click(function (event) {
                 event.preventDefault();
 
                 // Update the messages in the feed
@@ -1125,6 +1204,31 @@ permissions and limitations under the License.
 
                 // Call the feed followers method to get the latest followers of the flow
                 getFeedFollowers();
+            });
+
+            // Add the click event for updating the feed with the latest posts
+            $('#' + currentOptions.domId + '-update-feed-file').click(function (event) {
+                event.preventDefault();
+
+                // Update the messages in the feed
+                updateMessages();
+
+                // Call the feed followers method to get the latest followers of the flow
+                getFeedFollowers();
+            });
+
+            // Add the click event for updating the feed with the latest posts based on the alert
+            $('#' + currentOptions.domId + '-update-feed-new-posts').click(function (event) {
+                event.preventDefault();
+
+                // Update the messages in the feed
+                updateMessages();
+
+                // Call the feed followers method to get the latest followers of the flow
+                getFeedFollowers();
+
+                // Hide the feed update is needed
+                $('#' + currentOptions.domId + '-new-posts').hide();
             });
 
             // Add the click event for following the flow
@@ -1140,113 +1244,116 @@ permissions and limitations under the License.
                 }
             });
 
-            //// Initialize the file upload plugin
-            //$('#' + currentOptions.domId + '-fileupload').livequery(function () {
-            //    $(this).fileupload({
-            //        dataType: 'json',
-            //        url: ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file',
-            //        maxFileSize: 104857600, // 100MB
-            //        maxNumberOfFiles: 1,
-            //        basic: true,
-            //        completed: function (e, data) {
-            //            var file = null;
+            // Initialize the file upload plugin
+            $('#' + currentOptions.domId + '-fileupload').livequery(function () {
+                $(this).fileupload({
+                    dataType: 'json',
+                    url: ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+                    },
+                    maxFileSize: 104857600, // 100MB
+                    maxNumberOfFiles: 1,
+                    basic: true,
+                    completed: function (e, data) {
+                        var file = null;
 
-            //            // At the moment, we only support uploading one file per post
-            //            if (data.result != null &&
-            //                data.result.length > 0) {
-            //                // Grab the first file from the result list
-            //                file = data.result[0];
-            //            }
+                        // At the moment, we only support uploading one file per post
+                        if (data.result != null &&
+                            data.result.length > 0) {
+                            // Grab the first file from the result list
+                            file = data.result[0];
+                        }
 
-            //            // Pass the file object into the uploaded files array and refresh the UI
-            //            fileUploaded(file);
-            //        },
-            //        uploadTemplate: function (data) {
-            //            // Create a new array to store the rows of uploaded files
-            //            var rows = new Array();
-            //            var row = null;
+                        // Pass the file object into the uploaded files array and refresh the UI
+                        fileUploaded(file);
+                    },
+                    uploadTemplate: function (data) {
+                        // Create a new array to store the rows of uploaded files
+                        var rows = new Array();
+                        var row = null;
 
-            //            // Go through each of the uploaded files and print out the html
-            //            $.each(data.files, function (index, file) {
-            //                row = '';
-            //                row += '<div class="template-upload row-fluid">';
-            //                row += '  <p>' + file.name + ' (' + data.formatFileSize(file.size) + ')</p>';
+                        // Go through each of the uploaded files and print out the html
+                        $.each(data.files, function (index, file) {
+                            row = '';
+                            row += '<div class="template-upload row-fluid">';
+                            row += '  <p>' + file.name + ' (' + data.formatFileSize(file.size) + ')</p>';
 
-            //                // Check to see if there was an error processing the file
-            //                if (file.error == true) {
-            //                    row += '  <p><span class="label label-important">Error</span>' + file.error + '</p>';
-            //                    row += '  <button class="btn btn-warning cancel"><i class="icon-ban-circle icon-white"></i> Cancel</button>';
-            //                } else if (data.files.valid == true) {
-            //                    row += '  <div class="progress progress-success progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">';
-            //                    row += '    <div class="bar" style="width:0%;"></div>';
-            //                    row += '  </div>';
+                            // Check to see if there was an error processing the file
+                            if (file.error == true) {
+                                row += '  <p><span class="label label-important">Error</span>' + file.error + '</p>';
+                                row += '  <button class="btn btn-warning cancel"><i class="icon-ban-circle icon-white"></i> Cancel</button>';
+                            } else if (data.files.valid == true) {
+                                row += '  <div class="progress progress-success progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">';
+                                row += '    <div class="bar" style="width:0%;"></div>';
+                                row += '  </div>';
 
-            //                    // If we're not auto uploading files, we need to show the start and cancel buttons
-            //                    if (data.options.autoUpload == false) {
-            //                        row += '  <button class="btn btn-primary start"><i class="icon-upload icon-white"></i> Start</button>';
-            //                        row += '  <button class="btn btn-warning cancel"><i class="icon-ban-circle icon-white"></i> Cancel</button>';
-            //                    }
-            //                }
+                                // If we're not auto uploading files, we need to show the start and cancel buttons
+                                if (data.options.autoUpload == false) {
+                                    row += '  <button class="btn btn-primary start"><i class="icon-upload icon-white"></i> Start</button>';
+                                    row += '  <button class="btn btn-warning cancel"><i class="icon-ban-circle icon-white"></i> Cancel</button>';
+                                }
+                            }
 
-            //                row += '</div>';
+                            row += '</div>';
 
-            //                // Add the row of html to the array
-            //                rows[rows.length] = row;
-            //            });
+                            // Add the row of html to the array
+                            rows[rows.length] = row;
+                        });
 
-            //            return rows;
-            //        },
-            //        downloadTemplate: function (data) {
-            //            // Create a new array to store the rows of downloadable files
-            //            var rows = new Array();
-            //            var row = null;
+                        return rows;
+                    },
+                    downloadTemplate: function (data) {
+                        // Create a new array to store the rows of downloadable files
+                        var rows = new Array();
+                        var row = null;
 
-            //            // Go through each of the files that can be downloaded and print the html
-            //            $.each(data.files, function (index, file) {
-            //                row = '';
+                        // Go through each of the files that can be downloaded and print the html
+                        $.each(data.files, function (index, file) {
+                            row = '';
 
-            //                if (file.error) {
-            //                    row += '<div class="template-upload row-fluid">';
-            //                    row += '  <div class="span12">';
-            //                    row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
-            //                    row += '    <div><span class="label label-important">Error</span> ' + file.error + '</div>';
-            //                    row += '  </div>';
-            //                    row += '</div>';
-            //                } else {
-            //                    row += '<div id="' + file.id + '" data-name="' + file.name + '" data-type="' + file.type + '" class="template-upload row-fluid manywho-social-file">';
-            //                    row += '  <div class="span12">';
-            //                    row += '    <div>' + (file.thumbnailUrl ? '<img alt="' + file.name + '" src="' + file.thumbnailUrl + '" />' : '') + '</div>';
-            //                    row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
-            //                    row += '    <button class="btn btn-danger delete" data-type="DELETE" data-url="' + ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file/' + file.id + '" ' + (file.delete_with_credentials ? 'data-xhr-fields="{"withCredentials":true}"' : '') + '><i class="icon-trash icon-white"></i> <span>Delete</span></button>';
-            //                    row += '  </div>';
-            //                    row += '</div>';
-            //                }
+                            if (file.error) {
+                                row += '<div class="template-upload row-fluid">';
+                                row += '  <div class="span12">';
+                                row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
+                                row += '    <div><span class="label label-important">Error</span> ' + file.error + '</div>';
+                                row += '  </div>';
+                                row += '</div>';
+                            } else {
+                                row += '<div id="' + file.id + '" data-name="' + file.name + '" data-type="' + file.type + '" class="template-upload row-fluid manywho-social-file">';
+                                row += '  <div class="span12">';
+                                row += '    <div>' + (file.thumbnailUrl ? '<img alt="' + file.name + '" src="' + file.thumbnailUrl + '" />' : '') + '</div>';
+                                row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
+                                row += '    <button class="btn btn-danger delete" data-type="DELETE" data-url="' + ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file/' + file.id + '" ' + (file.delete_with_credentials ? 'data-xhr-fields="{"withCredentials":true}"' : '') + '><i class="icon-trash icon-white"></i> <span>Delete</span></button>';
+                                row += '  </div>';
+                                row += '</div>';
+                            }
 
-            //                // Add the row of html to the array
-            //                rows[rows.length] = row;
-            //            });
+                            // Add the row of html to the array
+                            rows[rows.length] = row;
+                        });
 
-            //            return rows;
-            //        }
-            //    });
+                        return rows;
+                    }
+                });
 
-            //    $(this).bind('fileuploaddestroy', function (e, destroyData) {
-            //        // Remove uploaded file name, which generated by server(GUID) from array
-            //        var url = null;
-            //        var deletedFileId = null;
+                $(this).bind('fileuploaddestroy', function (e, destroyData) {
+                    // Remove uploaded file name, which generated by server(GUID) from array
+                    var url = null;
+                    var deletedFileId = null;
 
-            //        // Get the unique identifier of the deleted file
-            //        url = destroyData.url;
-            //        deletedFileId = url.substring(url.lastIndexOf('/') + 1);
+                    // Get the unique identifier of the deleted file
+                    url = destroyData.url;
+                    deletedFileId = url.substring(url.lastIndexOf('/') + 1);
 
-            //        // Remove the deleted file from our stored array
-            //        fileDeleted(deletedFileId);
-            //    });
+                    // Remove the deleted file from our stored array
+                    fileDeleted(deletedFileId);
+                });
 
-            //    $(this).bind('fileuploadsubmit', function (e, destroyData) {
-            //        // Do nothing currently
-            //    });
-            //});
+                $(this).bind('fileuploadsubmit', function (e, destroyData) {
+                    // Do nothing currently
+                });
+            });
 
             // Add the pop over functionality when looking at a particular user
             $('.manywho-who-reference').livequery(function () {

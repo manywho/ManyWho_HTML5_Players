@@ -2,16 +2,12 @@
     background-color: #000000;
 }
 
-input {
+.nav-pills {
     margin-bottom: 0px !important;
 }
 
-textarea {
-    margin-bottom: 0px !important;
-}
-
-select {
-    margin-bottom: 0px !important;
+.manywho-debug-info {
+    margin-top: 10px !important;
 }
 
 .manywho-field-label {
@@ -28,6 +24,20 @@ select {
 
 .manwho-form-field-actions {
     padding-bottom: 5px;
+}
+
+.manywho-runtime-presentation-field {
+    margin-bottom: 10px !important;
+    color: #999999 !important;
+}
+
+.manywho-runtime-table-field td {
+    vertical-align: middle !important;
+}
+
+.manywho-runtime-table-field-contaner {
+    overflow: auto; 
+    max-height: 320px;
 }
 
 .manywho-field {
@@ -76,5 +86,21 @@ select {
     left: 50%;
     right: 0px;
     bottom: 0px;
+}
+
+.manywho-form-field-loading-indicator {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_16.gif');
+    background-repeat: no-repeat;
+}
+
+.manywho-form-field-table-loading-indicator {
+    min-height: 64px;
+    min-width: 64px;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_64.gif');
+    background-repeat: no-repeat;
+    background-position: center;
 }
 

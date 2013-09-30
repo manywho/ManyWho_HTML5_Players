@@ -2,20 +2,12 @@
     padding-top: 15px;
 }
 
-input {
-    margin-bottom: 0px !important;
-}
-
-textarea {
-    margin-bottom: 0px !important;
-}
-
-select {
-    margin-bottom: 0px !important;
-}
-
 .tab-content {
     overflow: hidden !important;
+}
+
+.nav-pills {
+    margin-bottom: 0px !important;
 }
 
 .avatar {
@@ -26,6 +18,10 @@ select {
 .avatar-big {
     height: 40px;
     width: 40px;
+}
+
+.manywho-debug-info {
+    margin-top: 10px !important;
 }
 
 .manywho-field-label {
@@ -49,6 +45,15 @@ select {
     margin-right: 5px;
 }
 
+.manywho-runtime-table-field td {
+    vertical-align: middle !important;
+}
+
+.manywho-runtime-table-field-contaner {
+    overflow: auto; 
+    max-height: 320px;
+}
+
 .manywho-runtime-field-required > div > label {
     font-weight: bold !important;
 }
@@ -57,6 +62,11 @@ select {
     color: #ff0000;
     content: ' *';
     display:inline;
+}
+
+.manywho-runtime-presentation-field {
+    margin-bottom: 10px !important;
+    color: #999999 !important;
 }
 
 li > span.manywho-who-reference {
@@ -83,6 +93,22 @@ li > span.manywho-who-reference:before {
             border-radius: 4px;
 }
 
+.manywho-form-field-loading-indicator {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_16.gif');
+    background-repeat: no-repeat;
+}
+
+.manywho-form-field-table-loading-indicator {
+    min-height: 64px;
+    min-width: 64px;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_64.gif');
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 .btn {
     margin-top: 5px !important;
     margin-bottom: 5px !important;
@@ -91,3 +117,4 @@ li > span.manywho-who-reference:before {
 .modal-backdrop {
     background-color: #ffffff !important;
 }
+

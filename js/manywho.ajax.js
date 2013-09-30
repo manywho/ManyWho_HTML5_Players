@@ -63,7 +63,8 @@ var ManyWhoAjax = {
                            successCallback, 
                            errorCallback,
                            headers,
-                           useFormContentType) {
+                           useFormContentType,
+                           authenticationToken) {
         var ajaxContentType = null;
 
         // Log the incoming parameter data so we have a record of it
@@ -98,7 +99,13 @@ var ManyWhoAjax = {
             processData: true,
             data: requestData,
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+                // If the caller has passed in the authentication token, we use that instead of the one stored in the shared services
+                if (authenticationToken != null &&
+                    authenticationToken.trim().length > 0) {
+                    xhr.setRequestHeader('Authorization', authenticationToken);
+                } else {
+                    xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+                }
 
                 // If the calling function has additional headers to add, we add those here
                 if (headers != null &&

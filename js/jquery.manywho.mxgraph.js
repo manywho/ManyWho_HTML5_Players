@@ -24,67 +24,166 @@ permissions and limitations under the License.
         // Configure the sidebar button for the map elements
         configureSidebarMapElement.call(this, graph, 'user', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP.toLowerCase(), 'Step', 'icon-map-marker', 'flow-button', developerMode);
         configureSidebarMapElement.call(this, graph, 'user', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase(), 'Page', 'icon-th', 'flow-button', developerMode);
-        configureSidebarMapElement.call(this, graph, 'user', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase(), 'Remote Page', 'icon-globe', 'flow-button-preview', developerMode);
-        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase(), 'Decision', 'icon-ok-sign', 'flow-button-preview', developerMode);
-        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase(), 'Operator', 'icon-cog', 'flow-button-preview', developerMode);
-        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase(), 'Message', 'icon-time', 'flow-button-preview', developerMode);
-        configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase(), 'Load', 'icon-circle-arrow-up', 'flow-button-preview', developerMode);
+        //configureSidebarMapElement.call(this, graph, 'user', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase(), 'Remote Page', 'icon-globe', 'flow-button', developerMode);
+        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase(), 'Decision', 'icon-ok-sign', 'flow-button', developerMode);
+        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase(), 'Operator', 'icon-cog', 'flow-button', developerMode);
+        configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase(), 'Message', 'icon-time', 'flow-button', developerMode);
+        configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase(), 'Load', 'icon-circle-arrow-up', 'flow-button', developerMode);
         configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_SAVE.toLowerCase(), 'Save', 'icon-circle-arrow-down', 'flow-button', developerMode);
-        configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase(), 'Delete', 'icon-remove-sign', 'flow-button-preview', developerMode);
+        configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase(), 'Delete', 'icon-remove-sign', 'flow-button', developerMode);
     }
 
     // This method contains all of the stuff that's particular to the group element implementations
     //
     var setupGroupElements = function (graph, developerMode) {
         // Configure the sidebar button for the group elements
-        configureSidebarGroupElement.call(this, graph, 'group', ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE.toLowerCase(), 'Swimlane', 'icon-user', 'flow-button-preview', developerMode);
+        configureSidebarGroupElement.call(this, graph, 'group', ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE.toLowerCase(), 'Swimlane', 'icon-user', 'flow-button', developerMode);
     }
 
     // Implementation specific method to open the dialog page for map elements.
     //
     var showMapElementDialog = function (graphId, operation, locationX, locationY, elementType, elementId, groupElementId) {
         editing(true);
-        ManyWhoSharedServices.showMapElementConfigDialog(elementType,
-                                                         elementId,
-                                                         groupElementId,
-                                                         graphId,
-                                                         operation,
-                                                         locationX,
-                                                         locationY,
-                                                         function (elementType, elementId, graphId, developerName, flowOutcome) {
-                                                             if (flowOutcome != 'delete') {
-                                                                 updateMapElement(graphId, elementId, elementType, developerName);
-                                                             } else {
-                                                                 deleteMapElement(graphId);
-                                                             }
-                                                             editing(false);
-                                                         },
-                                                         function (graphId, doDelete) {
-                                                             cancelMapElement(graphId, doDelete);
-                                                             editing(false);
-                                                         });
+
+        // We don't yet have the flows for these map element types so need to show the developer tooling
+        if (ManyWhoSharedServices.getDeveloperMode() == true ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
+            // Load the developer editor for the element
+            ManyWhoSharedServices.showGraphElementDeveloperDialog(elementType,
+                                                                  elementId,
+                                                                  groupElementId,
+                                                                  graphId,
+                                                                  operation,
+                                                                  locationX,
+                                                                  locationY,
+                                                                  function (json, successCallback) {
+                                                                      // Save the map element back to the service
+                                                                      ManyWhoDeveloper.saveMapElement(
+                                                                          json,
+                                                                          function (data, status, xhr) {
+                                                                              // Tell the caller that the user decided to save
+                                                                              updateMapElement(graphId, data.id.id, elementType, data.developerName);
+
+                                                                              // Give the data back to the caller
+                                                                              successCallback.call(this, JSON.stringify(data, undefined, 2));
+                                                                          },
+                                                                          function () {
+                                                                              alert('Whoops! Something bad happened - check the console logs in the browser for details');
+                                                                          });
+                                                                  },
+                                                                  function (graphId, elementId) {
+                                                                      // Delete the map element from the service
+                                                                      ManyWhoDeveloper.deleteMapElement(
+                                                                          elementId,
+                                                                          function (data, status, xhr) {
+                                                                              // Send back a cancel and a "delete"
+                                                                              cancelMapElement(graphId, true);
+                                                                              editing(false);
+                                                                          },
+                                                                          function () {
+                                                                              alert('Whoops! Something bad happened - check the console logs in the browser for details');
+                                                                          });
+                                                                  },
+                                                                  function (graphId, doDelete) {
+                                                                      cancelMapElement(graphId, doDelete);
+                                                                      editing(false);
+                                                                  });
+        } else {
+            // Load the flow for the appropriate element type
+            ManyWhoSharedServices.showMapElementConfigDialog(elementType,
+                                                             elementId,
+                                                             groupElementId,
+                                                             graphId,
+                                                             operation,
+                                                             locationX,
+                                                             locationY,
+                                                             function (elementType, elementId, graphId, developerName, flowOutcome) {
+                                                                 if (flowOutcome != null &&
+                                                                     flowOutcome.toLowerCase() == 'delete') {
+                                                                     deleteMapElement(graphId);
+                                                                 } else {
+                                                                     updateMapElement(graphId, elementId, elementType, developerName);
+                                                                 }
+                                                                 editing(false);
+                                                             },
+                                                             function (graphId, doDelete) {
+                                                                 cancelMapElement(graphId, doDelete);
+                                                                 editing(false);
+                                                             });
+        }
     }
 
     // Implementation specific method to open the dialog page for group elements.
     //
     var showGroupElementDialog = function (graphId, operation, locationX, locationY, height, width, elementType, elementId) {
         editing(true);
-        ManyWhoSharedServices.showGroupElementConfigDialog(elementType,
-                                                           elementId,
-                                                           graphId,
-                                                           operation,
-                                                           locationX,
-                                                           locationY,
-                                                           height,
-                                                           width,
-                                                           function (elementType, elementId, graphId, developerName) {
-                                                               updateGroupElement(graphId, elementId, elementType, developerName);
-                                                               editing(false);
-                                                           },
-                                                           function (graphId, doDelete) {
-                                                               cancelGroupElement(graphId, doDelete);
-                                                               editing(false);
-                                                           });
+
+        // We want to run the designer in developer mode - so show the developer dialog
+        if (ManyWhoSharedServices.getDeveloperMode() == true) {
+            // Load the developer editor for the element
+            ManyWhoSharedServices.showGraphElementDeveloperDialog(elementType,
+                                                                  elementId,
+                                                                  null,
+                                                                  graphId,
+                                                                  operation,
+                                                                  locationX,
+                                                                  locationY,
+                                                                  function (json, successCallback) {
+                                                                      // Save the group element back to the service
+                                                                      ManyWhoDeveloper.saveGroupElement(
+                                                                          json,
+                                                                          function (data, status, xhr) {
+                                                                              // Tell the caller that the user decided to save
+                                                                              updateGroupElement(graphId, data.id.id, elementType, data.developerName);
+
+                                                                              // Give the data back to the caller
+                                                                              successCallback.call(this, JSON.stringify(data, undefined, 2));
+                                                                          },
+                                                                          function () {
+                                                                              alert('Whoops! Something bad happened - check the console logs in the browser for details');
+                                                                          });
+                                                                  },
+                                                                  function (graphId, elementId) {
+                                                                      // Delete the group element from the service
+                                                                      ManyWhoDeveloper.deleteGroupElement(
+                                                                          elementId,
+                                                                          function (data, status, xhr) {
+                                                                              // Send back a cancel and a "delete"
+                                                                              cancelGroupElement(graphId, true);
+                                                                              editing(false);
+                                                                          },
+                                                                          function () {
+                                                                              alert('Whoops! Something bad happened - check the console logs in the browser for details');
+                                                                          });
+                                                                  },
+                                                                  function (graphId, doDelete) {
+                                                                      cancelGroupElement(graphId, doDelete);
+                                                                      editing(false);
+                                                                  });
+        } else {
+            // Load the dialog for the swimlane
+            ManyWhoSharedServices.showGroupElementConfigDialog(elementType,
+                                                               elementId,
+                                                               graphId,
+                                                               operation,
+                                                               locationX,
+                                                               locationY,
+                                                               height,
+                                                               width,
+                                                               function (elementType, elementId, graphId, developerName) {
+                                                                   updateGroupElement(graphId, elementId, elementType, developerName);
+                                                                   editing(false);
+                                                               },
+                                                               function (graphId, doDelete) {
+                                                                   cancelGroupElement(graphId, doDelete);
+                                                                   editing(false);
+                                                               });
+        }
     }
 
     var clearGraph = function () {
@@ -127,6 +226,7 @@ permissions and limitations under the License.
                                   data.developerSummary,
                                   data.startMapElementId,
                                   null,
+                                  ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                   null,
                                   applyElementsToGraph(loadFlowSuccessCallback),
                                   null);
@@ -547,6 +647,7 @@ permissions and limitations under the License.
                                 // We still have the cell - we now check we have all the connectors
                                 if (mapElement.id == cellElementId) {
                                     found = true;
+                                    var cellsToDelete = new Array();
 
                                     if (mapElement.outcomes != null &&
                                         mapElement.outcomes.length > 0) {
@@ -576,8 +677,6 @@ permissions and limitations under the License.
                                                 }
                                             }
                                         }
-
-                                        var cellsToDelete = new Array();
 
                                         // Go through and remove any that are no longer relevant
                                         if (cell.edges != null &&
@@ -693,10 +792,11 @@ permissions and limitations under the License.
                                                                 operation,
                                                                 nextElementId,
                                                                 function (elementId, graphId, outcomeId, outcomeDeveloperName, outcome, flowOutcome) {
-                                                                    if (flowOutcome != 'delete') {
-                                                                        updateMapElementOutcome(outcomeId, graphId, outcomeDeveloperName, outcome);
-                                                                    } else {
+                                                                    if (flowOutcome != null &&
+                                                                        flowOutcome.toLowerCase() == 'delete') {
                                                                         deleteMapElementOutcome(graphId);
+                                                                    } else {
+                                                                        updateMapElementOutcome(outcomeId, graphId, outcomeDeveloperName, outcome);
                                                                     }
                                                                     editing(false);
                                                                 },
@@ -1330,6 +1430,7 @@ permissions and limitations under the License.
                                  $('#flow-start-map-element-id').val(),
                                  changedMapElements,
                                  changedGroupElements,
+                                 ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                  null,
                                  applyElementsToGraph(updateGraphSuccess),
                                  null);
@@ -1550,8 +1651,14 @@ permissions and limitations under the License.
             // graph, such as the rubberband selection, but most parts
             // of the UI are custom in this example.
             editor = new mxEditor();
+
             var graph = editor.graph;
             var model = graph.getModel();
+
+            // Create a new key handler for the editor
+            var keyHandler = new mxDefaultKeyHandler(editor);
+            keyHandler.bindAction(46, 'delete');
+            keyHandler.bindAction(65, 'selectAll', 1);
 
             // Override a couple of things so the XML nodes work
             graph.convertValueToString = function (cell) {
@@ -1756,7 +1863,17 @@ permissions and limitations under the License.
 
             // Disables drag-and-drop into non-swimlanes.
             graph.isValidDropTarget = function (cell, cells, evt) {
-                return true;  // graph.isSwimlane(cell);
+                if (cell != null) {
+                    //if (cell.edge == true) {
+                    //    return false;
+                    if (graph.isSwimlane(cell) == true) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
             };
 
             // Disables drilling into non-swimlanes.
@@ -1837,7 +1954,14 @@ permissions and limitations under the License.
 
                     if (elementType != null &&
                         elementType.length > 0) {
-                        showMapElementDialog(cell.id, 'edit', x, y, elementType, elementId, groupElementId);
+                        if (elementType.toLowerCase() == ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE.toLowerCase()) {
+                            var width = cell.getGeometry().width;
+                            var height = cell.getGeometry().height;
+
+                            showGroupElementDialog(cell.id, 'edit', x, y, height, width, elementType, elementId);
+                        } else {
+                            showMapElementDialog(cell.id, 'edit', x, y, elementType, elementId, groupElementId);
+                        }
                     } else if (nodeType == 'outcome') {
                         elementId = cell.source.getValue().getAttribute('elementId');
                         outcomeId = cell.getValue().getAttribute('outcomeId');
@@ -1871,6 +1995,7 @@ permissions and limitations under the License.
         //    editing(false);
         //    ManyWhoFlow.load('ManyWhoMxGraph.Load',
         //                      flowId,
+        //                      ManyWhoSharedServices.getAuthorAuthenticationToken(),
         //                      null,
         //                      loadFlowSuccess(loadFlowSuccessCallback),
         //                      null);
@@ -1902,6 +2027,7 @@ permissions and limitations under the License.
                                        $('#flow-developer-summary').val(),
                                        $('#flow-start-map-element-id').val(),
                                        getMapElementsFromGraph.call(this),
+                                       ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                        null,
                                        applyElementsToGraph(syncSuccessCallback),
                                        null);

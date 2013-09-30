@@ -2,20 +2,16 @@
     padding-top: 60px;
 }
 
-input {
-    margin-bottom: 0px !important;
-}
-
-textarea {
-    margin-bottom: 0px !important;
-}
-
-select {
-    margin-bottom: 0px !important;
-}
-
 .tab-content {
     overflow: hidden !important;
+}
+
+.nav-pills {
+    margin-bottom: 0px !important;
+}
+
+.manywho-debug-info {
+    margin-top: 10px !important;
 }
 
 .manywho-wait {
@@ -28,6 +24,20 @@ select {
 
 .manwho-form-field-actions {
     padding-bottom: 5px;
+}
+
+.manywho-runtime-presentation-field {
+    margin-bottom: 10px !important;
+    color: #999999 !important;
+}
+
+.manywho-runtime-table-field td {
+    vertical-align: middle !important;
+}
+
+.manywho-runtime-table-field-contaner {
+    overflow: auto; 
+    max-height: 320px;
 }
 
 .manywho-form-section-grid {
@@ -287,4 +297,45 @@ select {
 
 #close-flow {
     margin-bottom: 5px !important;
+}
+
+#manywho-dialog-developer {
+    background-color: #444444 !important;
+}
+
+#manywho-dialog-header-developer.modal-header {
+  border-bottom: 1px solid #222222 !important;
+}
+
+#manywho-dialog-header-developer.modal-header h3 {
+  color: #ffffff !important;
+}
+
+#manywho-model-runtime-developer.modal-body p {
+  color: #c6c6c6 !important;
+}
+
+#manywho-model-outcomes-developer.modal-footer {
+  background-color: #373737 !important;
+  border-top: 1px solid #222222 !important;
+  -moz-box-shadow: 0 1px 0 #333333 inset !important;
+  -webkit-box-shadow: 0 1px 0 #333333 inset !important;
+  -o-box-shadow: 0 1px 0 #333333 inset !important;
+  box-shadow: 0 1px 0 #333333 inset !important;
+}
+
+.manywho-form-field-loading-indicator {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_16.gif');
+    background-repeat: no-repeat;
+}
+
+.manywho-form-field-table-loading-indicator {
+    min-height: 64px;
+    min-width: 64px;
+    background-image: url('https://cdn.manywho.com/images/loading_indicator_64.gif');
+    background-repeat: no-repeat;
+    background-position: center;
 }

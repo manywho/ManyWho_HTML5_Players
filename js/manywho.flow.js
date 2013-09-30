@@ -18,6 +18,7 @@ var ManyWhoFlow = {
     load: function (callingFunctionName,
                     tenantId,
                     flowId,
+                    authenticationToken,
                     loadBeforeSend,
                     loadSuccessCallback,
                     loadErrorCallback) {
@@ -30,7 +31,7 @@ var ManyWhoFlow = {
             // Create a header for the tenant id
             var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
 
-            ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
+            ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers, null, authenticationToken);
         } else {
             ManyWhoLogging.consoleLog(callingFunctionName + ' -> ManyWhoFlow.Load: Nothing to load with blank flow id.');
         }
@@ -40,6 +41,7 @@ var ManyWhoFlow = {
                               loginUrl,
                               sessionId,
                               sessionUrl,
+                              authenticationToken,
                               loginBeforeSend,
                               loginSuccessCallback,
                               loginErrorCallback) {
@@ -60,10 +62,11 @@ var ManyWhoFlow = {
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoginBySession', requestUrl, requestType, requestData, loginBeforeSend, loginSuccessCallback, loginErrorCallback, headers);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoginBySession', requestUrl, requestType, requestData, loginBeforeSend, loginSuccessCallback, loginErrorCallback, headers, null, authenticationToken);
     },
     snapAndRun: function (callingFunctionName,
                           flowId,
+                          authenticationToken,
                           runBeforeSend,
                           runSuccessCallback,
                           runErrorCallback) {
@@ -71,11 +74,12 @@ var ManyWhoFlow = {
         var requestType = 'POST';
         var requestData = '';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SnapAndRun', requestUrl, requestType, requestData, runBeforeSend, runSuccessCallback, runErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SnapAndRun', requestUrl, requestType, requestData, runBeforeSend, runSuccessCallback, runErrorCallback, null, null, authenticationToken);
     },
     activateFlow: function (callingFunctionName,
                             flowId,
                             flowVersionId,
+                            authenticationToken,
                             activateFlowBeforeSend,
                             activateFlowSuccessCallback,
                             activateFlowErrorCallback) {
@@ -83,11 +87,12 @@ var ManyWhoFlow = {
         var requestType = 'POST';
         var requestData = '';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ActivateFlow', requestUrl, requestType, requestData, activateFlowBeforeSend, activateFlowSuccessCallback, activateFlowErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ActivateFlow', requestUrl, requestType, requestData, activateFlowBeforeSend, activateFlowSuccessCallback, activateFlowErrorCallback, null, null, authenticationToken);
     },
     loadByName: function (callingFunctionName,
                           tenantId,
                           flowName,
+                          authenticationToken,
                           loadBeforeSend,
                           loadSuccessCallback,
                           loadErrorCallback) {
@@ -98,7 +103,7 @@ var ManyWhoFlow = {
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoadByName', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoadByName', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers, null, authenticationToken);
     },
     updateGraph: function (callingFunctionName,
                            editingToken,
@@ -108,6 +113,7 @@ var ManyWhoFlow = {
                            flowStartMapElementId,
                            flowMapElements,
                            flowGroupElements,
+                           authenticationToken,
                            updateBeforeSend,
                            updateSuccessCallback,
                            updateErrorCallback) {
@@ -122,7 +128,7 @@ var ManyWhoFlow = {
             ManyWhoLogging.consoleError(callingFunctionName + ' -> ManyWhoFlow.UpdateGraph: A flow id must be provided to sync.');
             return;
         } else {
-            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/graph';
+            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/flow/' + flowId;
             requestType = 'POST';
         }
 
@@ -148,7 +154,7 @@ var ManyWhoFlow = {
                     '"groupElements":' + stringFlowGroupElements +
             '}';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.UpdateGraph', requestUrl, requestType, requestData, updateBeforeSend, updateSuccessCallback, updateErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.UpdateGraph', requestUrl, requestType, requestData, updateBeforeSend, updateSuccessCallback, updateErrorCallback, null, null, authenticationToken);
     },
     syncGraph: function (callingFunctionName,
                          editingToken,
@@ -157,6 +163,7 @@ var ManyWhoFlow = {
                          flowSummary,
                          flowStartMapElementId,
                          flowMapElements,
+                         authenticationToken,
                          syncBeforeSend,
                          syncSuccessCallback,
                          syncErrorCallback) {
@@ -170,7 +177,7 @@ var ManyWhoFlow = {
             ManyWhoLogging.consoleError(callingFunctionName + ' -> ManyWhoFlow.SyncGraph: A flow id must be provided to sync.');
             return;
         } else {
-            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/graph/sync';
+            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/sync/flow/' + flowId;
             requestType = 'POST';
         }
 
@@ -191,13 +198,14 @@ var ManyWhoFlow = {
                     '"mapElements":' + stringFlowMapElements +
             '}';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SyncGraph', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SyncGraph', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback, null, null, authenticationToken);
     },
     saveFlow: function (callingFunctionName,
                         editingToken,
                         flowId,
                         flowName,
                         flowSummary,
+                        authenticationToken,
                         syncBeforeSend,
                         syncSuccessCallback,
                         syncErrorCallback) {
@@ -221,11 +229,12 @@ var ManyWhoFlow = {
                     '"developerSummary":"' + ManyWhoAjax.cleanJson(flowSummary) + '"' +
             '}';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SaveFlow', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SaveFlow', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback, null, null, authenticationToken);
     },
     stateChangeHappened: function (callingFunctionName,
                                    stateId,
                                    stateToken,
+                                   authenticationToken,
                                    changeBeforeSend,
                                    changeSuccessCallback,
                                    changeErrorCallback,
@@ -234,18 +243,19 @@ var ManyWhoFlow = {
         var requestType = 'GET';
         var requestData = '';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.StateChangeHappened', requestUrl, requestType, requestData, changeBeforeSend, changeSuccessCallback, changeErrorCallback, headers);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.StateChangeHappened', requestUrl, requestType, requestData, changeBeforeSend, changeSuccessCallback, changeErrorCallback, headers, null, authenticationToken);
     },
     changeAvailable: function (callingFunctionName,
                                flowId,
                                editingToken,
+                               authenticationToken,
                                changeBeforeSend,
                                changeSuccessCallback,
                                changeErrorCallback) {
-        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/graph/ping/' + editingToken;
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/ping/flow/' + flowId + '/' + editingToken;
         var requestType = 'GET';
         var requestData = '';
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ChangeAvailable', requestUrl, requestType, requestData, changeBeforeSend, changeSuccessCallback, changeErrorCallback);
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ChangeAvailable', requestUrl, requestType, requestData, changeBeforeSend, changeSuccessCallback, changeErrorCallback, null, null, authenticationToken);
     }
 }

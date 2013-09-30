@@ -282,16 +282,30 @@
                     'api/draw/1/flow',
                     'api/draw/1/flow/' + getFlowId(),
                     'api/draw/1/flow/' + getFlowId() + '/service/{serviceId}',
-                    'api/draw/1/element/service/query',
                     'api/draw/1/element/service/{serviceId}',
+                    'api/draw/1/element/service?filter=',
                     'api/draw/1/element/service',
-                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map',
+                    'api/draw/1/flow/' + getFlowId() + '/type/{typeId}',
+                    'api/draw/1/element/type/{typeId}',
+                    'api/draw/1/element/type?filter=',
+                    'api/draw/1/element/type',
+                    'api/draw/1/flow/' + getFlowId() + '/value/{valueId}',
+                    'api/draw/1/element/value/{valueId}',
+                    'api/draw/1/element/value?filter=',
+                    'api/draw/1/element/value',
+                    'api/draw/1/flow/' + getFlowId() + '/tag/{tagId}',
+                    'api/draw/1/element/tag/{tagId}',
+                    'api/draw/1/element/tag?filter=',
+                    'api/draw/1/element/tag',
+                    'api/draw/1/flow/' + getFlowId() + '/page/{pageId}',
+                    'api/draw/1/element/page/{pageId}',
+                    'api/draw/1/element/page?filter=',
+                    'api/draw/1/element/page',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/{mapElementId}',
-                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/query',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map',
-                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/{groupElementId}',
-                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/query',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group'
                 ];
 
@@ -341,10 +355,10 @@
                 requestContent += '    {\n';
                 requestContent += '      "id":null,\n';
                 requestContent += '      "typeElementId":null,\n';
-                requestContent += '      "typeElementEntryId":null,\n';
+                requestContent += '      "typeElementPropertyId":null,\n';
                 requestContent += '      "developerName":null,\n';
                 requestContent += '      "typeElementDeveloperName":null,\n';
-                requestContent += '      "typeElementEntryDeveloperName":null,\n';
+                requestContent += '      "typeElementPropertyDeveloperName":null,\n';
                 requestContent += '      "contentValue":null,\n';
                 requestContent += '      "contentType":null,\n';
                 requestContent += '      "objectData":null\n';
@@ -393,10 +407,10 @@
                 requestContent += '    {\n';
                 requestContent += '      "id":null,\n';
                 requestContent += '      "typeElementId":null,\n';
-                requestContent += '      "typeElementEntryId":null,\n';
+                requestContent += '      "typeElementPropertyId":null,\n';
                 requestContent += '      "developerName":null,\n';
                 requestContent += '      "typeElementDeveloperName":null,\n';
-                requestContent += '      "typeElementEntryDeveloperName":null,\n';
+                requestContent += '      "typeElementPropertyDeveloperName":null,\n';
                 requestContent += '      "contentValue":null,\n';
                 requestContent += '      "contentType":null,\n';
                 requestContent += '      "objectData":null\n';
@@ -413,161 +427,81 @@
             } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/service/') == 0) {
                 // action = "AddServiceElementToFlow"
                 requestContent += '';
-            } else if (requestUrl == 'api/draw/1/element/service/query') {
-                // action = "LoadServiceElements"
-                requestContent += getModelBuilderQuery();
             } else if (requestUrl.indexOf('api/draw/1/element/service/') == 0) {
-                // controller = "Draw"
+                // controller = "LoadServiceElement" or "DeleteServiceElement"
                 requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/service?filter=') {
+                // action = "LoadServiceElements"
+                requestContent += '';
             } else if (requestUrl == 'api/draw/1/element/service') {
                 // action = "SaveServiceElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.SERVICE_ELEMENT_TYPE_IMPLEMENTATION_SERVICE);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/type/') == 0) {
+                // action = "AddTypeElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/type/') == 0) {
+                // controller = "LoadTypeElement" or "DeleteTypeElement"
                 requestContent = '';
-
-                alert('Sorry! Request message not available yet!');
+            } else if (requestUrl == 'api/draw/1/element/type?filter=') {
+                // action = "LoadTypeElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/type') {
+                // action = "SaveTypeElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.TYPE_ELEMENT_TYPE_IMPLEMENTATION_TYPE);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/value/') == 0) {
+                // action = "AddValueElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/value/') == 0) {
+                // controller = "LoadValueElement" or "DeleteValueElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/value?filter=') {
+                // action = "LoadValueElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/value') {
+                // action = "SaveValueElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.SHARED_ELEMENT_TYPE_IMPLEMENTATION_VARIABLE);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/tag/') == 0) {
+                // action = "AddTagElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/tag/') == 0) {
+                // controller = "LoadTagElement" or "DeleteTagElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/tag?filter=') {
+                // action = "LoadTagElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/tag') {
+                // action = "SaveTagElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_TAG);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/page/') == 0) {
+                // action = "AddPageElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/page/') == 0) {
+                // controller = "LoadPageElement" or "DeletePageElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/page?filter=') {
+                // action = "LoadPageElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/page') {
+                // action = "SavePageElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
+                // action = "LoadMapElement" or "DeleteMapElement"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=') == 0) {
+                // action = "LoadMapElements"
+                requestContent = '';
             } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
                 // action = "SaveMapElement"
-                requestContent += '{\n';
-                requestContent += '  "id":null,\n';
-                requestContent += '  "x":0,\n';
-                requestContent += '  "y":0,\n';
-                requestContent += '  "elementType":"STEP",\n';
-                requestContent += '  "groupElementId":null,\n';
-                requestContent += '  "pageElementId":null,\n';
-                requestContent += '  "developerName":null,\n';
-                requestContent += '  "developerSummary":null,\n';
-                //requestContent += '  "operations":[\n';
-                //requestContent += '    {\n';
-                //requestContent += '      "id":"",\n';
-                //requestContent += '      "typeElementId":"",\n';
-                //requestContent += '      "order":0,\n';
-                //requestContent += '      "sharedElementToApplyContentValue":{\n';
-                //requestContent += '        "id":"",\n';
-                //requestContent += '        "command":"",\n';
-                //requestContent += '        "typeElementEntryId":""\n';
-                //requestContent += '      },\n';
-                //requestContent += '      "sharedElementContentValueToReference":{\n';
-                //requestContent += '        "id":"",\n';
-                //requestContent += '        "command":"",\n';
-                //requestContent += '        "typeElementEntryId":""\n';
-                //requestContent += '      }\n';
-                //requestContent += '    }\n';
-                //requestContent += '  ],\n';
-                //requestContent += '  "viewMessageAction":{\n';
-                //requestContent += '    "id":"",\n';
-                //requestContent += '    "developerName":"",\n';
-                //requestContent += '    "serviceElementId":"",\n';
-                //requestContent += '    "uriPart":"",\n';
-                //requestContent += '    "inputs":[\n';
-                //requestContent += '      {\n';
-                //requestContent += '        "id":"",\n';
-                //requestContent += '        "developerName":"",\n';
-                //requestContent += '        "contentValue":"",\n';
-                //requestContent += '        "sharedElementContentValueToReference":{\n';
-                //requestContent += '          "id":"",\n';
-                //requestContent += '          "command":"",\n';
-                //requestContent += '          "typeElementEntryId":""\n';
-                //requestContent += '        }\n';
-                //requestContent += '      }\n';
-                //requestContent += '    ],\n';
-                //requestContent += '    "outputs":[\n';
-                //requestContent += '      {\n';
-                //requestContent += '        "id":"",\n';
-                //requestContent += '        "developerName":"",\n';
-                //requestContent += '        "sharedElementToApplyContentValue":{\n';
-                //requestContent += '          "id":"",\n';
-                //requestContent += '          "command":"",\n';
-                //requestContent += '          "typeElementEntryId":""\n';
-                //requestContent += '        }\n';
-                //requestContent += '      }\n';
-                //requestContent += '    ]\n';
-                //requestContent += '  },\n';
-                //requestContent += '  "messageActions":[],\n';
-                //requestContent += '  "dataActions":[],\n';
-                //requestContent += '  "postUpdateToStream":false,\n';
-                requestContent += '  "userContent":"Put some content here for the user",\n';
-                requestContent += '  "outcomes":[\n';
-                requestContent += '    {\n';
-                requestContent += '      "id":null,\n';
-                requestContent += '      "developerName":"go",\n';
-                requestContent += '      "developerSummary":"Go to the next step",\n';
-                requestContent += '      "label":"Go!",\n';
-                requestContent += '      "nextMapElementId":null,\n';
-                requestContent += '      "pageActionBinding":"SAVE",\n';
-                //requestContent += '      "pageElementBindingId":"",\n';
-                requestContent += '      "order":0\n';
-                //requestContent += '      "comparison":{\n';
-                //requestContent += '        "id":"",\n';
-                //requestContent += '        "comparisonType":"AND",\n';
-                //requestContent += '        "rules":[\n';
-                //requestContent += '          {\n';
-                //requestContent += '            "id":"",\n';
-                //requestContent += '            "leftSharedElementContentValueToReference":{\n';
-                //requestContent += '              "id":"",\n';
-                //requestContent += '              "command":"",\n';
-                //requestContent += '              "typeElementEntryId":""\n';
-                //requestContent += '            },\n';
-                //requestContent += '            "criteriaType":"EQUAL",\n';
-                //requestContent += '            "rightSharedElementContentValueToReference":{\n';
-                //requestContent += '              "id":"",\n';
-                //requestContent += '              "command":"",\n';
-                //requestContent += '              "typeElementEntryId":""\n';
-                //requestContent += '            }\n';
-                //requestContent += '          }\n';
-                //requestContent += '        ],\n';
-                //requestContent += '        "comparisons":[],\n';
-                //requestContent += '        "order":0\n';
-                //requestContent += '      }\n';
-                requestContent += '    }\n';
-                requestContent += '  ]\n';
-                requestContent += '}';
-            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
-                // action = "LoadMapElement" or "LoadMapElements"
-                requestContent += getModelBuilderQuery();
-            } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
-                // action = "LoadMapElements"
-                requestContent += getModelBuilderQuery();
-            } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
-                // action = "SaveGroupElement"
-                requestContent += '{\n';
-                requestContent += '  "id":null,\n';
-                requestContent += '  "x":0,\n';
-                requestContent += '  "y":0,\n';
-                requestContent += '  "height":0,\n';
-                requestContent += '  "width":0,\n';
-                requestContent += '  "groupElementId":null,\n';
-                requestContent += '  "authorization":{\n';
-                requestContent += '    "serviceElementId":null,\n';
-                requestContent += '    "globalAuthenticationType":"ALL_USERS",\n';
-                requestContent += '    "streamBehaviour":"USE_EXISTING",\n';
-                requestContent += '    "groups":[\n';
-                requestContent += '      {\n';
-                requestContent += '        "authenticationId":null,\n';
-                requestContent += '        "attribute":null\n';
-                requestContent += '      }\n';
-                requestContent += '    ],\n';
-                requestContent += '    "users":[\n';
-                requestContent += '      {\n';
-                requestContent += '        "authenticationId":null,\n';
-                requestContent += '        "attribute":null,\n';
-                requestContent += '        "runningUser":false\n';
-                requestContent += '      }\n';
-                requestContent += '    ],\n';
-                requestContent += '    "locations":[\n';
-                requestContent += '      {\n';
-                requestContent += '        "developerName":null,\n';
-                requestContent += '        "developerSummary":null,\n';
-                requestContent += '        "sharedElementContentValueToReference":null,\n';
-                requestContent += '        "attribute":null\n';
-                requestContent += '      }\n';
-                requestContent += '    ]\n';
-                requestContent += '  }\n';
-                requestContent += '}';
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP);
             } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/') == 0) {
-                // action = "LoadGroupElement"
+                // action = "LoadGroupElement" or "DeleteGroupElement"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=') == 0) {
+                // action = "LoadGroupElements"
                 requestContent = '';
             } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
-                // action = "LoadGroupElements"
-                requestContent += getModelBuilderQuery();
+                // action = "SaveGroupElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE);
             } else if (requestUrl.indexOf('api/draw/1/flow/') == 0) {
                 // action = "GetFlowById"
                 requestContent = '';
@@ -721,18 +655,19 @@
                     // GET only
                     $('#request-type').html('');
                     $('#request-type').append('<option value="GET">GET</option>');
+
                 } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/service/') == 0) {
                     // action = "AddServiceElementToFlow"
                     // POST ONLY
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
-                } else if (requestUrl == 'api/draw/1/element/service/query') {
+                } else if (requestUrl == 'api/draw/1/element/service?filter=') {
                     // action = "LoadServiceElements"
-                    // POST ONLY
+                    // GET ONLY
                     $('#request-type').html('');
-                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="GET">GET</option>');
                 } else if (requestUrl.indexOf('api/draw/1/element/service/') == 0) {
-                    // controller = "Draw"
+                    // controller = "LoadServiceElement" of "DeleteServiceElement"
                     // GET AND DELETE ONLY
                     $('#request-type').html('');
                     $('#request-type').append('<option value="GET">GET</option>');
@@ -740,43 +675,126 @@
                 } else if (requestUrl == 'api/draw/1/element/service') {
                     // action = "SaveServiceElement"
                     $('#request-type').html('');
-                    $('#request-type').append('<option value="GET">GET</option>');
-                    $('#request-type').append('<option value="PUT">PUT</option>');
                     $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/type/') == 0) {
+                    // action = "AddTypeElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/draw/1/element/type?filter=') {
+                    // action = "LoadTypeElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/type/') == 0) {
+                    // controller = "LoadTypeElement" of "DeleteTypeElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
                     $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/type') {
+                    // action = "SaveTypeElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/value/') == 0) {
+                    // action = "AddValueElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/draw/1/element/value?filter=') {
+                    // action = "LoadValueElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/value/') == 0) {
+                    // controller = "LoadValueElement" of "DeleteValueElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/value') {
+                    // action = "SaveTypeElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/tag/') == 0) {
+                    // action = "AddTagElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/draw/1/element/tag?filter=') {
+                    // action = "LoadTagElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/tag/') == 0) {
+                    // controller = "LoadTagElement" of "DeleteTagElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/tag') {
+                    // action = "SaveTagElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/page/') == 0) {
+                    // action = "AddPageElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/draw/1/element/page?filter=') {
+                    // action = "LoadPageElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/page/') == 0) {
+                    // controller = "LoadPageElement" of "DeletePageElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/page') {
+                    // action = "SavePageElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
+                    // action = "LoadMapElement" or "DeleteMapElement"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=') == 0) {
+                    // action = "LoadMapElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
                 } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
                     // action = "SaveMapElement"
                     // POST ONLY
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
-                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
-                    // action = "LoadMapElement"
+
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/') == 0) {
+                    // action = "LoadGroupElement" or "DeleteGroupElement"
                     // GET ONLY
                     $('#request-type').html('');
                     $('#request-type').append('<option value="GET">GET</option>');
-                    $('#request-type').append('<option value="POST">POST</option>');
                     $('#request-type').append('<option value="DELETE">DELETE</option>');
-                } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
-                    // action = "LoadMapElements"
-                    // POST ONLY
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=') == 0) {
+                    // action = "LoadGroupElements"
+                    // GET ONLY
                     $('#request-type').html('');
-                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="GET">GET</option>');
                 } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
                     // action = "SaveGroupElement"
                     // POST ONLY
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
-                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/') == 0) {
-                    // action = "LoadGroupElement"
-                    // GET ONLY
-                    $('#request-type').html('');
-                    $('#request-type').append('<option value="GET">GET</option>');
-                    $('#request-type').append('<option value="DELETE">DELETE</option>');
-                } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
-                    // action = "LoadGroupElements"
-                    // POST ONLY
-                    $('#request-type').html('');
-                    $('#request-type').append('<option value="POST">POST</option>');
+
                 } else {
                     // We don't know the url, so we populate all of the parameters for request type
                     $('#request-type').html('');

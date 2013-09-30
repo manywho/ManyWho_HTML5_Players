@@ -42,7 +42,11 @@ permissions and limitations under the License.
                                                 $('#' + domId + '-state-id').val(),
                                                 $('#' + domId + '-state-token').val(),
                                                 null,
+                                                null,
                                                 function (data, status, xhr) {
+                                                    // Remove any backend fault errors - we're now able to connect
+                                                    $('#' + domId + '-backend-connection-fault').remove();
+
                                                     if (data == true) {
                                                         // If something has changed, we want to call "join"
                                                         join(domId);
@@ -82,9 +86,11 @@ permissions and limitations under the License.
     var manageError = function (domId) {
         return function (xhr, status, errorMessage) {
             var message = '';
+            var id = '';
 
             if (xhr.status == 0) {
                 message += '<strong>Yikes! We seem to have lost our backend.</strong> Make sure you\'re connected to the network and we\'ll try to connect again.';
+                id = ' id="' + domId + '-backend-connection-fault"';
             } else {
                 message += '<strong>Status Code: ' + xhr.status + '</strong> ' + errorMessage;
                 message += '<br/><br/>If you have any comments or concerns about this, please email us by clicking here:';
@@ -93,7 +99,7 @@ permissions and limitations under the License.
 
             $('#' + domId + '-system-faults').html('');
             $('#' + domId + '-system-faults').show();
-            $('#' + domId + '-system-faults').append('<div class="alert alert-error">' + message + '</div>');
+            $('#' + domId + '-system-faults').append('<div' + id + ' class="alert alert-error">' + message + '</div>');
 
             // Hide the wait as it's no longer applicable
             hideWait(domId);
@@ -124,6 +130,7 @@ permissions and limitations under the License.
                              $('#' + domId + '-tenant-id').val(),
                              $('#' + domId + '-flow-id').val(),
                              null,
+                             null,
                              function (data, status, xhr) {
                                  $('#' + domId + '-flow-id').val(data.id.id);
                                  $('#' + domId + '-flow-version-id').val(data.id.versionId);
@@ -138,6 +145,8 @@ permissions and limitations under the License.
                                                        '"initializationValues":null,' +
                                                        '"inputs":' + JSON.stringify(inputs) + ',' +
                                                        '"annotations":' + JSON.stringify(annotations) + ',' +
+                                                       '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
+                                                       '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
                                                        '"mode":"' + $('#' + domId + '-mode').val() + '"' +
                                                '}';
 
@@ -159,6 +168,8 @@ permissions and limitations under the License.
                                   '"initializationValues":null,' +
                                   '"inputs":' + JSON.stringify(inputs) + ',' +
                                   '"annotations":' + JSON.stringify(annotations) + ',' +
+                                  '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
+                                  '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
                                   '"mode":"' + $('#' + domId + '-mode').val() + '"' +
                           '}';
 
@@ -386,7 +397,13 @@ permissions and limitations under the License.
                 }
 
                 if (data.invokeType == 'SYNC') {
-                    $('#' + domId + '-screen-content').manywhoFormBootStrap('update', mapElementInvokeResponse.pageResponse);
+                    $('#' + domId + '-screen-content').manywhoFormBootStrap('update',
+                                                                            mapElementInvokeResponse.pageResponse,
+                                                                            mapElementInvokeResponse.outcomeResponses,
+                                                                            function (outcomeId) {
+                                                                                // Tell the engine to go forward based on the outcome being clicked
+                                                                                execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                            });
                 } else {
                     $('#' + domId + '-screen-content').manywhoFormBootStrap('assemble',
                                                                             mapElementInvokeResponse.pageResponse,
@@ -418,7 +435,7 @@ permissions and limitations under the License.
                 if (data.invokeType == 'WAIT') {
                     showWaitContent(domId, data.waitMessage);
                 } else {
-                    showWaitContent(domId, 'Waiting For Authorized Users');
+                    showWaitContent(domId, data.notAuthorizedMessage);
                 }
             } else if ($('#' + domId + '-join-thread-id').val() != null &&
                        $('#' + domId + '-join-thread-id').val().trim().length > 0) {
@@ -546,10 +563,20 @@ permissions and limitations under the License.
                 }
             } else if (data.invokeType == 'WAIT' ||
                        data.invokeType == 'STATUS') {
+                // We need to assign this as it may be different from what we thought
+                $('#' + domId + '-element-id').val(data.currentMapElementId);
+
+                // Store the state token also so we have it to check for changes
+                $('#' + domId + '-state-token').val(data.stateToken);
+
+                // Start the stream
+                startStream(domId, data.currentStreamId);
+
+                // No need to call the execute success callback - we just show the wait content
                 if (data.invokeType == 'WAIT') {
                     showWaitContent(domId, data.waitMessage);
                 } else {
-                    showWaitContent(domId, 'Waiting For Authorized Users');
+                    showWaitContent(domId, data.notAuthorizedMessage);
                 }
             }
         };
@@ -577,7 +604,16 @@ permissions and limitations under the License.
         executeRequestData += '},';
         executeRequestData += '"invokeType":"' + invokeType + '",';
         executeRequestData += '"mapElementInvokeRequest":{';
-        executeRequestData += '"pageRequest":' + JSON.stringify(formRequest) + ',';
+
+        if (formRequest == null &&
+            invokeType != null &&
+            invokeType.toLowerCase() == 'forward') {
+            // If the page request is null, then we send back an empty page request as this page does not have any inputs
+            executeRequestData += '"pageRequest":{"pageComponentInputResponses":null},';
+        } else {
+            // Serialize the page object as a JSON string
+            executeRequestData += '"pageRequest":' + JSON.stringify(formRequest) + ',';
+        }
 
         if (selectedOutcomeId != null &&
             selectedOutcomeId.trim().length > 0) {
@@ -722,6 +758,7 @@ permissions and limitations under the License.
                                        loginUrl,
                                        sessionId,
                                        $('#' + domId + '-session-url').val(),
+                                       null,
                                        null,
                                        function (data, status, xhr) {
                                            // The data is the authentication token
@@ -883,7 +920,6 @@ permissions and limitations under the License.
             html += '            <div class="pull-right">';
             html += '                <button id="' + domId + '-follow-flow-button" class="btn btn-success">Loading...</button>';
             html += '                <button id="' + domId + '-share-flow-button" class="btn btn-info"><i class="icon-heart icon-white"></i> Share</button>';
-            html += '                <button id="' + domId + '-update-feed" class="btn btn-primary"><i class="icon-refresh icon-white"></i> Update Feed</button>';
             html += '            </div>';
             html += '        </div>';
             html += '    </div>';
@@ -931,7 +967,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-rewrite-url" value="" />';
             html += '<input type="hidden" id="' + domId + '-stream-thread-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-join-thread-id" value="" />';
-            html += '<input type="hidden" id="' + domId + '-sync-thread-id" value="" />';
+            html += '<input type="hidden" id="' + domId + '-location-thread-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-recording-settings-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-recording-settings-mode" value="" />';
             html += '<input type="hidden" id="' + domId + '-recording-name" value="" />';
@@ -945,7 +981,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-position-heading" value="0" />';
             html += '<input type="hidden" id="' + domId + '-position-speed" value="0" />';
 
-            html += '<div id="' + domId + '-debug">';
+            html += '<div id="' + domId + '-debug" class="container-fluid manywho-debug-info">';
             html += '</div>';
 
             // Write the html to the parent element
@@ -1084,7 +1120,7 @@ permissions and limitations under the License.
                                                              runFlow(domId);
 
                                                              // Kick off a thread to keep the location data up-to-date
-                                                             $('#' + domId + '-sync-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
+                                                             $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
                                                          }, 
                                                          function () {
                                                              // Hide the finding wait message
@@ -1103,7 +1139,7 @@ permissions and limitations under the License.
             var domId = $(this).attr('id');
 
             // Stop all sync operations
-            clearInterval($('#' + domId + '-sync-thread-id').val());
+            clearInterval($('#' + domId + '-location-thread-id').val());
             clearInterval($('#' + domId + '-join-thread-id').val());
 
             // Destroy the boostrap form

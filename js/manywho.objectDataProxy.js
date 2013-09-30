@@ -94,6 +94,9 @@ var ManyWhoObjectDataProxy = {
 
         requestData += JSON.stringify(objectDataRequest);
 
-        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoObjectDataProxy.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback);
+        // Create a header for the tenant id
+        var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoObjectDataProxy.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     }
 }

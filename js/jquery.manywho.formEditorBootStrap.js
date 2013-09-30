@@ -16,887 +16,1064 @@ permissions and limitations under the License.
 
 (function ($) {
 
-    // Now we need to get the field "drop" working
-    // Then add the highlight area for dragging sections, columns, fields, etc
-    // Then work through the column reordering - so that the event checks the number of columns and rejigs the css
-    // Then add the action buttons to delete sections, columns, fields, etc
-    // Then start building the field flows - and also the column, section, etc flows - even for delete
-    // We should treat the form the same way we treat the graph - it should constantly post back and refresh from the form on the server (this would
-    // allow for collaborative form building also!!!!
+    var counter = 1;
 
+    var PAGE_CONTAINER_DIALOG_HEIGHT = 200;
+    var PAGE_CONTAINER_DIALOG_WIDTH = 175;
+    var PAGE_COMPONENT_DIALOG_HEIGHT = 450;
+    var PAGE_COMPONENT_DIALOG_WIDTH = 175;
+    var PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT = 250;
+    var PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH = 175;
 
-    // If bored, have a look at streaming APIs in .NET - it may be time to start moving to that
-    // Also - will want to rejig the WCF stuff over soon too - this needs to be the ASP.NET stuff - ideally before go-live
-
-    // Makes the toolbar buttons draggable to the form
-    //
-    var createDraggable = function (domId, fieldType) {
-        $('#' + domId + '-' + fieldType).draggable({
-            connectToSortable: '.manywho-form-section-column-cell-fields',
-            helper: 'clone',
-            revert: 'invalid'
-        });
+    var getCounter = function () {
+        return counter++;
     };
 
-    // Adds a section to the form as well as a first column
-    //
-    var addSection = function (domId, sectionObjectData, columnObjectData, cellObjectData) {
-        var sectionHtml = null;
-        var sectionId = ManyWhoUtils.getGuid();
-        var sectionLabel = null;
-
-        // Get the label for the section - if we have one
-        if (sectionObjectData != null) {
-            if (sectionObjectData.properties != null &&
-                sectionObjectData.properties.length > 0) {
-                for (var i = 0; i < sectionObjectData.properties.length; i++) {
-                    if (sectionObjectData.properties[i].developerName.toLowerCase() == 'label') {
-                        sectionLabel = sectionObjectData.properties[i].contentValue;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (sectionLabel == null) {
-            sectionLabel = '';
-        }
-
-        // Set this section to the selected section
-        $('#' + domId + '-selected-section').val(sectionId);
-
-        sectionHtml = '';
-        sectionHtml += '<div id="' + domId + '-' + sectionId + '-section-row" data-id="' + sectionId + '" class="row-fluid manywho-form-section-grid">';
-        sectionHtml +=      '<div id="' + domId + '-' + sectionId + '-section" class="span12">';
-        sectionHtml +=          '<div class="manywho-formbuilder-control-left">';
-        sectionHtml +=              '<i class="icon-plus-sign"></i>';
-        sectionHtml +=              '<i class="icon-minus-sign" id="' + domId + '-section-' + sectionId + '-delete"></i>';
-        sectionHtml +=              '<i class="icon-edit" id="' + domId + '-section-' + sectionId + '-edit"></i>';
-        sectionHtml +=          '</div>';
-        sectionHtml +=          '<div class="manywho-formbuilder-layout-label" id="' + domId + '-' + sectionId + '-section-label">' + sectionLabel + '</div>';
-        sectionHtml +=          '<div class="manywho-formbuilder-control-right">';
-        sectionHtml +=              '<i class="icon-move"></i>';
-        sectionHtml +=          '</div>';
-        sectionHtml +=          '<div id="' + domId + '-' + sectionId + '-columns" class="row-fluid manywho-form-section-columns">';
-        sectionHtml +=          '</div>';
-        sectionHtml +=      '</div>';
-        sectionHtml += '</div>';
-
-        $('#' + domId + '-form-sections').append(sectionHtml);
-
-        // Create the events for the controls
-        $('#' + domId + '-section-' + sectionId + '-edit').click(function (event) {
-            var inputs = null;
-            var formsection = $('#' + domId + '-data').data(sectionId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formsection != null) {
-                formsection = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormSection', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formsection);
-
-            ManyWhoSharedServices.showSubConfigDialog(450, 175, 'FORMSECTION', domId, domId + '-' + sectionId + '-section-row', sectionId, inputs, false, sectionOkCallback, true);
-        });
-
-        $('#' + domId + '-section-' + sectionId + '-delete').click(function (event) {
-            var inputs = null;
-            var formsection = $('#' + domId + '-data').data(sectionId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formsection != null) {
-                formsection = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormSection', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formsection);
-
-            ManyWhoSharedServices.showSubConfigDialog(150, 175, 'FORMSECTION', domId, domId + '-' + sectionId + '-section-row', sectionId, inputs, false, sectionOkCallback, true);
-        });
-
-        // Create the section object data and add it to our local database
-        $('#' + domId + '-data').data(sectionId, sectionObjectData);
-
-        // Only keep going up the stack if a column object has been provided
-        if (columnObjectData != null) {
-            // Add a column to this section
-            addColumn(domId, sectionId, columnObjectData, cellObjectData);
-        }
-
-        $('.manywho-form-section-column').sortable({
-            placeholder: 'manywho-sortable-placeholder',
-            connectWith: '.manywho-form-section-column'
-        });
-        $('.manywho-form-section-column').disableSelection();
-
-        return sectionId;
-    };
-
-    // Adds a column to the section as well as a first row for the column
-    //
-    var addColumn = function (domId, sectionId, columnObjectData, cellObjectData) {
-        var columns = 0;
-        var columnSpan = 0;
-        var columnHtml = null;
-        var placeholderCss = '';
-        var cellId = ManyWhoUtils.getGuid();
-        var columnId = ManyWhoUtils.getGuid();
-        var columnLabel = null;
-
-        // Get the label for the column - if we have one
-        if (columnObjectData != null) {
-            if (columnObjectData.properties != null &&
-                columnObjectData.properties.length > 0) {
-                for (var i = 0; i < columnObjectData.properties.length; i++) {
-                    if (columnObjectData.properties[i].developerName.toLowerCase() == 'label') {
-                        columnLabel = columnObjectData.properties[i].contentValue;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (columnLabel == null) {
-            columnLabel = '';
-        }
-
-        // Set this column to the selected column
-        $('#' + domId + '-selected-column').val(columnId);
-
-        // Get the current number of columns in this section
-        columns = $('#' + domId + '-' + sectionId + '-columns').children().length;
-        columns = columns + 1;
-
-        // Now calculate the column span
-        columnSpan = Math.floor(12 / columns);
-
-        // Create the column html
-        columnHtml = '';
-        columnHtml += '<div id="' + domId + '-' + sectionId + '-' + columnId + '-column" data-id="' + columnId + '" class="manywho-form-column-grid span1">';
-        columnHtml +=       '<div class="manywho-formbuilder-control-left">';
-        columnHtml +=           '<i class="icon-plus-sign"></i>';
-        columnHtml +=           '<i class="icon-minus-sign" id="' + domId + '-column-' + columnId + '-delete"></i>';
-        columnHtml +=           '<i class="icon-edit" id="' + domId + '-column-' + columnId + '-edit"></i>';
-        columnHtml +=       '</div>';
-        columnHtml +=       '<div class="manywho-formbuilder-layout-label text-info" id="' + domId + '-' + sectionId + '-' + columnId + '-column-label">' + columnLabel + '</div>';
-        columnHtml +=       '<div class="manywho-formbuilder-control-right">';
-        columnHtml +=           '<i class="icon-move"></i>';
-        columnHtml +=       '</div>';
-        columnHtml +=       '<div class="manywho-form-section-column-cells" id="' + domId + '-' + sectionId + '-' + columnId + '-cells"></div>';
-        columnHtml += '</div>';
-
-        // Add the column and adjust the span for all of the columns
-        $('#' + domId + '-' + sectionId + '-columns').append(columnHtml);
-        $('#' + domId + '-' + sectionId + '-columns').children().each(function (index, element) {
-            $(element).attr('class', 'manywho-form-column-grid span' + columnSpan);
-        });
-
-        // Create the events for the controls
-        $('#' + domId + '-section-' + columnId + '-edit').click(function (event) {
-            var inputs = null;
-            var formcolumn = $('#' + domId + '-data').data(columnId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formcolumn != null) {
-                formcolumn = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormColumn', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formcolumn);
-
-            ManyWhoSharedServices.showSubConfigDialog(450, 175, 'FORMCOLUMN', domId, domId + '-' + sectionId + '-' + columnId + '-column', columnId, inputs, false, columnOkCallback, true);
-        });
-
-        $('#' + domId + '-section-' + columnId + '-delete').click(function (event) {
-            var inputs = null;
-            var formcolumn = $('#' + domId + '-data').data(columnId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formcolumn != null) {
-                formcolumn = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormColumn', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formcolumn);
-
-            ManyWhoSharedServices.showSubConfigDialog(150, 175, 'FORMCOLUMN', domId, domId + '-' + sectionId + '-' + columnId + '-column', columnId, inputs, false, columnOkCallback, true);
-        });
-
-        // Create the column object data and add it to our local database
-        $('#' + domId + '-data').data(columnId, columnObjectData);
-
-        // Only keep going up the stack if a cell object has been provided
-        if (cellObjectData != null) {
-            // Add a row to this column
-            addCell(domId, sectionId, columnId, cellObjectData);
-        }
-
-        // We only want to add the span stuff if we have more than one column - otherwise it messes up the bootstrap layout on drag
-        if (columns > 1) {
-            placeholderCss = ' span' + columnSpan;
-        }
-
-        // Finally, make it a sortable again so we have drag and drop for layout
-        $('#' + domId + '-' + sectionId + '-columns').sortable({
-            placeholder: 'manywho-sortable-placeholder' + placeholderCss,
-            connectWith: '#' + domId + '-' + sectionId + '-columns'
-        });
-        $('#' + domId + '-' + sectionId + '-columns').disableSelection();
-
-        return columnId;
-    };
-
-    // Adds a cell to the column, ready to accept fields
-    //
-    var addCell = function (domId, sectionId, columnId, cellObjectData) {
-        var cellHtml = null;
-        var cellId = ManyWhoUtils.getGuid();
-        var cellLabel = null;
-
-        // Get the label for the cell - if we have one
-        if (cellObjectData != null) {
-            if (cellObjectData.properties != null &&
-                cellObjectData.properties.length > 0) {
-                for (var i = 0; i < cellObjectData.properties.length; i++) {
-                    if (cellObjectData.properties[i].developerName.toLowerCase() == 'label') {
-                        cellLabel = cellObjectData.properties[i].value;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (cellLabel == null) {
-            cellLabel = '';
-        }
-
-        cellHtml = '';
-        cellHtml += '<div id="' + domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-cell-block" data-id="' + cellId + '" class="row-fluid manywho-form-cell-grid">';
-        cellHtml +=     '<div id="' + domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-cell" class="span12 manywho-form-cell-grid-block">';
-        cellHtml +=         '<div class="manywho-formbuilder-control-left">';
-        cellHtml +=             '<i class="icon-plus-sign"></i>';
-        cellHtml +=             '<i class="icon-minus-sign" id="' + domId + '-cell-' + cellId + '-delete"></i>';
-        cellHtml +=             '<i class="icon-edit" id="' + domId + '-cell-' + cellId + '-edit"></i>';
-        cellHtml +=         '</div>';
-        cellHtml +=         '<div class="manywho-formbuilder-layout-label text-info" id="' + domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-cell-label">' + cellLabel + '</div>';
-        cellHtml +=         '<div class="manywho-formbuilder-control-right">';
-        cellHtml +=             '<i class="icon-move"></i>';
-        cellHtml +=         '</div>';
-        cellHtml +=         '<div id="' + domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-field-block" class="row-fluid">';
-        cellHtml +=             '<div id="' + domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-fields" class="span12 manywho-form-section-column-cell-fields manywho-form-field-block">';
-        cellHtml +=         '</div>';
-        cellHtml +=     '</div>';
-        cellHtml += '</div>';
-
-        // Add the cell to the column - no need to add sortable features as the columns are not sortable - only fields (that can be freely moved between columns)
-        $('#' + domId + '-' + sectionId + '-' + columnId + '-cells').append(cellHtml);
-
-        // Create the events for the controls
-        $('#' + domId + '-cell-' + cellId + '-edit').click(function (event) {
-            var inputs = null;
-            var formcell = $('#' + domId + '-data').data(cellId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formcell != null) {
-                formcell = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormCell', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formcell);
-
-            ManyWhoSharedServices.showSubConfigDialog(450, 175, 'FORMCELL', domId, domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-cell-block', cellId, inputs, false, cellOkCallback, true);
-        });
-
-        $('#' + domId + '-cell-' + cellId + '-delete').click(function (event) {
-            var inputs = null;
-            var formcell = $('#' + domId + '-data').data(cellId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formcell != null) {
-                formcell = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormCell', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formcell);
-
-            ManyWhoSharedServices.showSubConfigDialog(150, 175, 'FORMCELL', domId, domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-cell-block', cellId, inputs, false, cellOkCallback, true);
-        });
-
-        // Create the column object data and add it to our local database
-        $('#' + domId + '-data').data(cellId, cellObjectData);
-
-        // Make cells a sortable again so we have drag and drop for layout
-        $('.manywho-form-section-column-cells').sortable({
-            placeholder: 'manywho-sortable-placeholder',
-            connectWith: '.manywho-form-section-column-cells'
-        });
-        $('.manywho-form-section-column-cells').disableSelection();
-
-        // Finally, make it a sortable again so we have drag and drop for layout
-        $('.manywho-form-section-column-cell-fields').sortable({
-            placeholder: 'manywho-form-field-sortable-placeholder',
-            connectWith: '.manywho-form-section-column-cell-fields',
-            stop: function (event, ui) {
-                var fieldType = null;
-                var fieldsAreaId = $(event.target).attr('id');
-
-                if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_INPUTBOX;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_CHECKBOX;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_TEXTBOX;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_COMBOBOX;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_TABLE) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_TABLE;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_CONTENT) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_CONTENT;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_PRESENTATION;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_IMAGE) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_IMAGE;
-                } else if (event.srcElement.className.indexOf(ManyWhoConstants.COMPONENT_TYPE_TAG) >= 0) {
-                    fieldType = ManyWhoConstants.COMPONENT_TYPE_TAG;
-                }
-
-                // This condition is here so we don't create existing fields simply because they're moved (this method is called during resorts also)
-                if (fieldType != null &&
-                    fieldType.trim().length > 0) {
-                    createField(domId, ui.item, fieldsAreaId, fieldType, true);
-                }
-            }
-        });
-
-        return cellId;
-    };
-
-    // Adds a field to the cell
-    //
-    var addField = function (domId, sectionId, columnId, cellId, fieldObjectData) {
-        // We create a spoof of the output values
-        var outputValues = null;
-        var outputValue = null;
-        var fieldType = null;
-        var fieldId = null;
-
-        if (fieldObjectData != null) {
-            // Get the field type for this field
-            if (fieldObjectData.properties != null &&
-                fieldObjectData.properties.length > 0) {
-                for (var i = 0; i < fieldObjectData.properties.length; i++) {
-                    if (fieldObjectData.properties[i].developerName.toLowerCase() == 'fieldtype') {
-                        fieldType = fieldObjectData.properties[i].contentValue;
-                        break;
-                    }
-                }
-            }
-
-            // Add the base field html
-            fieldId = createField(domId, null, domId + '-' + sectionId + '-' + columnId + '-' + cellId + '-fields', fieldType, false);
-
-            // Now construct the output value object
-            outputValues = new Array();
-
-            outputValue = new Object();
-            outputValue.developerName = 'FlowOutcome';
-            outputValue.objectData = null;
-            outputValue.contentValue = 'edit';
-
-            outputValues[outputValues.length] = outputValue;
-
-            outputValue = new Object();
-            outputValue.developerName = 'FieldType';
-            outputValue.objectData = null;
-            outputValue.contentValue = fieldType;
-
-            outputValues[outputValues.length] = outputValue;
-
-            outputValue = new Object();
-            outputValue.developerName = 'FormField';
-            outputValue.objectData = [fieldObjectData];
-            outputValue.contentValue = null;
-
-            outputValues[outputValues.length] = outputValue;
-
-            // Now apply the field object data and make sure it's stored on this page
-            fieldOkCallback(domId, domId + '-field-' + fieldId, fieldId, false, outputValues);
-        }
-    };
-
-    // This method creates the html for the field preview
-    //
-    var createField = function (domId, tempFieldDroppable, fieldsAreaId, fieldType, openSettings) {
-        var fieldId = ManyWhoUtils.getGuid();
-        var fieldHtml = '';
-
-        fieldHtml += '<div id="' + domId + '-field-' + fieldId + '" data-id="' + fieldId + '" class="manywho-form-field">';
-        fieldHtml += '<div class="manywho-formbuilder-control-left">';
-        fieldHtml += '<i class="icon-minus-sign" id="' + domId + '-field-' + fieldId + '-delete"></i>';
-        fieldHtml += '<i class="icon-edit" id="' + domId + '-field-' + fieldId + '-edit"></i>';
-        fieldHtml += '</div>';
-        fieldHtml += '<div class="manywho-formbuilder-control-right">';
-        fieldHtml += '<i class="icon-move"></i>';
-        fieldHtml += '</div>';
-        fieldHtml += '<div class="manywho-formbuilder-field">';
-
-        if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
-            fieldHtml += '<input type="text" class="manywho-inputbox-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" />';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
-            fieldHtml += '<input type="checkbox" class="manywho-checkbox-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" />';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-            fieldHtml += '<textarea cols="40" rows="3" class="manywho-textbox-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" /></textarea>';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
-            fieldHtml += '<select class="manywho-combobox-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" /><option>-- select --</option></select>';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-            fieldHtml += '<table class="manywho-table-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" /></table>';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
-            fieldHtml += '<textarea cols="40" rows="3" class="manywho-content-field" id="' + domId + '-field-' + fieldId + '-input" data-fieldtype="' + fieldType + '" /></textarea>';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
-            fieldHtml += '<span class="manywho-presentation-field" id="' + domId + '-field-' + fieldId + '-input"></span>';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_IMAGE) {
-            fieldHtml += '<img class="manywho-image-field" id="' + domId + '-field-' + fieldId + '-input" />';
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
-            fieldHtml += '<span class="manywho-tag-field" id="' + domId + '-field-' + fieldId + '-input"></span>';
-        }
-
-        fieldHtml += '<label class="text-info manywho-field-label" id="' + domId + '-field-' + fieldId + '-label"></label>';
-
-        fieldHtml += '</div>';
-        fieldHtml += '</div>';
-
-        if (tempFieldDroppable != null) {
-            // Replace the temp field this the new html
-            tempFieldDroppable.replaceWith(fieldHtml);
+    var pageComponentOkCallback = function (domId, elementId, formElementId, doDelete, outputValues) {
+        var pageComponent = null;
+
+        // Get the page component object back from the response
+        pageComponent = ManyWhoUtils.getOutcomeValue(outputValues, 'PageComponent', null);
+
+        // Get the outcome out so we know what to do with the layout
+        outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+
+        if (outcome.toLowerCase() == 'delete') {
+            // The user is explicitly telling us to delete the page container
+            $('#' + elementId).remove();
+        } else if (outcome.toLowerCase() == 'cancel' &&
+                   doDelete == true) {
+            // If the user is canceling and we are doing the delete, remove the element from the dom
+            $('#' + elementId).remove();
         } else {
-            $('#' + fieldsAreaId).append(fieldHtml);
+            // Create the page component from the response
+            createPageComponent(domId, elementId, pageComponent[0]);
         }
-
-        // Create the events for the controls
-        $('#' + domId + '-field-' + fieldId + '-edit').click(function (event) {
-            var inputs = null;
-            var formfield = $('#' + domId + '-data').data(fieldId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formfield != null) {
-                formfield = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FieldType', fieldType, ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormField', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formfield);
-
-            ManyWhoSharedServices.showSubConfigDialog(450, 175, 'FORMFIELD', domId, domId + '-field-' + fieldId, fieldId, inputs, false, fieldOkCallback, true);
-        });
-
-        $('#' + domId + '-field-' + fieldId + '-delete').click(function (event) {
-            var inputs = null;
-            var formfield = $('#' + domId + '-data').data(fieldId);
-
-            // We're storing an object and we need to pass it back in an array
-            if (formfield != null) {
-                formfield = [formfield];
-            }
-
-            inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FieldType', fieldType, ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-            // Grab the existing object if one exists
-            inputs = ManyWhoSharedServices.createInput(inputs, 'FormField', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, formfield);
-
-            ManyWhoSharedServices.showSubConfigDialog(150, 175, 'FORMFIELD', domId, domId + '-field-' + fieldId, fieldId, inputs, false, fieldOkCallback, true);
-        });
-
-        // Temporary to test the inputs are working - we explicitly have an input type for field type to make life easier on the integration
-        var inputs = null;
-
-        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null);
-        inputs = ManyWhoSharedServices.createInput(inputs, 'FieldType', fieldType, ManyWhoConstants.CONTENT_TYPE_STRING, null);
-
-        if (openSettings != false) {
-            // Finally, we show the dialog
-            //ManyWhoSharedServices.showSubConfigDialog(450, 175, 'FORMFIELD', domId, domId + '-field-' + fieldId, fieldId, inputs, true, fieldOkCallback, true);
-        }
-
-        return fieldId;
     };
 
-    // This method is called by the sub config dialog method after a section definition is completed
-    //
-    var sectionOkCallback = function (domId, elementId, sectionId, doDelete, outputValues) {
-        var flowOutcome = null;
-        var label = null;
+    var pageContainerOkCallback = function (domId, elementId, formElementId, doDelete, outputValues) {
+        var pageContainerId = null;
+        var pageContainer = null;
+        var outcome = null;
 
-        flowOutcome = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FlowOutcome', null);
-        label = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormSection', 'Label');
+        // Get the page container object back from the response
+        pageContainer = ManyWhoUtils.getOutcomeValue(outputValues, 'PageContainer', null);
+        pageContainerId = ManyWhoUtils.getOutcomeValue(outputValues, 'PageContainer', 'Id');
 
-        // Check the flow outcome and and respond appropriately
-        if (flowOutcome != null) {
-            if (flowOutcome.toLowerCase() == 'cancel') {
-                if (doDelete == true) {
-                    // Remove the section from the form
+        // Get the outcome out so we know what to do with the layout
+        outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+
+        if (outcome.toLowerCase() == 'delete') {
+            // The user is explicitly telling us to delete the page container
+            $('#' + elementId).remove();
+        } else if (outcome.toLowerCase() == 'cancel') {
+            if (doDelete == true) {
+                if (elementId != null &&
+                    elementId.trim().length > 0) {
                     $('#' + elementId).remove();
+                } else {
+                    $('#' + pageContainerId).remove();
                 }
-            } else if (flowOutcome.toLowerCase() == 'delete') {
-                // Remove the section from the form
-                $('#' + elementId).remove();
-            } else if (flowOutcome.toLowerCase() == 'edit') {
-                // Get the first entry in the list from the returned object data list
-                $('#' + domId + '-data').data(sectionId, ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormSection', null)[0]);
             }
         } else {
-            alert('Flow outcome is blank');
+            // Create the page container from the response
+            createPageContainer(domId, elementId, null, pageContainer[0]);
         }
     };
 
-    // This method is called by the sub config dialog method after a column definition is completed
-    //
-    var columnOkCallback = function (domId, elementId, sectionId, doDelete, outputValues) {
-        var flowOutcome = null;
+    var pageElementContainerOkCallback = function (domId, elementId, formElementId, doDelete, outputValues) {
+        var pageLabel = null;
+        var page = null;
+        var outcome = null;
+
+        // Get the page container object back from the response
+        page = ManyWhoUtils.getOutcomeValue(outputValues, 'PAGE_LAYOUT', null);
+        pageLabel = ManyWhoUtils.getOutcomeValue(outputValues, 'PAGE_LAYOUT', 'Label');
+
+        // Get the outcome out so we know what to do with the layout
+        outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+
+        // Write the data back as long as the user didn't hit cancel
+        if (outcome.toLowerCase() != 'cancel') {
+            $('#' + domId + '-page-element').data('page', page[0]);
+            $('#' + domId + '-page-element-label').html(pageLabel);
+        }
+    };
+
+    var createPageContainer = function (domId, elementId, parentContainerId, pageContainer) {
         var label = null;
+        var id = null;
+        var containerType = null;
+        var developerName = null;
+        var childPageContainers = null;
+        var pageContainerHtml = null;
+        var currentCounter = 0;
 
-        flowOutcome = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FlowOutcome', null);
-        label = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormColumn', 'Label');
+        // Grab the current counter as we need that to reference our container
+        currentCounter = getCounter();
 
-        // Check the flow outcome and and respond appropriately
-        if (flowOutcome != null) {
-            if (flowOutcome.toLowerCase() == 'cancel') {
-                if (doDelete == true) {
-                    // Remove the column from the form
-                    $('#' + elementId).remove();
+        // Grab the id from the external identifier - we'll always have one of these regardless of "saved" status
+        id = pageContainer.externalId;
+
+        // Check to see if the page container has any properties
+        if (pageContainer.properties != null &&
+            pageContainer.properties.length > 0) {
+            // Go through each of the properties in the page container and grab out the ones we need
+            for (var c = 0; c < pageContainer.properties.length; c++) {
+                if (pageContainer.properties[c].developerName.toLowerCase() == 'label') {
+                    // Grab the label property
+                    label = pageContainer.properties[c].contentValue;
+                } else if (pageContainer.properties[c].developerName.toLowerCase() == 'containertype') {
+                    // Grab the container type property
+                    containerType = pageContainer.properties[c].contentValue;
+                } else if (pageContainer.properties[c].developerName.toLowerCase() == 'developername') {
+                    // Grab the container type property
+                    developerName = pageContainer.properties[c].contentValue;
+                } else if (pageContainer.properties[c].developerName.toLowerCase() == 'pagecontainers') {
+                    // Grab the page containers for this page container
+                    childPageContainers = pageContainer.properties[c].objectData;
                 }
-            } else if (flowOutcome.toLowerCase() == 'delete') {
-                // Remove the column from the form
-                $('#' + elementId).remove();
-            } else if (flowOutcome.toLowerCase() == 'edit') {
-                // Get the first entry in the list from the returned object data list
-                $('#' + domId + '-data').data(columnId, ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormColumn', null)[0]);
             }
+        }
+
+        // Save the page container to the dom
+        $('#' + domId + '-page-containers').data(id, pageContainer);
+
+        // Check to see if the element exists already in the dom
+        if ($('#' + id).length > 0) {
+            // The container already exists, so all we need to do in the UI is repaint the label
+            $('#' + id).children('.manywho-page-container-controls').children('.manywho-page-container-label').html('<strong>' + label + '</strong>');
         } else {
-            alert('Flow outcome is blank');
+            // Now create the page container html
+            pageContainerHtml = createPageContainerHtml(domId, currentCounter, containerType, id, label, developerName);
+
+            // Check to see if we have an element id to replace
+            if (elementId == null ||
+                elementId.trim().length == 0) {
+                // Append the page container to the parent's sortable
+                $('#' + parentContainerId).children('.page-sortable').append(pageContainerHtml);
+            } else {
+                // We have a placeholder element to replace with this new html
+                $('#' + elementId).replaceWith(pageContainerHtml);
+            }
+
+            // Add the events for this page container
+            $('#' + id).children('.manywho-page-container-controls').children('.manywho-edit-page-container').click(function (event) {
+                var inputs = null;
+                var pageContainers = null;
+
+                // Wrap the page containers in an array
+                pageContainers = [$('#' + domId + '-page-containers').data(id)];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
+                inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
+            });
+
+            $('#' + id).children('.manywho-page-container-controls').children('.manywho-delete-page-container').click(function (event) {
+                var inputs = null;
+                var pageContainers = null;
+
+                if ($('#' + id).children('.page-sortable').children().length > 0) {
+                    alert('You can\'t delete a Layout Container if it contains child Layout Containers or Components. Delete the children of this Layout Container first!');
+                    return;
+                }
+
+                // Wrap the page containers in an array
+                pageContainers = [$('#' + domId + '-page-containers').data(id)];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
+                inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
+            });
+
+            // Make the page container sortable
+            makeSortable(domId, 'page-sortable-' + currentCounter);
+
+            // Now that we've printed the parent container, we can print any children of this container
+            createPageContainers(domId, id, childPageContainers);
         }
     };
 
-    // This method is called by the sub config dialog method after a cell definition is completed
-    //
-    var cellOkCallback = function (domId, elementId, cellId, doDelete, outputValues) {
-        var flowOutcome = null;
-        var label = null;
+    var createPageContainers = function (domId, parentContainerId, pageContainers) {
+        // Check to see if we actually have any page containers
+        if (pageContainers != null &&
+            pageContainers.length > 0) {
 
-        flowOutcome = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FlowOutcome', null);
-        label = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormCell', 'Label');
+            // Sort the page containers by the order property so they appear in the correct order
+            pageContainers.sort(function (pageContainerA, pageContainerB) {
+                var orderA = ManyWhoUtils.grabOrderFromObjectDataEntry(pageContainerA);
+                var orderB = ManyWhoUtils.grabOrderFromObjectDataEntry(pageContainerB);
 
-        // Check the flow outcome and and respond appropriately
-        if (flowOutcome != null) {
-            if (flowOutcome.toLowerCase() == 'cancel') {
-                if (doDelete == true) {
-                    // Remove the cell from the form
-                    $('#' + elementId).remove();
+                if (orderA > orderB) {
+                    return 1;
+                } else if (orderA < orderB) {
+                    return -1;
+                } else {
+                    return 0;
                 }
-            } else if (flowOutcome.toLowerCase() == 'delete') {
-                // Remove the cell from the form
-                $('#' + elementId).remove();
-            } else if (flowOutcome.toLowerCase() == 'edit') {
-                // Get the first entry in the list from the returned object data list
-                $('#' + domId + '-data').data(cellId, ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormCell', null)[0]);
+            });
+
+            // Now go through each of the page containers and print them onto the screen
+            for (var b = 0; b < pageContainers.length; b++) {
+                var pageContainer = pageContainers[b];
+
+                // Create the page container
+                createPageContainer(domId, null, parentContainerId, pageContainer);
             }
-        } else {
-            alert('Flow outcome is blank');
         }
     };
 
-    // This method is called by the sub config dialog method after a field definition is completed
-    //
-    var fieldOkCallback = function (domId, elementId, fieldId, doDelete, outputValues) {
-        var fieldType = null;
-        var flowOutcome = null;
-        var formField = null;
+    var createPageContainerHtml = function (domId, currentCounter, containerType, pageContainerId, label, developerName) {
+        var html = '';
 
-        // Get the field type back from the flow
-        fieldType = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FieldType', null);
-        flowOutcome = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FlowOutcome', null);
+        // Create the page container shell
+        html += '<div class="manywho-page-container rendered" id="' + pageContainerId + '">';
+        
+        // Create the controls and label for this container
+        html += '<div class="manywho-page-container-controls">';
 
-        var hintValue = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'HintValue');
-        var helpInfo = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'HelpInfo');
-        var label = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'Label');
-        var developerName = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'DeveloperName');
-        var size = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'Size');
-        var maxSize = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'MaxSize');
-        var required = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'Required');
-        var editable = ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', 'IsEditable');
-        var fieldSize = null;
+        if (containerType == ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW) {
+            html += '<i class="icon-resize-vertical icon-white manywho-edit-page-container"></i> ';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW) {
+            html += '<i class="icon-resize-horizontal icon-white manywho-edit-page-container"></i> ';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW) {
+            html += '<i class="icon-arrow-right icon-white manywho-edit-page-container"></i> ';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_GROUP) {
+            html += '<i class="icon-folder-open icon-white manywho-edit-page-container"></i> ';
+        }
 
+        html += '<span class="manywho-page-container-label"><strong>' + label + '</strong></span>';
+        html += '<i class="icon-trash icon-white pull-right manywho-delete-page-container"></i>';
+        html += '</div>';
+
+        // Create the correct sortable implementation
+        if (containerType == ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW) {
+            html += '<div id="' + domId + '-page-sortable-' + currentCounter + '" class="page-sortable page-sortable-vertical" data-developername="' + developerName + '"></div>';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW) {
+            html += '<div id="' + domId + '-page-sortable-' + currentCounter + '" class="page-sortable page-sortable-horizontal" data-developername="' + developerName + '"></div>';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW) {
+            html += '<div id="' + domId + '-page-sortable-' + currentCounter + '" class="page-sortable page-sortable-inline" data-developername="' + developerName + '"></div>';
+        } else if (containerType == ManyWhoConstants.CONTAINER_TYPE_GROUP) {
+            html += '<div id="' + domId + '-page-sortable-' + currentCounter + '" class="page-sortable page-sortable-group" data-developername="' + developerName + '"></div>';
+        } else {
+            alert('Container type not found: ' + containerType);
+        }
+
+        // Close out the page container shell
+        html += '</div>';
+
+        return html;
+    };
+
+    var createPageComponents = function (domId, pageComponents) {
+        // Check to see if we actually have any page components in the array
+        if (pageComponents != null &&
+            pageComponents.length > 0) {
+            // Sort the components by container and then by order so they'll be rendered in the correct way
+            pageComponents.sort(function (pageComponentA, pageComponentB) {
+                var pageComponentParentA = ManyWhoUtils.grabPageContainerIdFromObjectDataEntry(pageComponentA);
+                var pageComponentParentB = ManyWhoUtils.grabPageContainerIdFromObjectDataEntry(pageComponentB);
+
+                if (pageComponentParentA > pageComponentParentB) {
+                    return 1;
+                } else if (pageComponentParentA < pageComponentParentB) {
+                    return -1;
+                } else {
+                    var pageComponentOrderA = ManyWhoUtils.grabOrderFromObjectDataEntry(pageComponentA);
+                    var pageComponentOrderB = ManyWhoUtils.grabOrderFromObjectDataEntry(pageComponentB);
+
+                    // If the page container id's are the same, then we wort by order
+                    if (pageComponentOrderA > pageComponentOrderB) {
+                        return 1;
+                    } else if (pageComponentOrderA < pageComponentOrderB) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }
+            });
+
+            // Now print each of the page components to the containers
+            for (var b = 0; b < pageComponents.length; b++) {
+                // Write the page component to the doc
+                createPageComponent(domId, null, pageComponents[b]);
+            }
+        }
+    };
+
+    var createPageComponent = function (domId, elementId, pageComponent) {
+        // Check to see if we actually have any page components in the array
+        if (pageComponent != null) {
+            var label = null;
+            var id = null;
+            var componentType = null;
+            var size = 0;
+            var maxSize = 0;
+            var height = 0;
+            var width = 0;
+            var content = null;
+            var required = false;
+            var editable = true;
+            var hintValue = null;
+            var helpInfo = null;
+            var pageContainerId = null;
+            var pageComponentHtml = null;
+            var currentCounter = 0;
+
+            // Grab a counter for our element
+            currentCounter = getCounter();
+
+            // Grab the external identifier for the component - we'll always have one of these regardless of "saved" status
+            id = pageComponent.externalId;
+
+            // Check to see if the page component has any properties
+            if (pageComponent.properties != null &&
+                pageComponent.properties.length > 0) {
+                // Go through each of the properties in the page container and grab out the ones we need
+                for (var c = 0; c < pageComponent.properties.length; c++) {
+                    if (pageComponent.properties[c].developerName.toLowerCase() == 'label') {
+                        // Grab the label property
+                        label = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'componenttype') {
+                        // Grab the container type property
+                        componentType = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'size') {
+                        // Grab the size property
+                        size = parseInt(pageComponent.properties[c].contentValue);
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'maxsize') {
+                        // Grab the max size property
+                        maxSize = parseInt(pageComponent.properties[c].contentValue);
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'height') {
+                        // Grab the height property
+                        height = parseInt(pageComponent.properties[c].contentValue);
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'width') {
+                        // Grab the width property
+                        width = parseInt(pageComponent.properties[c].contentValue);
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'content') {
+                        // Grab the content property
+                        content = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'required') {
+                        // Grab the required property
+                        required = pageComponent.properties[c].contentValue ? (pageComponent.properties[c].contentValue.toLowerCase() == 'true') : false;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'editable') {
+                        // Grab the editable property
+                        editable = pageComponent.properties[c].contentValue ? (pageComponent.properties[c].contentValue.toLowerCase() == 'true') : false;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'hintvalue') {
+                        // Grab the hint value property
+                        hintValue = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'helpinfo') {
+                        // Grab the help info property
+                        helpInfo = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'pagecontainerid') {
+                        // Grab the page container id property
+                        pageContainerId = pageComponent.properties[c].contentValue;
+                    }
+                }
+            }
+
+            // Save the page component to the dom
+            $('#' + domId + '-page-components').data(id, pageComponent);
+
+            // Create the html for the page component
+            pageComponentHtml = createPageComponentHtml(domId, currentCounter, pageContainerId, id, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable);
+
+            // Check to see if we have an element id to replace
+            if (elementId == null ||
+                elementId.trim().length == 0) {
+                // Print the component to the parent container
+                $('#' + pageContainerId).children('.page-sortable').append(pageComponentHtml);
+            } else {
+                // We have a placeholder element to replace with this new html
+                $('#' + elementId).replaceWith(pageComponentHtml);
+            }
+
+            // Add the events for this page container
+            $('#' + id).children('.manywho-page-component-controls').children('.manywho-edit-page-component').click(function (event) {
+                var inputs = null;
+                var pageComponents = null;
+
+                // Wrap the page components in an array
+                pageComponents = [$('#' + domId + '-page-components').data(id)];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
+                inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, id, null, inputs, false, pageComponentOkCallback, true);
+            });
+
+            $('#' + id).children('.manywho-page-component-controls').children('.manywho-delete-page-component').click(function (event) {
+                var inputs = null;
+                var pageComponents = null;
+
+                // Wrap the page components in an array
+                pageComponents = [$('#' + domId + '-page-components').data(id)];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
+                inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, id, null, inputs, false, pageComponentOkCallback, true);
+            });
+        }
+    };
+
+    var createPageComponentHtml = function (domId, currentCounter, pageContainerId, pageComponentId, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable) {
+        var html = '';
+        var labelHtml = null;
+        var editableHtml = '';
+        var componentSizeCss = '';
+
+        // Create the page component shell
+        html += '<div class="manywho-page-component rendered" id="' + pageComponentId + '">';
+
+        // Create the page component controls
+        html += '<div class="manywho-page-component-controls"><i class="icon-edit icon-white manywho-edit-page-component"></i> <i class="icon-trash icon-white pull-right manywho-delete-page-component"></i></div>';
+
+        // Now create the shell for the actual component
+        html += '<div>';
+
+        // If the hint value is null, we blank it out
+        if (hintValue == null) {
+            hintValue = '';
+        }
+
+        // Apply the readonly html if the field is not editable
+        if (editable == false) {
+            editableHtml = ' readonly';
+        }
+
+        // Make sure the label reflects the required status
+        if (label != null &&
+            label.trim().length > 0) {
+            if (required == true) {
+                labelHtml = '<label class="manywho-page-component-required">';
+            } else {
+                labelHtml = '<label>';
+            }
+        } else {
+            labelHtml = '';
+        }
+
+        // Printing a label wrapper depends on the component type
+        if (componentType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX ||
+            componentType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX ||
+            componentType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX ||
+            componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
+            html += labelHtml;
+        }
+
+        // We need to map the designers absolute field sizing over to a bootstrap equivalent - the mappings are here
         if (size > 0) {
             if (size < 10) {
-                fieldSize = ' input-mini';
+                componentSizeCss = ' input-mini';
             } else if (size < 20) {
-                fieldSize = ' input-small';
+                componentSizeCss = ' input-small';
             } else if (size < 30) {
-                fieldSize = ' input-medium';
+                componentSizeCss = ' input-medium';
             } else if (size < 50) {
-                fieldSize = ' input-large';
+                componentSizeCss = ' input-large';
             } else if (size < 70) {
-                fieldSize = ' input-xlarge';
+                componentSizeCss = ' input-xlarge';
             } else {
-                fieldSize = ' input-xxlarge';
+                componentSizeCss = ' input-xxlarge';
             }
         }
 
-        $('#' + elementId + '-input').addClass('manywho-runtime-inputbox-field' + fieldSize);
-
-        if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX ||
-            fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-            if (hintValue != null &&
-                hintValue.trim().length > 0) {
-                $('#' + elementId + '-input').attr('placeholder', hintValue);
+        if (width > 0) {
+            if (width < 10) {
+                componentSizeCss = ' input-mini';
+            } else if (width < 20) {
+                componentSizeCss = ' input-small';
+            } else if (width < 30) {
+                componentSizeCss = ' input-medium';
+            } else if (width < 50) {
+                componentSizeCss = ' input-large';
+            } else if (width < 70) {
+                componentSizeCss = ' input-xlarge';
+            } else {
+                componentSizeCss = ' input-xxlarge';
             }
         }
 
-        $('#' + elementId + '-input').attr('size', size);
-        $('#' + elementId + '-input').attr('maxsize', maxSize);
+        if (componentType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
+            html += '<input type="text"' + editableHtml + ' class="manywho-page-component-implementation input-large' + componentSizeCss + '" maxlength="' + maxSize + '" placeholder="' + hintValue + '" /><br />';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
+            html += '<textarea class="manywho-page-component-implementation' + componentSizeCss + '"' + editableHtml + ' placeholder="' + hintValue + '"></textarea><br />';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
+            html += '<div class="btn-toolbar">';
+            html += '<div class="btn-group" id="field-toolbar">';
+            html += '<a class="btn" data-wysihtml5-command="bold" title="CTRL+B" href="#"><i class="icon-bold"></i></a>';
+            html += '<a class="btn" data-wysihtml5-command="italic" title="CTRL+I" href="#"><i class="icon-italic"></i></a>';
+            html += '<a class="btn" data-wysihtml5-action="change_view"><i class="icon-eye-close"></i></a>';
+            html += '</div>';
+            html += '</div>';
+
+            // Print the label at the bottom as this field doesn't support wrapping labels
+            html += labelHtml;
+
+            // Print the text area for the content editor
+            html += '<textarea class="manywho-page-component-implementation"' + editableHtml + ' style="height: ' + (height * 12) + 'px; width: ' + (width * 5) + 'px;"></textarea><br />';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
+            html += '<input type="checkbox"' + editableHtml + ' class="manywho-page-component-implementation" /> ';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
+            html += '<div class="manywho-page-component-implementation">TAG</div>';
+
+            // Print the label at the bottom as this field doesn't support wrapping labels
+            html += labelHtml;
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
+            html += '<div class="manywho-page-component-implementation">' + content + '</div>';
+
+            // Print the label at the bottom as this field doesn't support wrapping labels
+            html += '<label>';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_IMAGE) {
+            html += '<img src="' + content + '" class="manywho-page-component-implementation" alt="' + label + '" height="' + height + '" width="' + width + '" />';
+
+            // Print the label at the bottom as this field doesn't support wrapping labels
+            html += labelHtml;
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
+            html += '<select class="manywho-page-component-implementation"' + editableHtml + '></select><br />';
+        } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+            html += '<div>';
+            html += '<table class="manywho-page-component-implementation table table-hover table-condensed table-bordered"></table>';
+            html += '</div>';
+
+            // Print the label at the bottom as this field doesn't support wrapping labels
+            html += labelHtml;
+        }
+
+        html += '<span class="text-info manywho-field-label">' + label + '</span>';
+
+        // If we have help info, we add a little help button
+        if (helpInfo != null &&
+            helpInfo.trim().length > 0) {
+            html += ' <a href="#"><i class="icon-question-sign"></i></a>';
+        }
 
         if (label != null &&
             label.trim().length > 0) {
-            $('#' + elementId + '-label').html(label);
-        } else {
-            $('#' + elementId + '-label').html('');
+            // Close out the label
+            html += '</label>';
         }
 
-        if (helpInfo != null &&
-            helpInfo.trim().length > 0) {
-            $('#' + elementId + '-label').after('<div class="alert alert-info"><small id="' + elementId + '-help">' + helpInfo + '</small></div>');
-        } else {
-            $('#' + elementId + '-help').remove();
-        }
+        // Close out the component implementation shell
+        html += '</div>';
 
-        if (editable.toLowerCase() == 'true' ||
-            editable == true) {
-            $('#' + elementId + '-input').removeAttr('readonly');
-        } else {
-            $('#' + elementId + '-input').attr('readonly', 'readonly');
-        }
+        // Close out the component shell
+        html += '</div>';
 
-        if (required.toLowerCase() == 'true' ||
-            required == true) {
-            $('#' + elementId + '-label').addClass('manywho-runtime-field-required');
-            $('#' + elementId + '-label').removeClass('manywho-runtime-field-not-required');
-        } else {
-            $('#' + elementId + '-label').removeClass('manywho-runtime-field-required');
-            $('#' + elementId + '-label').addClass('manywho-runtime-field-not-required');
-        }
+        return html;
+    };
 
-        // Check the flow outcome and and respond appropriately
-        if (flowOutcome != null) {
-            if (flowOutcome.toLowerCase() == 'cancel') {
-                if (doDelete == true) {
-                    // Remove the field from the form
-                    $('#' + elementId).remove();
+    var makeSortable = function (domId, sortableId) {
+        $('#' + domId + '-' + sortableId).sortable({
+            revert: false,
+            dropOnEmpty: true,
+            placeholder: 'page-placeholder',
+            over: function (event, ui) {
+                if ($(this).hasClass('page-sortable-horizontal') == true) {
+                    // Count the children in the sortable
+                    childCount = $(this).children('div').length;
+
+                    // Subtract 2 from the child count - 1 for the helper, 1 for the placeholder
+                    childCount = childCount - 1;
+
+                    // Get the interval for the spans, subracting 12 (oddly not 10 for the child container padding), and 12 (for the parent container padding)
+                    // The above stuff and below math is not correct
+                    columnInterval = Math.floor(($(this).innerWidth() - (10 * childCount)) / childCount);
+
+                    console.log($(this).attr('id') + ': ' + $(this).innerWidth());
+
+                    // Go through all of the children and re-apply the old span
+                    $(this).children('div').each(function (index, element) {
+                        if ($(element).hasClass('ui-sortable-helper') == false) {
+                            $(this).css('width', columnInterval + 'px');
+                            if ($(this).css('display') != 'none') {
+                                $(this).css('display', 'inline-block');
+                            }
+                        }
+                    });
                 }
-            } else if (flowOutcome.toLowerCase() == 'delete') {
-                // Remove the field from the form
-                $('#' + elementId).remove();
-            } else if (flowOutcome.toLowerCase() == 'edit') {
-                // Get the first entry in the list from the returned object data list
-                $('#' + domId + '-data').data(fieldId, ManyWhoSharedServices.getOutcomeValue(outputValues, 'FormField', null)[0]);
-            }
-        } else {
-            alert('Flow outcome is blank');
-        }
-    };
+            },
+            out: function (event, ui) {
+                if ($(this).hasClass('page-sortable-horizontal') == true) {
+                    var childCount = 0;
+                    var columnInterval = 0;
 
-    // This method is used purely to populate the start-up form.  Once we start building forms, we rely on the flow to populate this information, not
-    // manual javascript
-    //
-    var createSectionObjectData = function(guid) {
-        var objectAPI = null;
+                    // Count the children in the sortable that are actual children that are going to stay!
+                    $(this).children('div').each(function (index, element) {
+                        // If it's not visible, we don't care about it!  This will be the case when we're dragging a new element "through" a sortable and out
+                        // If it's a placeholder, we don't care about it either!  True for both new and existing sorting events
+                        if ($(this).css('display') != 'none' &&
+                            $(this).hasClass('placeholder') == false) {
+                            childCount++;
+                        }
+                    });
 
-        objectAPI = createObjectAPI(null, ManyWhoConstants.OBJECT_TYPE_FORM_SECTION);
+                    //childCount = $(this).children('div').length;
+                    childCount = childCount - 1;
 
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ID, null, null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_DEVELOPER_NAME, 'Section 1', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_LABEL, '', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ORDER, '0', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_COLUMNS, null, null);
+                    // Get the interval for the spans now the helper has left
+                    columnInterval = Math.floor(($(this).innerWidth() - 10 - (10 * childCount)) / childCount);
 
-        return objectAPI;
-    };
+                    // Go through all of the children and re-apply the old span
+                    $(this).children('div').each(function (index, element) {
+                        $(this).css('width', columnInterval + 'px');
+                        if ($(this).css('display') != 'none') {
+                            $(this).css('display', 'inline-block');
+                        }
+                    });
+                }
+            },
+            stop: function (event, ui) {
+                var currentCounter = 0;
+                var childCount = 0;
+                var childWidth = 0;
+                var parentWidth = 0;
+                var addingElement = true;
+                var componentHtml = '';
+                var componentType = null;
+                var containerType = null;
+                var inputs = null;
 
-    // This method is used purely to populate the start-up form.  Once we start building forms, we rely on the flow to populate this information, not
-    // manual javascript
-    //
-    var createColumnObjectData = function () {
-        var objectAPI = null;
-        var propertyAPI = null;
+                // Check the element to make sure this operation is possible
+                if (ui.item.hasClass('manywho-page-container') == true) {
+                    // Go through all of the children and make sure there aren't any components - if so, this is not a valid drop
+                    $(this).children('div').each(function (index, element) {
+                        if ($(this).hasClass('manywho-page-component') == true) {
+                            // Blank out the draggable
+                            ui.item.replaceWith('');
 
-        objectAPI = createObjectAPI(null, ManyWhoConstants.OBJECT_TYPE_FORM_COLUMN);
+                            // Tell the user what they did wrong
+                            alert('You can\'t add a child container if the parent already has components!');
 
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ID, null, null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_DEVELOPER_NAME, 'Column 1', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_LABEL, '', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ORDER, '0', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_CELLS, null, null);
+                            // Tell this code block not to add the element, but to make sure all of the sizing is OK
+                            addingElement = false;
 
-        return objectAPI;
-    };
+                            // Return out of this child loop
+                            return;
+                        }
+                    });
+                } else if (ui.item.hasClass('manywho-page-component') == true) {
+                    // Check to make sure this container isn't a group - you can only add containers to a 'group' container
+                    if ($(this).hasClass('page-sortable-group') == true) {
+                        // Blank out the draggable
+                        ui.item.replaceWith('');
 
-    // This method is used purely to populate the start-up form.  Once we start building forms, we rely on the flow to populate this information, not
-    // manual javascript
-    //
-    var createCellObjectData = function () {
-        var objectAPI = null;
+                        // Tell the user what they did wrong
+                        alert('You can only add containers to a group!');
 
-        objectAPI = createObjectAPI(null, ManyWhoConstants.OBJECT_TYPE_FORM_CELL);
+                        // Tell this code block not to add the element, but to make sure all of the sizing is OK
+                        addingElement = false;
 
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ID, null, null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_DEVELOPER_NAME, 'Cell 1', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_LABEL, '', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_ORDER, '0', null);
-        createObjectPropertyAPI(objectAPI, ManyWhoConstants.SERVICE_VALUE_FIELDS, null, null);
+                        // Return out of this child loop
+                        return;
+                    }
 
-        return objectAPI;
-    };
+                    // Go through all of the children and make sure there aren't any containers - if so, this is not a valid drop
+                    $(this).children('div').each(function (index, element) {
+                        if ($(this).hasClass('manywho-page-container') == true) {
+                            // Blank out the draggable
+                            ui.item.replaceWith('');
 
-    var createObjectAPI = function(externalId, objectType) {
-        var objectAPI = null;
+                            // Tell the user what they did wrong
+                            alert('You can\'t add a child component if the parent already has containers!');
 
-        objectAPI = new Object();
-        objectAPI.externalId = externalId;
-        objectAPI.isChanged = true;
-        objectAPI.typeDeveloperName = objectType;
-        objectAPI.properties = new Array();
+                            // Tell this code block not to add the element, but to make sure all of the sizing is OK
+                            addingElement = false;
 
-        return objectAPI;
-    };
-
-    var createObjectPropertyAPI = function (objectAPI, developerName, value, list) {
-        var propertyAPI = null;
-
-        if (objectAPI.properties == null)
-        {
-            objectAPI.properties = new Array();
-        }
-
-        propertyAPI = new Object();
-        propertyAPI.developerName = developerName;
-        propertyAPI.isChanged = true;
-        propertyAPI.objectData = list;
-        propertyAPI.typeElementEntryId = null;
-        propertyAPI.contentValue = value;
-
-        objectAPI.properties[objectAPI.properties.length] = propertyAPI;
-
-        return propertyAPI;
-    };
-
-    var assignOrderProperty = function (order, objectAPI) {
-        for (var i = 0; i < objectAPI.properties.length; i++) {
-            var propertyAPI = objectAPI.properties[i];
-
-            if (propertyAPI.developerName.toLowerCase() == ManyWhoConstants.SERVICE_VALUE_ORDER.toLowerCase()) {
-                propertyAPI.contentValue = '' + order + '';
-            }
-        }
-    };
-
-    var addObjectToProperty = function (parentObjectData, property, childObjectData) {
-        for (var i = 0; i < parentObjectData.properties.length; i++) {
-            if (parentObjectData.properties[i].developerName.toLowerCase() == property.toLowerCase()) {
-                if (parentObjectData.properties[i].objectData == null) {
-                    parentObjectData.properties[i].objectData = new Array();
+                            // Return out of this child loop
+                            return;
+                        }
+                    });
                 }
 
-                parentObjectData.properties[i].objectData[parentObjectData.properties[i].objectData.length] = childObjectData;
+                // Count the children in the sortable and grab the parent width
+                childCount = $(this).children('div').length;
+                parentWidth = $(this).innerWidth() - (10 * childCount);
+
+                // Make sure the validation rules are OK and we're not mixing components and containers
+                // Also - make sure this component hasn't already been rendered (which will be the case for re-ordering)
+                if (addingElement == true &&
+                    ui.item.hasClass('rendered') == false) {
+                    // Create a counter so we have a unique identifier for this sortable
+                    currentCounter = getCounter();
+
+                    // Check to see if the item being dragged is a container
+                    if (ui.item.hasClass('manywho-page-container') == true) {
+                        // Replace the content of the dragged item with the correct sortable
+                        if (ui.item.hasClass(ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW) == true) {
+                            containerType = ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW;
+                        } else if (ui.item.hasClass(ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW) == true) {
+                            containerType = ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW;
+                        } else if (ui.item.hasClass(ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW) == true) {
+                            containerType = ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW;
+                        } else if (ui.item.hasClass(ManyWhoConstants.CONTAINER_TYPE_GROUP) == true) {
+                            containerType = ManyWhoConstants.CONTAINER_TYPE_GROUP;
+                        }
+
+                        // Replace the droppable with the generated field placeholder
+                        ui.item.replaceWith('<div class="manywho-page-container" id="' + domId + '-page-sortable-' + currentCounter + '"></div>');
+
+                        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                        inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', containerType, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                        // Open the dialog for creating a new form field
+                        ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, domId + '-page-sortable-' + currentCounter, null, inputs, true, pageContainerOkCallback, true);
+                    } else {
+                        // We're dragging a component and therefore do not want to make it a sortable
+                        if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_INPUTBOX;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_TEXTBOX;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_CONTENT) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_CONTENT;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_CHECKBOX;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_COMBOBOX;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_TABLE) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_TABLE;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_PRESENTATION;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_IMAGE) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_IMAGE;
+                        } else if (ui.item.hasClass(ManyWhoConstants.COMPONENT_TYPE_TAG) == true) {
+                            componentType = ManyWhoConstants.COMPONENT_TYPE_TAG;
+                        }
+
+                        // Replace the droppable with the generated field placeholder
+                        ui.item.replaceWith('<div class="manywho-page-component" id="' + domId + '-page-component-' + currentCounter + '"></div>');
+
+                        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                        inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', componentType, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                        // Grab the container id of the parent
+                        inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainerId', $(this).parent().attr('id'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                        // Open the dialog for creating a new form field
+                        ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, domId + '-page-component-' + currentCounter, null, inputs, true, pageComponentOkCallback, true);
+                    }
+                }
+
+                // If this is a horizontal sortable, we need to rejig the columns
+                if ($(this).hasClass('page-sortable-horizontal') == true) {
+                    // Get the width for each of the children based on the width of the parent
+                    childWidth = Math.floor((parentWidth - 10) / childCount);
+
+                    // Go through all of the children and apply the correct width
+                    $(this).children('div').each(function (index, element) {
+                        $(this).css('width', childWidth + 'px');
+                        if ($(this).css('display') != 'none') {
+                            $(this).css('display', 'inline-block');
+                        }
+                    });
+                }
             }
+        });
+    };
+
+    var createProperty = function (domId, developerName, contentValue, objectData) {
+        var property = new Object();
+
+        property.developerName = developerName;
+        property.contentValue = contentValue;
+        property.objectData = objectData;
+
+        return property;
+    };
+
+    var createPageContainerObjects = function (domId, pageContainerId) {
+        var pageContainers = new Array();
+        var order = 0;
+
+        // Take the parent container, grab the page sortable child, then grab the children of that that are page containers and iterate
+        $('#' + pageContainerId).children('.page-sortable').children('.manywho-page-container').each(function (index, element) {
+            var pageContainer = null;
+            var pageContainersProperty = null;
+            var orderProperty = null;
+            var id = null;
+            var label = null;
+            var containerType = null;
+
+            // Get the id directly from the child element
+            id = $(this).attr('id');
+
+            // Grab the page container from the local database
+            pageContainer = $('#' + domId + '-page-containers').data(id);
+
+            // Check to make sure the page container is not null - if it is, it's likely the dom has had a fault - but we still want to save
+            if (pageContainer != null) {
+                // Find the property for the page containers
+                for (var a = 0; a < pageContainer.properties.length; a++) {
+                    // Check to see if this is the property for page containers
+                    if (pageContainer.properties[a].developerName.toLowerCase() == 'pagecontainers') {
+                        // We've found the page container property for child page containers
+                        pageContainersProperty = pageContainer.properties[a];
+                    } else if (pageContainer.properties[a].developerName.toLowerCase() == 'order') {
+                        orderProperty = pageContainer.properties[a];
+                    }
+                }
+
+                // Assign the order property to the order it appears in the UI
+                orderProperty.contentValue = '' + order + '';
+
+                // Check to see if this container has any child containers
+                if ($(this).children('.page-sortable').children('.manywho-page-container').length > 0) {
+                    // Grab the child page containers
+                    pageContainersProperty.objectData = createPageContainerObjects(domId, $(this).attr('id'));
+                } else {
+                    // Add the page containers property, but make it null
+                    pageContainersProperty.objectData = null;
+                }
+
+                // Add this page container to the list of containers
+                pageContainers[pageContainers.length] = pageContainer;
+
+                // Increment the order (this assumes the search returns in the order it's displayed to the user
+                order++;
+            }
+        });
+
+        // If the array is empty, we null it out to keep things clean
+        if (pageContainers.length == 0) {
+            pageContainers = null;
         }
+
+        return pageContainers;
     };
 
     // Publicly allowed methods
     var methods = {
         init: function (options) {
             var panel = '';
+            var html = '';
+            var page = null;
             var domId = $(this).attr('id');
+            var pageEditorHeight = null;
 
             var opts = $.extend({}, $.fn.manywhoFormEditor.defaults, options);
 
-            panel += '<div class="container-fluid">';
-            panel += '    <div class="row-fluid">';
-            panel += '        <div class="span2">';
-            panel += '		      <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Input Box</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Text Box</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Check Box</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Combo Box</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Table</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Content</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Presentation</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Image</a></div>';
-            panel += '            <div><a id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '" class="btn span12 ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '" style="text-align: left;" href="#"><i class="icon-share-alt"></i> Tag</a></div>';
-            panel += '        </div>';
-            panel += '        <div class="span10">';
-            panel += '            <div class="manywho-formeditor-scaffolding-controls">';
-            panel += '                <a id="' + domId + '-add-section" class="btn btn-primary" style="text-align: left;" href="#"><i class="icon-plus-sign icon-white"></i> Add Section</a>';
-            panel += '                <a id="' + domId + '-add-column" class="btn btn-primary" style="text-align: left;" href="#"><i class="icon-plus-sign icon-white"></i> Add Column</a>';
-            panel += '                <a id="' + domId + '-add-cell" class="btn btn-primary" style="text-align: left;" href="#"><i class="icon-plus-sign icon-white"></i> Add Cell</a>';
-            panel += '            </div>';
-            panel += '            <div id="' + domId + '-manywho-form-canvas" class="manywho-form-canvas">';
-            panel += '                <div id="' + domId + '-form-sections" class="manywho-form-section-column">';
-            panel += '                </div>';
-            panel += '            </div>';
-            panel += '        </div>';
-            panel += '    </div>';
-            panel += '</div>';
+            // The on page databases to store the containers and components for the page element
+            html += '<div id="' + domId + '-page-components" style="display: none;"></div>';
+            html += '<div id="' + domId + '-page-containers" style="display: none;"></div>';
+            html += '<div id="' + domId + '-page-element" style="display: none;"></div>';
 
-            panel += '<div id="' + domId + '-data" style="display:none;"></div>';
-            panel += '<input type="hidden" id="' + domId + '-selected-column" />';
-            panel += '<input type="hidden" id="' + domId + '-selected-section" />';
+            html += '    <div class="row-fluid">';
+            html += '        <table width="100%"><tr><td id="' + domId + '-page-builder-toolbar" width="10%" valign="top">';
 
-            // Print the form panel detail back to the reference form panel
-            $(this).html(panel);
+            html += '        <div>';
+            html += '            <h5>Layouts</h5>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '"><i class="icon-folder-open"></i> Group</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '"><i class="icon-resize-vertical"></i> Vertical</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '"><i class="icon-resize-horizontal"></i> Horizontal</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '"><i class="icon-arrow-right"></i> Inline</div>';
+            html += '        </div>';
 
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_CHECKBOX);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_TEXTBOX);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_INPUTBOX);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_COMBOBOX);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_TABLE);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_CONTENT);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_PRESENTATION);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_IMAGE);
-            createDraggable(domId, ManyWhoConstants.COMPONENT_TYPE_TAG);
+            html += '        <p>&nbsp;</p>';
 
-            $('#' + domId + '-add-section').click(function (event) {
-                event.preventDefault();
-                addSection.call(this, domId);
+            html += '        <div>';
+            html += '            <h5>Components</h5>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '">Input</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '">Text</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '">Checkbox</div>';
+            html += '        </div>';
+
+            html += '        <p>&nbsp;</p>';
+
+            html += '        <div>';
+            html += '            <h5>Coming soon!</h5>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '">Content</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
+            html += '        </div>';
+
+            html += '        </td>';
+            html += '        <td width="90%" valign="top">';
+
+            html += '            <div class="row-fluid">';
+            html += '                <div class="span1"><img src="/extensions/glyphicons/page_element_small.png" height="48" width="48" alt="Page Layout" style="padding-bottom: 10px;" /></div>';
+            html += '                <div class="span11">Use the editor below to build your Page Layout. Simply drag Layout Container or Components from the left and drop them on the right. We recommend you start by setting out your Layout Containers, then add your Components. Once a Layout Container or Component has been placed, it cannot be moved outside of its immediate parent.</div>';
+            html += '            </div>';
+
+            html += '            <div id="' + domId + '-page-builder" class="page-builder">';
+            html += '                <div class="manywho-page-container-controls">';
+            html += '                <i class="icon-list-alt icon-white" id="' + domId + '-page-element-edit"></i> ';
+            html += '                <span class="manywho-page-container-label" id="' + domId + '-page-element-label"></span>';
+            html += '            </div>';
+
+            html += '            <div id="' + domId + '-page-sortable-0" class="page-sortable page-sortable-vertical page-sortable-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '">';
+            html += '            </div>';
+
+            html += '        </td></tr></table>';
+            html += '    </div>';
+
+            // Print the scaffolding into the dom
+            $(this).html(html);
+
+            // Grab the height of the parent container so we can adjust the editor accordingly
+            pageEditorHeight = $(this).height() - 30;
+
+            // Apply the CSS directly to the page editor
+            $('#' + domId + '-page-builder').css('min-height', pageEditorHeight + 'px');
+            $('#' + domId + '-page-sortable-0').css('min-height', pageEditorHeight + 'px');
+
+            $('#' + domId + '-page-element-edit').click(function (event) {
+                var inputs = null;
+                var page = null;
+
+                // Wrap the page containers in an array
+                page = [$('#' + domId + '-page-element').data('page')];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
             });
 
-            $('#' + domId + '-add-column').click(function (event) {
-                event.preventDefault();
-                addColumn.call(this, domId, $('#' + domId + '-selected-section').val());
+            // Make all of our test sortables sortable!
+            makeSortable(domId, 'page-sortable-0');
+
+            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
             });
 
-            $('#' + domId + '-add-cell').click(function (event) {
-                event.preventDefault();
-                addCell.call(this, domId, $('#' + domId + '-selected-section').val(), $('#' + domId + '-selected-column').val());
+            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
             });
 
-            // Create the blank form so we start with a section, column and cell
-            addSection.call(this, domId, createSectionObjectData(), createColumnObjectData(), createCellObjectData());
+            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
 
-            $('.manywho-block-fields').disableSelection();
-            $('.manywho-form-section-column').disableSelection();
+            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
+
+            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
+
+            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
+
+            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
+
+            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
+
+            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
+            //    connectToSortable: '.page-sortable',
+            //    helper: 'clone',
+            //    scroll: true, // Scroll the page if we hit the edge
+            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            //});
+
+            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable').draggable({
+            //    connectToSortable: '.page-sortable',
+            //    helper: 'clone',
+            //    scroll: true, // Scroll the page if we hit the edge
+            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            //});
+
+            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable').draggable({
+            //    connectToSortable: '.page-sortable',
+            //    helper: 'clone',
+            //    scroll: true, // Scroll the page if we hit the edge
+            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            //});
+
+            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable').draggable({
+            //    connectToSortable: '.page-sortable',
+            //    helper: 'clone',
+            //    scroll: true, // Scroll the page if we hit the edge
+            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            //});
+
+            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable').draggable({
+            //    connectToSortable: '.page-sortable',
+            //    helper: 'clone',
+            //    scroll: true, // Scroll the page if we hit the edge
+            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            //});
+
+            // Create an empty page object for new pages
+            page = new Object();
+            page.properties = new Array();
+
+            // Make sure we tell the service the type of element we're saving back
+            page.developerName = 'pageelement';
+
+            // Create the properties
+            page.properties[page.properties.length] = createProperty(domId, 'pageconditions', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'tags', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'stopconditionsonfirsttrue', 'false', null);
+            page.properties[page.properties.length] = createProperty(domId, 'id', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'label', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'elementtype', ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT, null);
+            page.properties[page.properties.length] = createProperty(domId, 'developername', 'My Form', null);
+            page.properties[page.properties.length] = createProperty(domId, 'developersummary', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'pagecontainers', null, null);
+            page.properties[page.properties.length] = createProperty(domId, 'pagecomponents', null, null);
+
+            // Store the page in the dom
+            $('#' + domId + '-page-element').data('page', page);
+
+            $('div').disableSelection();
         },
         validate: function() {
             var failureResult = new Object();
@@ -907,180 +1084,142 @@ permissions and limitations under the License.
             return failureResult;
         },
         getValue: function () {
-            // This method basically merries up the objects stored in the database against the current layout of the form and returns the sections as
-            // object data ready to be passed back to the flow
             var domId = $(this).attr('id');
-            var sectionOrder = 0;
-            var sectionsArray = new Array();
+            var pageElement = null;
+            var pageComponents = new Array();
+            var pageContainers = new Array();
+            var pageComponentsProperty = null;
+            var pageContainersProperty = null;
 
-            // Step 1: iterate through all of the sections in the form editor
-            $('.manywho-form-section-grid').each(function (sectionIndex) {
-                var sectionId = null;
-                var sectionObjectData = null;
-                var columnOrder = 0;
+            // Create the shell of the object
+            pageElement = $('#' + domId + '-page-element').data('page');
 
-                // Get the section id from the dom
-                sectionId = $(this).attr('data-id');
+            // Get the page container and component properties out as we're going to overwrite their contents
+            for (var a = 0; a < pageElement.properties.length; a++) {
+                if (pageElement.properties[a].developerName.toLowerCase() == 'pagecontainers') {
+                    pageContainersProperty = pageElement.properties[a];
+                } else if (pageElement.properties[a].developerName.toLowerCase() == 'pagecomponents') {
+                    pageComponentsProperty = pageElement.properties[a];
+                }
+            }
 
-                // Now grab the section object data from our local storage db
-                sectionObjectData = $('#' + domId + '-data').data(sectionId);
+            // Start by grabbing the page containers for the root page element - this will give us our base object for the page element also
+            pageContainersProperty.objectData = createPageContainerObjects(domId, domId + '-page-builder');
 
-                // Assign the latest order information to the section
-                assignOrderProperty(sectionOrder, sectionObjectData);
+            // Go through each of the component sortable areas
+            $('#' + domId + '-page-builder').find('.page-sortable').each(function (index, element) {
+                var pageComponentOrder = 0;
+                var pageContainerDeveloperName = null;
 
-                // Step 2: iterate through all of the columns for the section and add them to the root section object
-                $(this).find('.manywho-form-column-grid').each(function (columnIndex) {
-                    var columnId = null;
-                    var columnObjectData = null;
-                    var cellOrder = 0;
+                // Grab the parent page container as we'll need that for the developer name
+                pageContainerDeveloperName = $(this).attr('data-developername');
 
-                    // Get the column id from the dom
-                    columnId = $(this).attr('data-id');
+                // Now that we have a sortable, got through the children that are components
+                $(this).children('.manywho-page-component').each(function (index, element) {
+                    var pageComponent = null;
+                    var orderProperty = null;
+                    var pageContainerDeveloperNameProperty = null;
 
-                    // Now grab the column object data from our local storage db
-                    columnObjectData = $('#' + domId + '-data').data(columnId);
+                    // Grab the component object from our database
+                    pageComponent = $('#' + domId + '-page-components').data($(this).attr('id'));
 
-                    // Assign the latest order information to the column
-                    assignOrderProperty(columnOrder, columnObjectData);
-
-                    // Step 3: iterate through all of the cells for the column and add them to the parent column object
-                    $(this).find('.manywho-form-cell-grid').each(function (cellIndex) {
-                        var cellId = null;
-                        var cellObjectData = null;
-                        var fieldOrder = 0;
-
-                        // Get the cell id from the dom
-                        cellId = $(this).attr('data-id');
-
-                        // Now grab the cell object data from our local storage db
-                        cellObjectData = $('#' + domId + '-data').data(cellId);
-
-                        // Assign the latest order information to the cell
-                        assignOrderProperty(cellOrder, cellObjectData);
-
-                        // Step 4: iterate through all of the fields for the cell and add them to the parent cell object
-                        $(this).find('.manywho-form-field').each(function (fieldIndex) {
-                            var fieldId = null;
-                            var fieldObjectData = null;
-
-                            // Get the field id from the dom
-                            fieldId = $(this).attr('data-id');
-
-                            // Now grab the field object data from our local storage db
-                            fieldObjectData = $('#' + domId + '-data').data(fieldId);
-
-                            // Assign the latest order information to the field
-                            assignOrderProperty(fieldOrder, fieldObjectData);
-
-                            // Add this field to the cell fields property
-                            addObjectToProperty(cellObjectData, ManyWhoConstants.SERVICE_VALUE_FIELDS, fieldObjectData);
-
-                            // Increment the field order
-                            fieldOrder++;
-                        });
-
-                        // Add this cell to the column cells property
-                        addObjectToProperty(columnObjectData, ManyWhoConstants.SERVICE_VALUE_CELLS, cellObjectData);
-
-                        // Increment the cell order
-                        cellOrder++;
-                    });
-
-                    // Add this column to the section columns property
-                    addObjectToProperty(sectionObjectData, ManyWhoConstants.SERVICE_VALUE_COLUMNS, columnObjectData);
-
-                    // Increment the column order
-                    columnOrder++;
-                });
-
-                // Add the section to the sections array
-                sectionsArray[sectionsArray.length] = sectionObjectData;
-
-                // Increment the section order
-                sectionOrder++;
-            });
-
-            return sectionsArray;
-        },
-        setValue: function (sections) {
-            var domId = $(this).attr('id');
-
-            if (sections != null &&
-                sections.length > 0) {
-                // Clear any existing sections (the default stuff we add for new forms)
-                $('#' + domId + '-form-sections').html('');
-
-                // Need to sort the sections here
-                for (var i = 0; i < sections.length; i++) {
-                    var section = sections[i];
-
-                    // Add the section to our document
-                    var sectionId = addSection(domId, section, null, null);
-
-                    if (section.properties != null &&
-                        section.properties.length > 0) {
-                        // Need to sort the columns here
-                        for (var j = 0; j < section.properties.length; j++) {
-                            // We need to find the columns property in the section object
-                            if (section.properties[j].developerName.toLowerCase() == 'columns') {
-                                var columns = section.properties[j].objectData;
-
-                                // Check to make sure we have some columns
-                                if (columns != null &&
-                                    columns.length > 0) {
-                                    for (var a = 0; a < columns.length; a++) {
-                                        var column = columns[a];
-
-                                        // Add the column to our document
-                                        var columnId = addColumn(domId, sectionId, column, null);
-
-                                        if (column.properties != null &&
-                                            column.properties.length > 0) {
-                                            // Need to sort the cells here
-                                            for (var k = 0; k < column.properties.length; k++) {
-                                                if (column.properties[k].peveloperName.toLowerCase() == 'cells') {
-                                                    var cells = column.properties[k].objectData;
-
-                                                    // Check to make sure we have some cells
-                                                    if (cells != null &&
-                                                        cells.length > 0) {
-                                                        for (var b = 0; b < cells.length; b++) {
-                                                            var cell = cells[b];
-
-                                                            // Add the cell to our document
-                                                            var cellId = addCell(domId, sectionId, columnId, cell);
-
-                                                            if (cell.properties != null &&
-                                                                cell.properties.length > 0) {
-                                                                // Need to sort the fields here
-                                                                for (var l = 0; l < cell.properties.length; l++) {
-                                                                    if (cell.properties[l].developerName.toLowerCase() == 'fields') {
-                                                                        var fields = cell.properties[l].objectData;
-
-                                                                        // Check to make sure we have some fields
-                                                                        if (fields != null &&
-                                                                            fields.length > 0) {
-                                                                            for (var c = 0; c < fields.length; c++) {
-                                                                                var field = fields[c];
-
-                                                                                // Finally, add the field to our document
-                                                                               addField(domId, sectionId, columnId, cellId, field);
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                    // Check to make sure the component isn't null
+                    if (pageComponent != null) {
+                        // Find the order property for the page component
+                        for (var a = 0; a < pageComponent.properties.length; a++) {
+                            // Check to see if this is the property for order
+                            if (pageComponent.properties[a].developerName.toLowerCase() == 'order') {
+                                orderProperty = pageComponent.properties[a];
+                            } else if (pageComponent.properties[a].developerName.toLowerCase() == 'pagecontainerdevelopername') {
+                                pageContainerDeveloperNameProperty = pageComponent.properties[a];
                             }
                         }
+
+                        // Assign the page container developer name
+                        pageContainerDeveloperNameProperty.contentValue = pageContainerDeveloperName;
+
+                        // Assign the order to how is appears in the container
+                        orderProperty.contentValue = '' + pageComponentOrder + '';
+
+                        // Add each page component object to our array
+                        pageComponents[pageComponents.length] = pageComponent;
+
+                        // Increment the order of the component
+                        pageComponentOrder++;
                     }
+                });
+            });
+
+            // Now add the page components to our page element
+            pageComponentsProperty.objectData = pageComponents;
+
+            // Return the page wrapped in an array so it's recognized by the form runtime as an object data value
+            return [pageElement];
+        },
+        setValue: function (objectData) {
+            var domId = $(this).attr('id');
+            var page = null;
+            var currentCounter = 0;
+            var parentContainerId = null;
+            var inputs = null;
+
+            // Check to see if the page object api is not null
+            if (objectData != null &&
+                objectData.length > 0) {
+                // Grab the page object from the object data
+                page = objectData[0];
+
+                // Check to see if the page object api has any properties
+                if (page.properties != null &&
+                    page.properties.length > 0) {
+                    var pageComponents = null;
+                    var pageContainers = null;
+
+                    // Assign the parent container to the page
+                    parentContainerId = domId + '-page-builder';
+
+                    // Go through each of the page object api properties and apply them appropriately
+                    for (var a = 0; a < page.properties.length; a++) {
+                        // Check to see if we're dealing with the page containers property
+                        if (page.properties[a].developerName.toLowerCase() == 'pagecontainers') {
+                            // Grab the page containers from the page object api
+                            pageContainers = page.properties[a].objectData;
+                        } else if (page.properties[a].developerName.toLowerCase() == 'pagecomponents') {
+                            // Grab the page components from the page object api
+                            pageComponents = page.properties[a].objectData;
+                        } else if (page.properties[a].developerName.toLowerCase() == 'label') {
+                            $('#' + domId + '-page-element-label').html(page.properties[a].contentValue);
+                        } else if (page.properties[a].developerName.toLowerCase() == 'id') {
+                            $('#' + domId + '-page-element-id').val(page.properties[a].contentValue);
+                        } else if (page.properties[a].developerName.toLowerCase() == 'developername') {
+                            $('#' + domId + '-page-element-developername').val(page.properties[a].contentValue);
+                        } else if (page.properties[a].developerName.toLowerCase() == 'developersummary') {
+                            $('#' + domId + '-page-element-developersummary').val(page.properties[a].contentValue);
+                        }
+                    }
+
+                    // Create the page containers for the page element
+                    createPageContainers(domId, parentContainerId, pageContainers);
+
+                    // Create the page components - this method handles sorting and parent placement
+                    createPageComponents(domId, pageComponents);
                 }
+
+                // Store the page in the dom
+                $('#' + domId + '-page-element').data('page', page);
+            }
+
+            if ($('#' + domId + '-page-element-label').html() == null ||
+                $('#' + domId + '-page-element-label').html().trim().length == 0) {
+                // We don't have an existing page element, so we should load the dialog immediately so the user is prompted to add the info
+                // Wrap the page in an array (there will be an empty one in the dom)
+                page = [$('#' + domId + '-page-element').data('page')];
+
+                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
+
+                // Open the dialog for creating a new form field
+                ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
             }
         }
     };

@@ -16,20 +16,83 @@ permissions and limitations under the License.
 
 (function ($) {
 
+    // This method works out if the action type should be shown inline with table records or not. The decision will determine if the outcome
+    // button is displayed at the top of the table or if it's shown as a link against each record in the table
+    //
+    var isInlinePageActionType = function (pageActionType) {
+        var isInline = false;
+
+        if (pageActionType != null &&
+            pageActionType.trim().length > 0) {
+            pageActionType = pageActionType.toLowerCase();
+
+            if (pageActionType == ManyWhoConstants.ACTION_TYPE_EDIT.toLowerCase() ||
+                pageActionType == ManyWhoConstants.ACTION_TYPE_REMOVE.toLowerCase() ||
+                pageActionType == ManyWhoConstants.ACTION_TYPE_IMPORT.toLowerCase() ||
+                pageActionType == ManyWhoConstants.ACTION_TYPE_OPEN.toLowerCase() ||
+                pageActionType == ManyWhoConstants.ACTION_TYPE_DELETE.toLowerCase() ||
+                pageActionType == ManyWhoConstants.ACTION_TYPE_UPDATE.toLowerCase()) {
+                // The outcome should be rendered inline on the table component
+                isInline = true;
+            }
+        }
+
+        return isInline;
+    };
+
     // This method generates the actual HTML for the table component to turn into the fully functioning table.  Tables do not support
     // inline editing of any kind.  To edit a table, you need to create a separate form and outcome for that. TODO: we should add binding
     // for outcomes to bind to table operations - such as edit, delete, etc - in case the UI has multiple tables.  This is also much more
     // mobile friendly as mobile devices don't often have inline table editing - it's just too complicated!
     //
-    var generateTableDataHtml = function (field, objectData, formMetaData) {
+    var generateTableDataHtml = function (field, objectData, formMetaData, outcomeResponses, onClickFunction) {
         var html = '';
         var columns = field.columns;
+        var actionLinks = '';
+        var actionLinkCount = 0;
+        var hasActionLinks = false;
 
         // Job number 1 is to create the headings for the table - so the user knows what each column is for
         if (columns != null &&
             columns.length > 0) {
 
             html += '<thead class="header"><tr>';
+
+            // Check to see if this table has any bound outcomes
+            if (outcomeResponses != null &&
+                outcomeResponses.length > 0) {
+                for (var a = 0; a < outcomeResponses.length; a++) {
+                    // The outcome is bound to this table and it's not a bulk action (i.e. it should be inline)
+                    if (outcomeResponses[a].pageObjectBindingId == field.id &&
+                        outcomeResponses[a].isBulkAction == false &&
+                        isInlinePageActionType(outcomeResponses[a].pageActionType) == true) {
+                        // Construct the temp link which may need some additional formatting
+                        var tempActionLink = '<li><a href="#" class="manywho-table-outcome-action" data-outcomeid="' + outcomeResponses[a].id + '">' + outcomeResponses[a].label + '</a></li>';
+
+                        // We add a bar to act as a link separator
+                        if (actionLinkCount == 0) {
+                            actionLinks += '<ul class="nav nav-pills">' + tempActionLink;
+                        } else {
+                            actionLinks += tempActionLink;
+                        }
+
+                        // Tell the algorithm we have action links
+                        hasActionLinks = true;
+
+                        // Increment the counter so we know to put in the bar
+                        actionLinkCount++;
+                    }
+                }
+            }
+
+            // If we have action links, we add a column for those
+            if (hasActionLinks == true) {
+                // Add the closing UL to the action links
+                actionLinks += '</ul>';
+
+                // Add the column to the table
+                html += '<th class="manywho-runtime-table-actions-header">Action</th>';
+            }
 
             // Go through the list of columns provided and print the header information
             for (var i = 0; i < columns.length; i++) {
@@ -89,6 +152,11 @@ permissions and limitations under the License.
                 // We add the id to the row so we can identify it for selections
                 html += '<tr id="' + objectEntry.externalId + '">';
 
+                // If we have action links, we add them first here
+                if (hasActionLinks == true) {
+                    html += '<td class="manywho-runtime-table-actions-entry">' + actionLinks + '</td>';
+                }
+
                 // Go through each of the columns and find the matching property.  We do this to ensure the columns
                 // are always rendered in the correct order for the headings
                 for (var k = 0; k < columns.length; k++) {
@@ -100,7 +168,7 @@ permissions and limitations under the License.
                         for (var j = 0; j < objectEntry.properties.length; j++) {
                             var property = objectEntry.properties[j];
 
-                            if (column.typeElementEntryId == property.typeElementEntryId) {
+                            if (column.typeElementPropertyId == property.typeElementPropertyId) {
                                 var fieldValue = '';
 
                                 if (property.contentValue != null) {
@@ -121,7 +189,7 @@ permissions and limitations under the License.
         }
 
         return html;
-    }
+    };
 
     // This method generates the select options html based on the object data and selected object data.  This method relies
     // on the fact that the options are generated from object data and not simple array lists.
@@ -225,7 +293,7 @@ permissions and limitations under the License.
     // This is a multi-purpose method that not only generates the table entries from object data, but also applies any
     // object data changes without re-rendering the entire list.
     //
-    var createUIForObjectData = function (domId, field, formMetaData, objectData) {
+    var createUIForObjectData = function (domId, field, formMetaData, objectData, outcomeResponses, onClickFunction) {
         var html = null;
         var storageObject = null;
 
@@ -239,7 +307,7 @@ permissions and limitations under the License.
             if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
                 html = generateSelectOptionsHtml(field.columns, objectData, formMetaData.objectData, field.isMultiSelect);
             } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                html = generateTableDataHtml(field, objectData, formMetaData);
+                html = generateTableDataHtml(field, objectData, formMetaData, outcomeResponses, onClickFunction);
             } else {
                 alert('Field type not supported for UI data method: ' + field.componentType);
             }
@@ -259,7 +327,7 @@ permissions and limitations under the License.
             if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
                 html = generateSelectOptionsHtml(field.columns, formMetaData.objectData, null, field.isMultiSelect);
             } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                html = generateTableDataHtml(field, formMetaData.objectData, formMetaData);
+                html = generateTableDataHtml(field, formMetaData.objectData, formMetaData, outcomeResponses, onClickFunction);
             } else {
                 alert('Field type not supported for UI data method: ' + field.componentType);
             }
@@ -297,13 +365,6 @@ permissions and limitations under the License.
                 if ($(this).hasClass('success')) {
                     // Remove the selection from the already selected row
                     $(this).removeClass('success');
-
-                    // Enabled the edit and delete actions if they exist
-                    $.each($('#' + domId + '-' + field.id + '-actions').find('button'), function (index) {
-                        if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
-                            //$(this).attr('disabled', 'disabled');
-                        }
-                    });
                 }
                 else {
                     // Remove any selections that exist on the table
@@ -311,13 +372,29 @@ permissions and limitations under the License.
 
                     // Make the current row selected
                     $(this).addClass('success');
+                }
+            });
 
-                    // Enabled the edit and delete actions if they exist
-                    $.each($('#' + domId + '-' + field.id + '-actions').find('button'), function (index) {
-                        if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
-                            //$(this).removeAttr('disabled');
-                        }
-                    });
+            // Add action link support for any actions in the table
+            $('#' + domId + '-' + field.id + '-field').find('.manywho-table-outcome-action').click(function (event) {
+                // Prevent the default event
+                event.preventDefault();
+
+                // Remove any selections that exist on the table
+                $('#' + domId + '-' + field.id + '-field').find('tr').removeClass('success');
+
+                // Make the current row selected - this is needed so we have the value of the row
+                $(this).parents('tr').addClass('success');
+
+                // Disable all of the outcome buttons on the form
+                $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+
+                // Check to make sure all of the fields are valid - and prompt the user if they're not
+                var isValid = validateFieldValues(domId);
+
+                if (isValid == true) {
+                    // If the form validates OK, we proceed with the onClick function
+                    onClickFunction.call(this, $(this).attr('data-outcomeid'));
                 }
             });
         }
@@ -348,12 +425,27 @@ permissions and limitations under the License.
 
                 // Open the share js connection for this state and this field
                 sharejs.open($('#' + domId + '-state-id').val() + '-' + field.id, 'text', ManyWhoConstants.NODE_BASE_PATH + '/nodeApp/channel', function (error, doc) {
+                    // Grab the current value of the field
+                    var documentValue = $('#' + domId + '-' + field.id + '-field').val();
+
                     window.doc = doc;
                     if (error) {
                         console.log(error);
                     } else {
-                        documentElement.disabled = false;
+                        //documentElement.disabled = false;
                         doc.attach_textarea(documentElement);
+
+                        // If the document had a value in it already (for example from the page load, stick it back into the document - but only
+                        // if share js does not already have some content in the shared space
+                        if ((doc.getText() == null ||
+                             doc.getText().trim().length == 0) &&
+                            documentValue != null &&
+                            documentValue.trim().length > 0) {
+                            // Insert the content at position 0 in sharejs
+                            doc.insert(0, documentValue);
+                            // Set the field value also
+                            $('#' + domId + '-' + field.id + '-field').val(documentValue);
+                        }
                     }
                 });
             }
@@ -397,35 +489,64 @@ permissions and limitations under the License.
         html += '<div id="' + domId + '-' + field.id + '-database" style="display:none;"></div>';
         html += '<div id="' + domId + '-' + field.id + '-actions" class="manwho-form-field-actions"></div>';
 
+        // Put the label above the field
         if (field.label != null &&
             field.label.trim().length > 0 &&
-            field.componentType != ManyWhoConstants.COMPONENT_TYPE_IMAGE) {
+            field.componentType != ManyWhoConstants.COMPONENT_TYPE_IMAGE &&
+            field.componentType != ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
+            html += '<label><span class="text-info manywho-field-label">' + field.label + '</span></label>';
+        } else if (field.label != null &&
+                   field.label.trim().length > 0 &&
+                   field.componentType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
             html += '<label>';
+        }
+
+        // Add in the help information if it has been provided
+        if (field.helpInfo != null &&
+            field.helpInfo.trim().length > 0 &&
+            field.componentType != ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
+            html += '<a class="btn btn-info" href="#" id="' + domId + '-' + field.id + '-help-info"><i class="icon-question-sign icon-white"></i></a>';
         }
 
         // Add the field html here
         html += fieldHtml;
 
+        // The label is a bit different for check boxes
         if (field.label != null &&
             field.label.trim().length > 0 &&
-            field.componentType != ManyWhoConstants.COMPONENT_TYPE_IMAGE) {
+            field.componentType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
             html += '<span class="text-info manywho-field-label">' + field.label + '</span></label>';
+
+            // Add in the help information if it has been provided
+            if (field.helpInfo != null &&
+                field.helpInfo.trim().length > 0) {
+                html += '<a class="btn btn-info" href="#" id="' + domId + '-' + field.id + '-help-info"><i class="icon-question-sign icon-white"></i></a>';
+            }
         }
 
-        // Add in the help information if it has been provided
-        if (field.helpInfo != null &&
-            field.helpInfo.trim().length > 0) {
-            html += '<a class="btn btn-info" href="#" id="' + domId + '-' + field.id + '-help-info"><i class="icon-question-sign icon-white"></i></a>';
+        // Add the loading indicator div so we have that for async fields - we use a different indicator for tables
+        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+            html += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-table-loading-indicator"></div>';
+        } else {
+            html += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-loading-indicator"></div>';
         }
 
         html += '</div>';
         html += '</div>';
+
+        // If this is a vertical flow layout, we wrap the field in a row fluid
+        if ($('#' + field.pageContainerId).attr('data-containertype').toLowerCase() == ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW.toLowerCase()) {
+            html = '<div class="row-fluid">' + html + '</div>';
+        }
 
         // Add this field to the row of fields
         $('#' + field.pageContainerId).append(html);
 
         // Add the realtime social stuff to the field
         addFieldCollaboration(domId, field);
+
+        // Hide the loading indicator from the user
+        $('#' + domId + '-' + field.id + '-loading-indicator').hide();
 
         if (field.helpInfo != null &&
             field.helpInfo.trim().length > 0) {
@@ -560,24 +681,40 @@ permissions and limitations under the License.
 
         if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX.toUpperCase()) {
             if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_NUMBER.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" /><br />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_DATETIME.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="datetime" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" /><br />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="datetime" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_PASSWORD.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" /><br />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" /><br />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT.toUpperCase()) {
             fieldHtml = '';
+            fieldHtml += '<div id="' + domId + '-' + field.id + '-field-toolbar">';
             fieldHtml += '<div class="btn-toolbar">';
-            fieldHtml += '<div class="btn-group" id="' + domId + '-' + field.id + '-field-toolbar">';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="bold" title="CTRL+B" href="#"><i class="icon-bold"></i></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="italic" title="CTRL+I" href="#"><i class="icon-italic"></i></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-action="change_view"><i class="icon-eye-close"></i></a>';
+            fieldHtml += '<div class="btn-group">';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="bold" title="CTRL+B" href="#"><small><b>B</b></small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="italic" title="CTRL+I" href="#"><small><i>I</i></small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1"><small>H1</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2"><small>H2</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="insertUnorderedList"><small>&bull; List</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="insertOrderedList"><small>Order</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="createLink" title="CTRL+L" href="#"><small>Link</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-command="insertSpeech"><small>Speech</small></a>';
+            fieldHtml += '<a class="btn" data-wysihtml5-action="change_view"><small>Source</small></a>';
             fieldHtml += '</div>';
             fieldHtml += '</div>';
-            fieldHtml += '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-content-field" placeholder="' + field.hintValue + '" style="height: ' + (field.height * 10) + 'px; width: ' + (field.width * 4) + 'px;">' + formMetaData.contentValue + '</textarea><br />';
+            fieldHtml += '<div data-wysihtml5-dialog="createLink" style="display: none;">';
+            fieldHtml += '<label>';
+            fieldHtml += 'Link:';
+            fieldHtml += '<input data-wysihtml5-dialog-field="href" value="http://">';
+            fieldHtml += '</label>';
+            fieldHtml += '<a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>';
+            fieldHtml += '</div>';
+            fieldHtml += '</div>';
+
+            fieldHtml += '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-content-field" placeholder="' + field.hintValue + '" style="height: ' + (field.height * 10) + 'px; width: ' + (field.width * 4) + 'px;">' + formMetaData.contentValue + '</textarea>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX.toUpperCase()) {
             if (formMetaData.contentValue != null &&
                 formMetaData.contentValue.trim().toLowerCase() == 'true') {
@@ -586,7 +723,7 @@ permissions and limitations under the License.
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="checkbox" class="manywho-runtime-inputbox-field' + fieldSize + '" /> ';
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX.toUpperCase()) {
-            fieldHtml = '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-textarea-field' + fieldSize + '" placeholder="' + field.hintValue + '" rows="' + field.height + '" cols="' + field.width + '">' + formMetaData.contentValue + '</textarea><br />';
+            fieldHtml = '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-textarea-field' + fieldSize + '" placeholder="' + field.hintValue + '" rows="' + field.height + '" cols="' + field.width + '">' + formMetaData.contentValue + '</textarea>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX.toUpperCase()) {
             multiModifier = '';
 
@@ -594,9 +731,9 @@ permissions and limitations under the License.
                 multiModifier = ' multiple';
             }
 
-            fieldHtml = '<select id="' + domId + '-' + field.id + '-field"' + multiModifier + ' size="1" class="manywho-runtime-combobox-field"></select><br />';
+            fieldHtml = '<select id="' + domId + '-' + field.id + '-field"' + multiModifier + ' size="1" class="manywho-runtime-combobox-field"></select>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TABLE.toUpperCase()) {
-            fieldHtml = '<div style="overflow: auto; max-height: 300px;"><table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select"></table></div>';
+            fieldHtml = '<div class="manywho-runtime-table-field-container"><table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select"></table></div>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION.toUpperCase()) {
             fieldHtml = '<div id="' + domId + '-' + field.id + '-field" class="manywho-runtime-presentation-field"></div>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TAG.toUpperCase()) {
@@ -610,7 +747,7 @@ permissions and limitations under the License.
 
     // This is the generic method for creating outcomes.
     //
-    var generateOutcome = function (domId, externalDomId, outcomeId, label, onClickFunction, formElementBindingId, formActionBinding, viewStateDomElement, mapElementId) {
+    var generateOutcome = function (domId, externalDomId, outcomeId, label, onClickFunction, formElementBindingId, formActionBinding, isBulkAction, formActionType, viewStateDomElement, mapElementId) {
         var outcomeDomId = null;
         var buttonClass = 'btn';
 
@@ -633,49 +770,56 @@ permissions and limitations under the License.
             buttonClass += ' btn-warning';
         }
 
-        // Print the outcome button
-        $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + domId + '-' + outcomeId + '" data-actionbinding="' + formActionBinding + '">' + label + '</button>&nbsp;');
-
-        // Make sure we show the field outcomes action div
         if (formElementBindingId != null &&
-            formElementBindingId.trim().length > 0) {
-            $('#' + outcomeDomId).show();
-        }
+            formElementBindingId.trim().length > 0 &&
+            isBulkAction == false &&
+            isInlinePageActionType(formActionType) == true) {
+            // Do nothing as we'll add the action to the component control
+        } else {
+            // Print the outcome button
+            $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + domId + '-' + outcomeId + '" data-actionbinding="' + formActionBinding + '">' + label + '</button>&nbsp;');
 
-        $('#' + domId + '-' + outcomeId).click(function (event) {
-            // Make sure we don't cause any linking issues or page refreshes
-            event.preventDefault();
-
-            // Disable all of the outcome buttons on the form
-            $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
-
-            if (externalDomId != null &&
-                externalDomId.trim().length > 0) {
-                $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+            // Make sure we show the field outcomes action div
+            if (formElementBindingId != null &&
+                formElementBindingId.trim().length > 0) {
+                $('#' + outcomeDomId).show();
             }
 
-            // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
-            $('#' + domId + '-sections-selector').find('li').each(function (index) {
-                // Check to see if this is the active tab - if so we save that info into the dom
-                if (viewStateDomElement != null &&
-                    $(this).hasClass('active') == true) {
-                    $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
+            $('#' + domId + '-' + outcomeId).click(function (event) {
+                // Make sure we don't cause any linking issues or page refreshes
+                event.preventDefault();
+
+                // Disable all of the outcome buttons on the form
+                $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+
+                if (externalDomId != null &&
+                    externalDomId.trim().length > 0) {
+                    $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+                }
+
+                // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
+                $('#' + domId + '-sections-selector').find('li').each(function (index) {
+                    // Check to see if this is the active tab - if so we save that info into the dom
+                    if (viewStateDomElement != null &&
+                        $(this).hasClass('active') == true) {
+                        $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
+                    }
+                });
+
+                // Check to make sure all of the fields are valid - and prompt the user if they're not
+                var isValid = validateFieldValues(domId);
+
+                if (isValid == true) {
+                    // If the form validates OK, we proceed with the onClick function
+                    onClickFunction.call(this, outcomeId);
                 }
             });
-
-            // Check to make sure all of the fields are valid - and prompt the user if they're not
-            var isValid = validateFieldValues(domId);
-
-            if (isValid == true) {
-                // If the form validates OK, we proceed with the onClick function
-                onClickFunction.call(this, outcomeId);
-            }
-        });
+        }
     };
 
     // This is a utility function for creating all field types in one method.
     //
-    var createField = function (domId, field, formMetaData, eventCallback) {
+    var createField = function (domId, field, formMetaData, outcomeResponses, eventCallback, onClickFunction) {
         var fieldHtml = null;
 
         // If the content value is null, we want to blank it out so the null doesn't get printed into the html
@@ -710,7 +854,7 @@ permissions and limitations under the License.
         // If we have an object data request or any object data for select type fields, we do that operation here
         if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX ||
             field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-            createUIForObjectData(domId, field, formMetaData, null);
+            createUIForObjectData(domId, field, formMetaData, null, outcomeResponses, onClickFunction);
         } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
             // We have logic here very specific to tag fields as we need to generate those
             if (formMetaData.tags != null &&
@@ -1087,6 +1231,12 @@ permissions and limitations under the License.
             }
         }
 
+        // We also use this call as an opportune moment to grab the active tabs
+        $('ul.nav-tabs li.active').each(function (index, value) {
+            // Go through each of the selected tabs and save them to a local cookie
+            ManyWhoUtils.setCookie($('#' + domId + '-state-id').val() + '-' + $(this).attr('data-parentcontainerid'), $(this).attr('data-containerid'));
+        });
+
         return fields;
     };
 
@@ -1103,7 +1253,7 @@ permissions and limitations under the License.
             // Check to see what the parent properties are - this will dictate how we add the child and what additional html is needed
             if (parentContainerType.toLowerCase() == ManyWhoConstants.CONTAINER_TYPE_GROUP.toLowerCase()) {
                 // Add the html for the tab group to the end of the list of tabs
-                $('#' + parentPageContainerId + '-tabs-selector').append('<li id="' + pageContainerId + '-tab"><a href="#' + pageContainerId + '-tab-pane" data-toggle="tab">' + pageContainerLabel + '</a></li>');
+                $('#' + parentPageContainerId + '-tabs-selector').append('<li id="' + pageContainerId + '-tab" data-containerid="' + pageContainerId + '" data-parentcontainerid="' + parentPageContainerId + '"><a href="#' + pageContainerId + '-tab-pane" data-toggle="tab">' + pageContainerLabel + '</a></li>');
 
                 // We have a group sections so we build a tab for this panel
                 pageContainerHtml += '<div id="' + pageContainerId + '-tab-pane" class="tab-pane">';
@@ -1124,28 +1274,37 @@ permissions and limitations under the License.
             pageContainerHtml += '<div id="' + pageContainerId + '-tabs" class="tabbable">';
             pageContainerHtml += '  <ul id="' + pageContainerId + '-tabs-selector" class="nav nav-tabs">';
             pageContainerHtml += '  </ul>';
-            pageContainerHtml += '  <div id="' + pageContainerId + '" class="tab-content">';
+            pageContainerHtml += '  <div id="' + pageContainerId + '" class="tab-content" data-containertype="' + containerType + '">';
             pageContainerHtml += '  </div>';
             pageContainerHtml += '</div>';
         } else {
-            pageContainerHtml += '<div id="' + pageContainerId + '-row" class="row-fluid">';
-
-            if (containerType.toLowerCase() == ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW.toLowerCase()) {
-                pageContainerHtml += '<div id="' + pageContainerId + '" class="span12 manywho-form-cell-fields-span">';
-            } else {
-                pageContainerHtml += '<div id="' + pageContainerId + '" class="span12">';
-            }
-
             // Add the header to the row
             if (pageContainerLabel != null &&
                 pageContainerLabel.trim().length > 0 &&
                 (parentContainerType == null ||
                  parentContainerType.toLowerCase() != ManyWhoConstants.CONTAINER_TYPE_GROUP.toLowerCase())) {
+                pageContainerHtml += '<div id="' + pageContainerId + '-row-header" class="row-fluid">';
                 pageContainerHtml += '<h3>' + pageContainerLabel + '</h3>';
+                pageContainerHtml += '</div>';
+            }
+
+            if (containerType.toLowerCase() != ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW.toLowerCase()) {
+                pageContainerHtml += '<div id="' + pageContainerId + '-row" class="row-fluid">';
+            }
+
+            if (containerType.toLowerCase() == ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW.toLowerCase()) {
+                pageContainerHtml += '<div id="' + pageContainerId + '" class="span12 manywho-form-cell-fields-span" data-containertype="' + containerType + '">';
+            } else if (containerType.toLowerCase() == ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW.toLowerCase()) {
+                pageContainerHtml += '<div id="' + pageContainerId + '" class="row-fluid" data-containertype="' + containerType + '">';
+            } else {
+                pageContainerHtml += '<div id="' + pageContainerId + '" class="span12" data-containertype="' + containerType + '">';
             }
 
             pageContainerHtml += '</div>';
-            pageContainerHtml += '</div>';
+
+            if (containerType.toLowerCase() != ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW.toLowerCase()) {
+                pageContainerHtml += '</div>';
+            }
         }
 
         if (parentContainerType != null &&
@@ -1185,7 +1344,7 @@ permissions and limitations under the License.
 
         // Now we need to rejig the spans so the layout is correct
         // We need to actually iterate over the columns to check if they are visible - if not, we don't want to count them
-        $(selector).children('div').each(function (index, element) {
+        $(selector).children('div:not(.row-fluid)').each(function (index, element) {
             if ($(element).css('display') != 'none') {
                 columns++;
             }
@@ -1195,7 +1354,7 @@ permissions and limitations under the License.
         columnInterval = Math.floor(12 / columns);
 
         // Iterate over the columns
-        $(selector).children().each(function (index, element) {
+        $(selector).children('div:not(.row-fluid)').each(function (index, element) {
             if ($(element).css('display') != 'none') {
                 // Change the span class appropriately
                 $(element).attr('class', 'span' + columnInterval);
@@ -1205,7 +1364,7 @@ permissions and limitations under the License.
 
     // This is an iterative method for assembling the page containers
     //
-    var assemblePageContainers = function (parentContainerType, parentPageContainerId, pageContainerResponses) {
+    var assemblePageContainers = function (domId, parentContainerType, parentPageContainerId, pageContainerResponses) {
         if (pageContainerResponses != null &&
             pageContainerResponses.length > 0) {
             // Sort the page containers so they appear in the right order
@@ -1223,11 +1382,14 @@ permissions and limitations under the License.
             for (var i = 0; i < pageContainerResponses.length; i++) {
                 var pageContainerResponse = pageContainerResponses[i];
 
+                // Check to see if this container is the active one
+                var selectedPageContainerId = ManyWhoUtils.getCookie($('#' + domId + '-state-id').val() + '-' + parentPageContainerId);
+
                 // Create the actual container
-                createPageContainer(parentContainerType, parentPageContainerId, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.label);
+                createPageContainer(parentContainerType, parentPageContainerId, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.label, selectedPageContainerId);
 
                 // If this page container has page containers, we write those now too
-                assemblePageContainers(pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.pageContainerResponses);
+                assemblePageContainers(domId, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.pageContainerResponses);
             }
         }
     };
@@ -1244,7 +1406,7 @@ permissions and limitations under the License.
             }
 
             // Assemble all of the page containers
-            assemblePageContainers(null, domId + '-page', pageResponse.pageContainerResponses);
+            assemblePageContainers(domId, null, domId + '-page', pageResponse.pageContainerResponses);
 
             // Now that we have our page containers, we add the components
             if (pageResponse.pageComponentResponses != null &&
@@ -1275,7 +1437,7 @@ permissions and limitations under the License.
                     var pageComponentData = getFormMetaData(pageResponse.pageComponentDataResponses, pageComponentResponse.id);
 
                     // Create the field in our form
-                    createField(domId, pageComponentResponse, pageComponentData, eventCallback);
+                    createField(domId, pageComponentResponse, pageComponentData, outcomeResponses, eventCallback, outcomeFunction);
                 }
             }
 
@@ -1297,7 +1459,7 @@ permissions and limitations under the License.
 
                 for (var j = 0; j < outcomeResponses.length; j++) {
                     var outcome = outcomeResponses[j];
-                    generateOutcome(domId, externalOutcomeDomId, outcome.id, outcome.label, outcomeFunction, outcome.pageElementBindingId, outcome.pageActionBinding, viewStateDomElement, mapElementId);
+                    generateOutcome(domId, externalOutcomeDomId, outcome.id, outcome.label, outcomeFunction, outcome.pageObjectBindingId, outcome.pageActionBindingType, outcome.isBulkAction, outcome.pageActionType, viewStateDomElement, mapElementId);
                 }
             }
         }
@@ -1305,7 +1467,7 @@ permissions and limitations under the License.
 
     // This form simply updates the values on the form without repainting the whole layout.
     //
-    var updateForm = function (domId, formResponse) {
+    var updateForm = function (domId, formResponse, outcomeResponses, onClickFunction) {
         if (formResponse != null &&
             formResponse.pageComponentDataResponses != null &&
             formResponse.pageComponentDataResponses.length > 0) {
@@ -1353,16 +1515,19 @@ permissions and limitations under the License.
                     var found = false;
 
                     // Reassign the objects based on the object data - this will handle the selection
-                    createUIForObjectData(domId, storageObject.field, formMetaDataEntry, null);
+                    createUIForObjectData(domId, storageObject.field, formMetaDataEntry, null, outcomeResponses, onClickFunction);
                 } else if (formMetaDataEntry.objectDataRequest != null &&
                            storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_TAG) {
+                    // Show the loading indicator so the user knows something is happening
+                    $('#' + domId + '-' + storageObject.field.id + '-loading-indicator').show();
+
                     // Now we grab the data in realtime from the data provider
                     ManyWhoObjectDataProxy.load('ManyWhoFormBootStrap.UpdateForm',
                                                 $('#' + domId + '-tenant-id').val(),
                                                 formMetaDataEntry.objectDataRequest,
                                                 null,
-                                                assignObjectDataRequestResponse(domId, storageObject.field, formMetaDataEntry),
-                                                null);
+                                                assignObjectDataRequestResponse(domId, storageObject.field, formMetaDataEntry, outcomeResponses, onClickFunction),
+                                                assignObjectDataRequestResponseError(domId, storageObject.field, formMetaDataEntry));
                 } else {
                     if (storageObject.field.componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
                         // We don't have a content value - we only have content
@@ -1378,10 +1543,24 @@ permissions and limitations under the License.
 
     // The response function for handling the asynchronous data object request stuff
     //
-    var assignObjectDataRequestResponse = function (domId, field, formMetaDataEntry) {
+    var assignObjectDataRequestResponse = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction) {
         return function (data, status, xhr) {
+            // Hide the loading indicator as we've finished loading
+            $('#' + domId + '-' + field.id + '-loading-indicator').hide();
+
             // Assign the options to the selection menu
-            createUIForObjectData(domId, field, formMetaDataEntry, data.objectData);
+            createUIForObjectData(domId, field, formMetaDataEntry, data.objectData, outcomeResponses, onClickFunction);
+        }
+    };
+
+    // The response function for handling errors in the asynchronous data object request stuff
+    //
+    var assignObjectDataRequestResponseError = function (domId, field, formMetaDataEntry) {
+        return function (data, status, xhr) {
+            // Hide the loading indicator as we've finished loading
+            $('#' + domId + '-' + field.id + '-loading-indicator').hide();
+
+            // TODO: write the error to the validation message with a retry link
         }
     };
 
@@ -1460,7 +1639,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1476,7 +1655,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1492,7 +1671,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1508,7 +1687,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1522,7 +1701,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1538,7 +1717,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1554,7 +1733,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1570,7 +1749,7 @@ permissions and limitations under the License.
             var fieldId = null;
 
             if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_TAG) {
-                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, eventCallback);
+                fieldId = createField($(this).attr('id'), section, column, cell, field, formMetaData, null, eventCallback);
             } else {
                 // TODO: throw an error
             }
@@ -1587,7 +1766,7 @@ permissions and limitations under the License.
                                  mapElementId) {
             var domId = $(this).attr('id');
 
-            generateOutcome(domId, externalDomId, outcomeId, outcomeLabel, onClickFunction, formElementBindingId, formActionBinding, viewStateDomElement, mapElementId);
+            generateOutcome(domId, externalDomId, outcomeId, outcomeLabel, onClickFunction, formElementBindingId, formActionBinding, null, null, viewStateDomElement, mapElementId);
         },
         getFields: function () {
             var domId = $(this).attr('id');
@@ -1612,12 +1791,12 @@ permissions and limitations under the License.
             assembleForm(domId, formResponse, eventCallback, outcomeResponses, outcomeFunction, externalOutcomeDomId, formLabelPanel, viewStateDomElement, mapElementId);
 
             // Update the form with the form metadata
-            updateForm(domId, formResponse);
+            updateForm(domId, formResponse, outcomeResponses, outcomeFunction);
         },
-        update: function (formResponse) {
+        update: function (formResponse, outcomeResponses, outcomeFunction) {
             var domId = $(this).attr('id');
 
-            updateForm(domId, formResponse);
+            updateForm(domId, formResponse, outcomeResponses, outcomeFunction);
         },
         destroy: function () {
             var domId = $(this).attr('id');

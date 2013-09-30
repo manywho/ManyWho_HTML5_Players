@@ -39,7 +39,7 @@ function configurePage() {
     }
 
     // Grab the authentication token from the authentication cookie
-    ManyWhoSharedServices.setAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
+    ManyWhoSharedServices.setAuthorAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
     ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
 
     // Create the function for creating error alerts in the designer
@@ -82,7 +82,7 @@ function configurePage() {
 
     // Create the setup function
     var updateTools = function () {
-        var authenticationToken = ManyWhoSharedServices.getAuthenticationToken();
+        var authenticationToken = ManyWhoSharedServices.getAuthorAuthenticationToken();
 
         if (authenticationToken != null &&
             authenticationToken.trim().length > 0) {
@@ -107,7 +107,7 @@ function configurePage() {
             }
         } else {
             ManyWhoSharedServices.showAuthenticationDialog(function (authenticationToken, manywhoTenantId) {
-                ManyWhoSharedServices.setAuthenticationToken(authenticationToken);
+                ManyWhoSharedServices.setAuthorAuthenticationToken(authenticationToken);
                 ManyWhoSharedServices.setTenantId(manywhoTenantId);
 
                 // Set the authentication token into the cookie also
@@ -122,7 +122,7 @@ function configurePage() {
 
     var reLogin = function () {
         // Set the authentication token and tenant to blank
-        ManyWhoSharedServices.setAuthenticationToken('');
+        ManyWhoSharedServices.setAuthorAuthenticationToken('');
         ManyWhoSharedServices.setTenantId('');
 
         // Set the authentication token and tenant to blank in the cookie
@@ -149,8 +149,9 @@ function configurePage() {
                                                            ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
                                                                                 ManyWhoSharedServices.getEditingToken(),
                                                                                 ManyWhoSharedServices.getFlowId(),
-                                                                                $('#flow-developer-name').html(flowDeveloperName),
-                                                                                $('#flow-developer-summary').html(flowDeveloperSummary),
+                                                                                $('#flow-developer-name').html(),
+                                                                                $('#flow-developer-summary').html(),
+                                                                                ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                                                                 null,
                                                                                 function (data, status, xhr) {
                                                                                 },
@@ -192,15 +193,15 @@ function configurePage() {
         ManyWhoSharedServices.showSharedElementConfigDialog('TAG', null, null, createErrorAlert);
     });
 
-    $("#manage-macros").click(function (event) {
-        event.preventDefault();
+    //$("#manage-macros").click(function (event) {
+    //    event.preventDefault();
 
-        if (ManyWhoSharedServices.getDeveloperMode() == true) {
-            ManyWhoSharedServices.showSharedElementConfigDialog('MACRO', null, null, createErrorAlert);
-        } else {
-            alert('Coming soon!');
-        }
-    });
+    //    if (ManyWhoSharedServices.getDeveloperMode() == true) {
+    //        ManyWhoSharedServices.showSharedElementConfigDialog('MACRO', null, null, createErrorAlert);
+    //    } else {
+    //        alert('Coming soon!');
+    //    }
+    //});
 
     $("#manage-types").click(function (event) {
         event.preventDefault();
@@ -232,6 +233,7 @@ function configurePage() {
         ManyWhoSharedServices.showBuildDialog(true);
         ManyWhoFlow.snapAndRun('ManyWhoBuilder.RunFlow',
                                ManyWhoSharedServices.getFlowId(),
+                               ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                null,
                                function (data, status, xhr) {
                                    ManyWhoSharedServices.showBuildDialog(false);
@@ -246,12 +248,13 @@ function configurePage() {
         ManyWhoSharedServices.showBuildDialog(true);
         ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
                                ManyWhoSharedServices.getFlowId(),
+                               ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                null,
                                function (data, status, xhr) {
                                    ManyWhoSharedServices.showBuildDialog(false);
 
                                    // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
-                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, null, null, null);
+                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
 
                                    // Now we load the flow which allows the author to then share it with their friends
                                    window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/default?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
@@ -263,7 +266,7 @@ function configurePage() {
         event.preventDefault();
 
         if ($(this).attr('disabled') != 'disabled') {
-            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthenticationToken());
+            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken());
             window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/build?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
         }
     });
@@ -284,6 +287,7 @@ function configurePage() {
                              ManyWhoSharedServices.getFlowId(),
                              $('#flow-developer-name').html(),
                              $('#flow-developer-summary').html(),
+                             ManyWhoSharedServices.getAuthorAuthenticationToken(),
                              null,
                              function (data, status, xhr) {
                              },
@@ -308,8 +312,12 @@ function configurePage() {
                 ManyWhoFlow.changeAvailable('ManyWhoBuilder.configurePage',
                                             ManyWhoSharedServices.getFlowId(),
                                             ManyWhoSharedServices.getEditingToken(),
+                                            ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                             null,
                                             function (data, status, xhr) {
+                                                // Clear any errors as we're now successfully managing to reach the backend
+                                                $('#flow-error').html('');
+
                                                 if (data != null &&
                                                     data == true) {
                                                     // Sync the graph so we have the necessary changes
