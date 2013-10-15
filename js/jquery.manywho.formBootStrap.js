@@ -16,6 +16,8 @@ permissions and limitations under the License.
 
 (function ($) {
 
+    var RESULT_LIMIT = 10;
+
     // This method works out if the action type should be shown inline with table records or not. The decision will determine if the outcome
     // button is displayed at the top of the table or if it's shown as a link against each record in the table
     //
@@ -45,12 +47,13 @@ permissions and limitations under the License.
     // for outcomes to bind to table operations - such as edit, delete, etc - in case the UI has multiple tables.  This is also much more
     // mobile friendly as mobile devices don't often have inline table editing - it's just too complicated!
     //
-    var generateTableDataHtml = function (field, objectData, formMetaData, outcomeResponses, onClickFunction) {
+    var generateTableDataHtml = function (domId, field, objectData, formMetaData, outcomeResponses, onClickFunction, isOffset, hasMoreResults) {
         var html = '';
         var columns = field.columns;
         var actionLinks = '';
         var actionLinkCount = 0;
         var hasActionLinks = false;
+        var records = 0;
 
         // Job number 1 is to create the headings for the table - so the user knows what each column is for
         if (columns != null &&
@@ -110,6 +113,9 @@ permissions and limitations under the License.
         if (objectData != null &&
             objectData.length > 0) {
             html += '<tbody>';
+
+            // Assign the number of records so we have it
+            records - objectData.length;
 
             // We only do this ordering on non async data requests - otherwise we leave the remote service to do the ordering for us
             if (formMetaData.objectDataRequest == null) {
@@ -186,6 +192,22 @@ permissions and limitations under the License.
             }
 
             html += '</tbody>';
+        }
+
+        // If we have the same number of records or more than the limit, we enable the 'next' button
+        if (hasMoreResults == true ||
+            isOffset == true) {
+            // Show the pagination controls
+            $('#' + domId + '-' + field.id + '-field-pagination').show();
+            $('#' + domId + '-' + field.id + '-field-pagination-next-entry').removeClass('disabled');
+
+            if (hasMoreResults == false) {
+                $('#' + domId + '-' + field.id + '-field-pagination-next-entry').addClass('disabled');
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+            }
+        } else {
+            // Hide the pagination controls
+            $('#' + domId + '-' + field.id + '-field-pagination').hide();
         }
 
         return html;
@@ -293,7 +315,7 @@ permissions and limitations under the License.
     // This is a multi-purpose method that not only generates the table entries from object data, but also applies any
     // object data changes without re-rendering the entire list.
     //
-    var createUIForObjectData = function (domId, field, formMetaData, objectData, outcomeResponses, onClickFunction) {
+    var createUIForObjectData = function (domId, field, formMetaData, objectData, outcomeResponses, onClickFunction, isOffset, hasMoreResults) {
         var html = null;
         var storageObject = null;
 
@@ -307,7 +329,7 @@ permissions and limitations under the License.
             if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
                 html = generateSelectOptionsHtml(field.columns, objectData, formMetaData.objectData, field.isMultiSelect);
             } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                html = generateTableDataHtml(field, objectData, formMetaData, outcomeResponses, onClickFunction);
+                html = generateTableDataHtml(domId, field, objectData, formMetaData, outcomeResponses, onClickFunction, isOffset, hasMoreResults);
             } else {
                 alert('Field type not supported for UI data method: ' + field.componentType);
             }
@@ -327,7 +349,7 @@ permissions and limitations under the License.
             if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
                 html = generateSelectOptionsHtml(field.columns, formMetaData.objectData, null, field.isMultiSelect);
             } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                html = generateTableDataHtml(field, formMetaData.objectData, formMetaData, outcomeResponses, onClickFunction);
+                html = generateTableDataHtml(domId, field, formMetaData.objectData, formMetaData, outcomeResponses, onClickFunction, isOffset, hasMoreResults);
             } else {
                 alert('Field type not supported for UI data method: ' + field.componentType);
             }
@@ -455,7 +477,7 @@ permissions and limitations under the License.
     // This function is used to create the standard field layout for all fields.  This ensures we have a consistent printing
     // of html across all field types - with the flexibility to be adaptive for each type.
     //
-    var buildFieldLayout = function (domId, field, formMetaData, eventCallback, fieldHtml) {
+    var buildFieldLayout = function (domId, field, formMetaData, eventCallback, fieldHtml, outcomeResponses, onClickFunction) {
         var html = null;
         var span = null;
 
@@ -487,7 +509,16 @@ permissions and limitations under the License.
 
         html += '<div id="' + domId + '-' + field.id + '-properties" class="manywho-form-field-reference" data-fieldid="' + field.id + '" data-required="' + formMetaData.isRequired + '" data-fieldtype="' + field.componentType + '">';
         html += '<div id="' + domId + '-' + field.id + '-database" style="display:none;"></div>';
-        html += '<div id="' + domId + '-' + field.id + '-actions" class="manwho-form-field-actions"></div>';
+        html += '<div id="' + domId + '-' + field.id + '-actions" class="manwho-form-field-actions">';
+
+        if (field.isSearchable == true) {
+            html += '<div class="input-append">';
+            html += '<input type="text" id="' + domId + '-' + field.id + '-field-search" class="span8">';
+            html += '<button type="button" id="' + domId + '-' + field.id + '-field-search-button" class="btn btn-inverse" style="margin-top: 0px !important;"><i class="icon-search icon-white"></i> Search</button>';
+            html += '</div>';
+        }
+
+        html += '</div>';
 
         // Put the label above the field
         if (field.label != null &&
@@ -525,9 +556,7 @@ permissions and limitations under the License.
         }
 
         // Add the loading indicator div so we have that for async fields - we use a different indicator for tables
-        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-            html += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-table-loading-indicator"></div>';
-        } else {
+        if (field.componentType != ManyWhoConstants.COMPONENT_TYPE_TABLE) {
             html += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-loading-indicator"></div>';
         }
 
@@ -551,6 +580,60 @@ permissions and limitations under the License.
         if (field.helpInfo != null &&
             field.helpInfo.trim().length > 0) {
             $('#' + domId + '-' + field.id + '-help-info').popover({ title: 'Help', content: field.helpInfo });
+        }
+
+        // Check to see if this is a searchable field
+        if (field.isSearchable == true) {
+            $('#' + domId + '-' + field.id + '-field-search').keypress(function (event) {
+                // Check to see if this is the enter key
+                if (event.which == 13) {
+                    // Dispatch the data population as the user has hit enter
+                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                }
+            });
+
+            $('#' + domId + '-' + field.id + '-field-search-button').click(function (event) {
+                // Dispatch the search as the user has clicked the button
+                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+            });
+        }
+
+        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+            $('#' + domId + '-' + field.id + '-field-pagination-next').click(function (event) {
+                var page = $('#' + domId + '-' + field.id + '-field').attr('data-page');
+                page = parseInt(page);
+
+                if (page < 0) {
+                    page = 0;
+                }
+
+                // Increment the page
+                page++;
+
+                // Apply the change
+                $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
+
+                // Requiry the system
+                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+            });
+
+            $('#' + domId + '-' + field.id + '-field-pagination-prev').click(function (event) {
+                var page = $('#' + domId + '-' + field.id + '-field').attr('data-page');
+                page = parseInt(page);
+
+                if (page < 0) {
+                    page = 0;
+                }
+
+                // Decrement the page
+                page--;
+
+                // Apply the change
+                $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
+
+                // Requiry the system
+                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+            });
         }
 
         // Apply the required status
@@ -683,7 +766,7 @@ permissions and limitations under the License.
             if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_NUMBER.toLowerCase()) {
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_DATETIME.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="datetime" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="date" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_PASSWORD.toLowerCase()) {
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else {
@@ -733,7 +816,17 @@ permissions and limitations under the License.
 
             fieldHtml = '<select id="' + domId + '-' + field.id + '-field"' + multiModifier + ' size="1" class="manywho-runtime-combobox-field"></select>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TABLE.toUpperCase()) {
-            fieldHtml = '<div class="manywho-runtime-table-field-container"><table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select"></table></div>';
+            fieldHtml = '';
+            fieldHtml += '<div class="manywho-runtime-table-field-container">';
+            fieldHtml += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-table-loading-indicator"></div>';
+            fieldHtml += '<table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></table>';
+            fieldHtml += '<div id="' + domId + '-' + field.id + '-field-pagination" class="pagination">';
+            fieldHtml += '<ul>';
+            fieldHtml += '<li id="' + domId + '-' + field.id + '-field-pagination-prev-entry"><a href="#" id="' + domId + '-' + field.id + '-field-pagination-prev">Prev</a></li>';
+            fieldHtml += '<li id="' + domId + '-' + field.id + '-field-pagination-next-entry"><a href="#" id="' + domId + '-' + field.id + '-field-pagination-next">Next</a></li>';
+            fieldHtml += '</ul>';
+            fieldHtml += '</div>';
+            fieldHtml += '</div>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION.toUpperCase()) {
             fieldHtml = '<div id="' + domId + '-' + field.id + '-field" class="manywho-runtime-presentation-field"></div>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TAG.toUpperCase()) {
@@ -768,6 +861,8 @@ permissions and limitations under the License.
             buttonClass += ' btn-primary';
         } else if (outcomeId.toLowerCase() == ManyWhoConstants.DEBUG_GUID.toLowerCase()) {
             buttonClass += ' btn-warning';
+        } else if (formActionType == 'PLACEHOLDER') {
+            buttonClass += ' btn-info';
         }
 
         if (formElementBindingId != null &&
@@ -785,35 +880,42 @@ permissions and limitations under the License.
                 $('#' + outcomeDomId).show();
             }
 
-            $('#' + domId + '-' + outcomeId).click(function (event) {
-                // Make sure we don't cause any linking issues or page refreshes
-                event.preventDefault();
+            // Don't add the button click if we're using one of these action types for the outcome
+            if (formActionType != 'PLACEHOLDER' &&
+                formActionType != 'NOT_ALLOWED') {
+                $('#' + domId + '-' + outcomeId).click(function (event) {
+                    // Make sure we don't cause any linking issues or page refreshes
+                    event.preventDefault();
 
-                // Disable all of the outcome buttons on the form
-                $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+                    // Disable all of the outcome buttons on the form
+                    $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
 
-                if (externalDomId != null &&
-                    externalDomId.trim().length > 0) {
-                    $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
-                }
+                    if (externalDomId != null &&
+                        externalDomId.trim().length > 0) {
+                        $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+                    }
 
-                // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
-                $('#' + domId + '-sections-selector').find('li').each(function (index) {
-                    // Check to see if this is the active tab - if so we save that info into the dom
-                    if (viewStateDomElement != null &&
-                        $(this).hasClass('active') == true) {
-                        $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
+                    // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
+                    $('#' + domId + '-sections-selector').find('li').each(function (index) {
+                        // Check to see if this is the active tab - if so we save that info into the dom
+                        if (viewStateDomElement != null &&
+                            $(this).hasClass('active') == true) {
+                            $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
+                        }
+                    });
+
+                    // Check to make sure all of the fields are valid - and prompt the user if they're not
+                    var isValid = validateFieldValues(domId);
+
+                    if (isValid == true) {
+                        // If the form validates OK, we proceed with the onClick function
+                        onClickFunction.call(this, outcomeId);
                     }
                 });
-
-                // Check to make sure all of the fields are valid - and prompt the user if they're not
-                var isValid = validateFieldValues(domId);
-
-                if (isValid == true) {
-                    // If the form validates OK, we proceed with the onClick function
-                    onClickFunction.call(this, outcomeId);
-                }
-            });
+            } else {
+                // Disable the button as we can't use it - it's either not allowed or it's simply a placeholder
+                $('#' + domId + '-' + outcomeId).attr('disabled', 'disabled');
+            }
         }
     };
 
@@ -836,7 +938,7 @@ permissions and limitations under the License.
         fieldHtml = generateFieldHtmlForFieldType(domId, field, formMetaData);
 
         // Send the input field to the build field call - this will print the field also
-        buildFieldLayout(domId, field, formMetaData, eventCallback, fieldHtml);
+        buildFieldLayout(domId, field, formMetaData, eventCallback, fieldHtml, outcomeResponses, onClickFunction);
 
         // Create the storage object so we have it for updates - this contains the data we need to recreate the field, etc
         storageObject = new Object();
@@ -848,13 +950,21 @@ permissions and limitations under the License.
         // We store the storage object using the field id as the placeholder - not needed for any particular reason
         $('#' + domId + '-' + field.id + '-database').data(field.id, storageObject);
 
-        // Make the outcome actions area invisible for now
-        $('#' + domId + '-' + field.id + '-actions').hide();
+        // Only hide the actions section if we don't have search - the search will be put in the actions container so we need it to be visible
+        if (field.isSearchable == false) {
+            // Make the outcome actions area invisible for now
+            $('#' + domId + '-' + field.id + '-actions').hide();
+        }
+
+        // Hide the pagination controls - if we have a table
+        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+            $('#' + domId + '-' + field.id + '-field-pagination').hide();
+        }
 
         // If we have an object data request or any object data for select type fields, we do that operation here
         if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX ||
             field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-            createUIForObjectData(domId, field, formMetaData, null, outcomeResponses, onClickFunction);
+            createUIForObjectData(domId, field, formMetaData, null, outcomeResponses, onClickFunction, false, false);
         } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
             // We have logic here very specific to tag fields as we need to generate those
             if (formMetaData.tags != null &&
@@ -1014,17 +1124,28 @@ permissions and limitations under the License.
     //
     var getFieldValue = function (domId, fieldId, fieldType) {
         var value = null;
+        var valueType = null;
 
         fieldType = $('#' + domId + '-' + fieldId + '-properties').attr('data-fieldtype');
         fieldType = fieldType.toUpperCase();
 
         if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
+            // Grab the value type from the field
+            valueType = $('#' + domId + '-' + fieldId + '-field').attr('type');
             value = $('#' + domId + '-' + fieldId + '-field').val();
+
+            // If we have a date, we do a little work to make sure it's in the correct format
+            if (valueType.toLowerCase() == 'date' &&
+                value != null &&
+                value.trim().length > 0) {
+                // Parse the date using the moment library - but only overwrite the value if we have a valid date
+                // This is so moment doesn't fix anything that will then pass validation
+                if (moment(value).isValid() == true) {
+                    // Overwrite the value with the full date as this is the value that will be posted back to the service
+                    value = moment(value).toString();
+                }
+            }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-            value = $('#' + domId + '-' + fieldId + '-field').val();
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_NUMBER) {
-            value = $('#' + domId + '-' + fieldId + '-field').val();
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_DATETIME) {
             value = $('#' + domId + '-' + fieldId + '-field').val();
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
             value = $('#' + domId + '-' + fieldId + '-field').val();
@@ -1102,16 +1223,28 @@ permissions and limitations under the License.
     // This method is used to set the actual field for the field type.
     //
     var setFieldValue = function (domId, fieldId, fieldType, value, objectData) {
+        var valueType = null;
+
         fieldType = $('#' + domId + '-' + fieldId + '-properties').attr('data-fieldtype');
         fieldType = fieldType.toUpperCase();
 
         if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
+            valueType = $('#' + domId + '-' + fieldId + '-field').attr('type');
+
+            // If this is a date, we don't want to write the ECMA format - it's too much!
+            if (valueType.toLowerCase() == 'date') {
+                if (value != null &&
+                    value.trim().length > 0) {
+                    // Format the date using something that's acceptable to most!
+                    value = moment(value).format('DD MMM YYYY');
+                } else {
+                    // Blank out the date if it isn't valid
+                    value = '';
+                }
+            }
+
             $('#' + domId + '-' + fieldId + '-field').val(value);
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-            $('#' + domId + '-' + fieldId + '-field').val(value);
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_NUMBER) {
-            $('#' + domId + '-' + fieldId + '-field').val(value);
-        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_DATETIME) {
             $('#' + domId + '-' + fieldId + '-field').val(value);
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
             $('#' + domId + '-' + fieldId + '-field').val(value);
@@ -1515,19 +1648,15 @@ permissions and limitations under the License.
                     var found = false;
 
                     // Reassign the objects based on the object data - this will handle the selection
-                    createUIForObjectData(domId, storageObject.field, formMetaDataEntry, null, outcomeResponses, onClickFunction);
+                    createUIForObjectData(domId, storageObject.field, formMetaDataEntry, null, outcomeResponses, onClickFunction, false, false);
                 } else if (formMetaDataEntry.objectDataRequest != null &&
                            storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_TAG) {
-                    // Show the loading indicator so the user knows something is happening
-                    $('#' + domId + '-' + storageObject.field.id + '-loading-indicator').show();
-
                     // Now we grab the data in realtime from the data provider
-                    ManyWhoObjectDataProxy.load('ManyWhoFormBootStrap.UpdateForm',
-                                                $('#' + domId + '-tenant-id').val(),
-                                                formMetaDataEntry.objectDataRequest,
-                                                null,
-                                                assignObjectDataRequestResponse(domId, storageObject.field, formMetaDataEntry, outcomeResponses, onClickFunction),
-                                                assignObjectDataRequestResponseError(domId, storageObject.field, formMetaDataEntry));
+                    dispatchAsyncDataPopulation(domId,
+                                                storageObject.field,
+                                                formMetaDataEntry,
+                                                outcomeResponses, 
+                                                onClickFunction);
                 } else {
                     if (storageObject.field.componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
                         // We don't have a content value - we only have content
@@ -1541,15 +1670,97 @@ permissions and limitations under the License.
         }
     };
 
+    // This is the method that should be used for all data requests for asynchronous data as it handles limits and paging
+    //
+    var dispatchAsyncDataPopulation = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction) {
+        var isOffset = false;
+
+        if (formMetaDataEntry.objectDataRequest == null) {
+            alert('Hmmm... no request object to get the data. Contact your administrator.');
+        }
+
+        // If we don't have a list filter object, we need to create one
+        if (formMetaDataEntry.objectDataRequest.listFilter == null) {
+            formMetaDataEntry.objectDataRequest.listFilter = new Object();
+        }
+
+        // Set the limit to 10 no matter what
+        formMetaDataEntry.objectDataRequest.listFilter.limit = RESULT_LIMIT;
+
+        // Check to see if we're going to add a search on top of our query
+        if (field.isSearchable == true) {
+            // Grab the search value from the input box
+            var search = $('#' + domId + '-' + field.id + '-field-search').val();
+
+            // Only send it if the search is not blank
+            if (search != null &&
+                search.trim().length > 0) {
+                // Add the search
+                formMetaDataEntry.objectDataRequest.listFilter.search = search;
+            } else {
+                formMetaDataEntry.objectDataRequest.listFilter.search = null;
+            }
+        }
+
+        // Check to see if the order by stuff has been defined
+        if ($('#' + domId + '-' + field.id + '-field').attr('data-orderby') != null) {
+            // Get the order by information
+            var orderBy = $('#' + domId + '-' + field.id + '-field').attr('data-orderby');
+            var orderByDirection = $('#' + domId + '-' + field.id + '-field').attr('data-orderbydirection');
+
+            // If the order by stuff is empty, we don't want to use it
+            if (orderBy != null &&
+                orderBy.trim().length > 0) {
+                // Assign the values to the object data request
+                formMetaDataEntry.objectDataRequest.listFilter.orderBy = orderBy;
+                formMetaDataEntry.objectDataRequest.listFilter.orderByDirection = orderByDirection;
+            }
+        }
+
+        // Check the paging - it should be zero to start
+        if ($('#' + domId + '-' + field.id + '-field').attr('data-page') != null) {
+            var page = parseInt($('#' + domId + '-' + field.id + '-field').attr('data-page'));
+            var offset = 0;
+            
+            // We need to calculate the offset
+            if (page > 0) {
+                // The offset is equivalent to the page number multiplied by the limit
+                offset = page * RESULT_LIMIT;
+                isOffset = true;
+            }
+
+            // If the offset is 0, we don't have a previous
+            if (offset == 0) {
+                // Remove the class just in case - so we don't add it twice
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').addClass('disabled');
+            }
+
+            // Assign the offset
+            formMetaDataEntry.objectDataRequest.listFilter.offset = offset;
+        }
+
+        // Show the loading indicator so the user knows something is happening
+        $('#' + domId + '-' + field.id + '-loading-indicator').show();
+
+        // Now we grab the data in realtime from the data provider
+        ManyWhoObjectDataProxy.load('ManyWhoFormBootStrap.DispatchAsyncDataPopulation',
+                                    $('#' + domId + '-tenant-id').val(),
+                                    formMetaDataEntry.objectDataRequest,
+                                    null,
+                                    assignObjectDataRequestResponse(domId, field, formMetaDataEntry, outcomeResponses, onClickFunction, isOffset),
+                                    assignObjectDataRequestResponseError(domId, field, formMetaDataEntry));
+    }
+
     // The response function for handling the asynchronous data object request stuff
     //
-    var assignObjectDataRequestResponse = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction) {
+    var assignObjectDataRequestResponse = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction, isOffset) {
         return function (data, status, xhr) {
             // Hide the loading indicator as we've finished loading
             $('#' + domId + '-' + field.id + '-loading-indicator').hide();
 
             // Assign the options to the selection menu
-            createUIForObjectData(domId, field, formMetaDataEntry, data.objectData, outcomeResponses, onClickFunction);
+            createUIForObjectData(domId, field, formMetaDataEntry, data.objectData, outcomeResponses, onClickFunction, isOffset, data.hasMoreResults);
         }
     };
 
@@ -1559,8 +1770,6 @@ permissions and limitations under the License.
         return function (data, status, xhr) {
             // Hide the loading indicator as we've finished loading
             $('#' + domId + '-' + field.id + '-loading-indicator').hide();
-
-            // TODO: write the error to the validation message with a retry link
         }
     };
 

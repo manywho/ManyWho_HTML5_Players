@@ -96,11 +96,19 @@
     background-repeat: no-repeat;
 }
 
+.manywho-runtime-table-field-container {
+    position: relative;
+    min-height: 96px;
+}
+
 .manywho-form-field-table-loading-indicator {
     min-height: 64px;
     min-width: 64px;
     background-image: url('https://cdn.manywho.com/images/loading_indicator_64.gif');
     background-repeat: no-repeat;
     background-position: center;
+    position: absolute;
+    margin: 0px 0 0 -32px;
+    top: 32px;
+    left: 50%;
 }
-

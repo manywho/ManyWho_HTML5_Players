@@ -437,7 +437,7 @@ permissions and limitations under the License.
         html += '<div class="manywho-page-component rendered" id="' + pageComponentId + '">';
 
         // Create the page component controls
-        html += '<div class="manywho-page-component-controls"><i class="icon-edit icon-white manywho-edit-page-component"></i> <i class="icon-trash icon-white pull-right manywho-delete-page-component"></i></div>';
+        html += '<div class="manywho-page-component-controls"><i class="icon-edit icon-white manywho-edit-page-component"></i> <i class="icon-trash icon-white pull-right manywho-delete-page-component"></i> <span class="text-info manywho-field-label">' + label + '</span></div>';
 
         // Now create the shell for the actual component
         html += '<div>';
@@ -506,9 +506,9 @@ permissions and limitations under the License.
         }
 
         if (componentType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX) {
-            html += '<input type="text"' + editableHtml + ' class="manywho-page-component-implementation input-large' + componentSizeCss + '" maxlength="' + maxSize + '" placeholder="' + hintValue + '" /><br />';
+            html += '<input type="text"' + editableHtml + ' class="manywho-page-component-implementation input-large' + componentSizeCss + '" maxlength="' + maxSize + '" placeholder="' + hintValue + '" />';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
-            html += '<textarea class="manywho-page-component-implementation' + componentSizeCss + '"' + editableHtml + ' placeholder="' + hintValue + '"></textarea><br />';
+            html += '<textarea class="manywho-page-component-implementation' + componentSizeCss + '"' + editableHtml + ' placeholder="' + hintValue + '"></textarea>';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
             html += '<div class="btn-toolbar">';
             html += '<div class="btn-group" id="field-toolbar">';
@@ -522,7 +522,7 @@ permissions and limitations under the License.
             html += labelHtml;
 
             // Print the text area for the content editor
-            html += '<textarea class="manywho-page-component-implementation"' + editableHtml + ' style="height: ' + (height * 12) + 'px; width: ' + (width * 5) + 'px;"></textarea><br />';
+            html += '<textarea class="manywho-page-component-implementation"' + editableHtml + ' style="height: ' + (height * 12) + 'px; width: ' + (width * 5) + 'px;"></textarea>';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
             html += '<input type="checkbox"' + editableHtml + ' class="manywho-page-component-implementation" /> ';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
@@ -541,7 +541,7 @@ permissions and limitations under the License.
             // Print the label at the bottom as this field doesn't support wrapping labels
             html += labelHtml;
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
-            html += '<select class="manywho-page-component-implementation"' + editableHtml + '></select><br />';
+            html += '<select class="manywho-page-component-implementation"' + editableHtml + '></select>';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
             html += '<div>';
             html += '<table class="manywho-page-component-implementation table table-hover table-condensed table-bordered"></table>';
@@ -550,8 +550,6 @@ permissions and limitations under the License.
             // Print the label at the bottom as this field doesn't support wrapping labels
             html += labelHtml;
         }
-
-        html += '<span class="text-info manywho-field-label">' + label + '</span>';
 
         // If we have help info, we add a little help button
         if (helpInfo != null &&
@@ -883,6 +881,7 @@ permissions and limitations under the License.
 
             html += '        <div>';
             html += '            <h5>Components</h5>';
+            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '">Presentation</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '">Input</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '">Text</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
@@ -895,7 +894,6 @@ permissions and limitations under the License.
             html += '            <h5>Coming soon!</h5>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '">Content</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
             html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
             html += '        </div>';
@@ -1027,13 +1025,13 @@ permissions and limitations under the License.
             //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
             //});
 
-            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable').draggable({
-            //    connectToSortable: '.page-sortable',
-            //    helper: 'clone',
-            //    scroll: true, // Scroll the page if we hit the edge
-            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            //});
+            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable').draggable({
+                connectToSortable: '.page-sortable',
+                helper: 'clone',
+                scroll: true, // Scroll the page if we hit the edge
+                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+            });
 
             //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable').draggable({
             //    connectToSortable: '.page-sortable',

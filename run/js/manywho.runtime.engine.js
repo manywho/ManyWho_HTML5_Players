@@ -103,6 +103,15 @@ permissions and limitations under the License.
 
             // Hide the wait as it's no longer applicable
             hideWait(domId);
+
+            // Re-enable the outcome buttons so the user can take action as needed
+            $('#' + domId).find('.manywho-outcome-button').removeAttr('disabled');
+
+            // Re-enable custom panel buttons
+            if ($('#' + domId + '-outcome-panel').val() != null &&
+                $('#' + domId + '-outcome-panel').val().trim().length > 0) {
+                $('#' + $('#' + domId + '-outcome-panel').val()).find('.manywho-outcome-button').removeAttr('disabled');
+            }
         }
     };
 
@@ -401,6 +410,9 @@ permissions and limitations under the License.
                                                                             mapElementInvokeResponse.pageResponse,
                                                                             mapElementInvokeResponse.outcomeResponses,
                                                                             function (outcomeId) {
+                                                                                // Store the selected outcome so we have it
+                                                                                $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', outcomeId);
+
                                                                                 // Tell the engine to go forward based on the outcome being clicked
                                                                                 execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
                                                                             });
@@ -413,6 +425,9 @@ permissions and limitations under the License.
                                                                             },
                                                                             mapElementInvokeResponse.outcomeResponses,
                                                                             function (outcomeId) {
+                                                                                // Store the selected outcome so we have it
+                                                                                $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', outcomeId);
+
                                                                                 // Tell the engine to go forward based on the outcome being clicked
                                                                                 execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
                                                                             },
@@ -451,6 +466,22 @@ permissions and limitations under the License.
             } else {
                 // Update the stream information
                 //$('#' + domId + '-social-feed').manywhoSocial('setStreamId', data.currentStreamId);
+            }
+
+            // Call the update callback if one exists
+            var updateCallback = $('#' + domId + '-inputs-database').data('updateCallback');
+
+            // Check to make sure we have an update callback
+            if (updateCallback != null) {
+                // Get the previous data so we can send it back
+                var previousData = $('#' + domId + '-inputs-database').data('updateCallbackPrevious');
+                var previousSelectedOutcomeId = $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId');
+
+                // Give the update callback the data from the invoke
+                updateCallback.call(this, data, previousData, previousSelectedOutcomeId);
+
+                // Set the previous data to this execution
+                $('#' + domId + '-inputs-database').data('updateCallbackPrevious', data);
             }
 
             // Finally, hide the wait
@@ -1026,7 +1057,7 @@ permissions and limitations under the License.
                 $('#' + domId + '-share-flow-dialog').modal('hide');
             });
         },
-        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl) {
+        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction) {
             var domId = $(this).attr('id');
 
             // Make the outcome panel blank if it's null
@@ -1081,6 +1112,9 @@ permissions and limitations under the License.
             $('#' + domId + '-inputs-database').data('inputs', inputs);
             $('#' + domId + '-inputs-database').data('annotations', annotations);
             $('#' + domId + '-inputs-database').data('doneCallback', doneCallbackFunction);
+            $('#' + domId + '-inputs-database').data('updateCallback', updateCallbackFunction);
+            $('#' + domId + '-inputs-database').data('updateCallbackPrevious', null);
+            $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', null);
 
             if (mode == ManyWhoConstants.MODE_DEBUG ||
                 mode == ManyWhoConstants.MODE_DEBUG_STEPTHROUGH) {
@@ -1100,40 +1134,40 @@ permissions and limitations under the License.
                 $('#' + domId + '-debug').hide();
             }
 
-            // Finally, we grab the geo location
-            if (navigator.geolocation){
-                // timeout at 60000 milliseconds (60 seconds)
-                var options = {timeout:1000};
+            // Finally, we grab the geo location - commented out as we have this turned off by default
+            //if (navigator.geolocation){
+            //    // timeout at 60000 milliseconds (60 seconds)
+            //    var options = {timeout:1000};
 
-                // Tell the user we're trying to find their location                
-                showWait(domId, 'Finding your location...');
+            //    // Tell the user we're trying to find their location                
+            //    showWait(domId, 'Finding your location...');
 
-                // Get the navigator current position
-                navigator.geolocation.getCurrentPosition(function (position) {
-                                                             // Hide the finding wait message
-                                                             hideWait(domId);
+            //    // Get the navigator current position
+            //    navigator.geolocation.getCurrentPosition(function (position) {
+            //                                                 // Hide the finding wait message
+            //                                                 hideWait(domId);
 
-                                                             // Grab the position data so we have the geo location of our user
-                                                             assignUserPosition(domId, position);
+            //                                                 // Grab the position data so we have the geo location of our user
+            //                                                 assignUserPosition(domId, position);
                     
-                                                             // Run the requested flow
-                                                             runFlow(domId);
+            //                                                 // Run the requested flow
+            //                                                 runFlow(domId);
 
-                                                             // Kick off a thread to keep the location data up-to-date
-                                                             $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
-                                                         }, 
-                                                         function () {
-                                                             // Hide the finding wait message
-                                                             hideWait(domId);
+            //                                                 // Kick off a thread to keep the location data up-to-date
+            //                                                 $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
+            //                                             }, 
+            //                                             function () {
+            //                                                 // Hide the finding wait message
+            //                                                 hideWait(domId);
 
-                                                             // Run the requested flow - we had an error grabbing geo location
-                                                             runFlow(domId);
-                                                         },
-                                                         options);
-            } else {
-                // Run the requested flow - geo location is not supported
+            //                                                 // Run the requested flow - we had an error grabbing geo location
+            //                                                 runFlow(domId);
+            //                                             },
+            //                                             options);
+            //} else {
+                // Run the requested flow - geo location is not supported just yet
                 runFlow(domId);
-            }
+            //}
         },
         clear: function () {
             var domId = $(this).attr('id');
