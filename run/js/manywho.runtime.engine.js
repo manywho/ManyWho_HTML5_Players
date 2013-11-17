@@ -32,6 +32,16 @@ permissions and limitations under the License.
     };
 
     var checkStateChanges = function (domId, check) {
+        var checkTimer = 10000;
+        var testValue = 0;
+
+        testValue = parseInt($('#' + domId + '-sync-timing').val());
+
+        // We can't go below a second - that's too much polling
+        if (testValue >= 1000) {
+            checkTimer = testValue;
+        }
+
         if (check == true) {
             $('#' + domId + '-join-thread-id').val(setInterval(function () {
                 // Create a header for the tenant id
@@ -54,7 +64,7 @@ permissions and limitations under the License.
                                                 },
                                                 manageError(domId),
                                                 headers);
-            }, 10000));
+            }, checkTimer));
         } else {
             clearInterval($('#' + domId + '-join-thread-id').val());
         }
@@ -250,7 +260,7 @@ permissions and limitations under the License.
 
     // This method is used to make a call to the engine to execute.
     //
-    var execute = function (domId, invokeType, selectedOutcomeId, formRequest) {
+    var execute = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
         // Stop automatic synchronization
         checkStateChanges(domId, false);
 
@@ -266,7 +276,7 @@ permissions and limitations under the License.
 
         var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val();
         var requestType = 'POST';
-        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest);
+        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, navigationItemId);
 
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
@@ -617,13 +627,14 @@ permissions and limitations under the License.
     // is sort of recursive as we need to call it every time the engine returns a response and we want
     // to make another request.
     //
-    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest) {
+    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
         var executeRequestData = '';
 
         executeRequestData += '{';
         executeRequestData += '"stateId":"' + $('#' + domId + '-state-id').val() + '",';
         executeRequestData += '"stateToken":"' + $('#' + domId + '-state-token').val() + '",';
         executeRequestData += '"currentMapElementId":"' + $('#' + domId + '-element-id').val() + '",';
+        executeRequestData += '"navigationElementId":"' + $('#' + domId + '-navigation-element-id').val() + '",';
         executeRequestData += '"geoLocation":{';
         executeRequestData += '"latitude":' + $('#' + domId + '-position-latitude').val() + ',';
         executeRequestData += '"longitude":' + $('#' + domId + '-position-longitude').val() + ',';
@@ -634,6 +645,14 @@ permissions and limitations under the License.
         executeRequestData += '"speed":' + $('#' + domId + '-position-speed').val() + '';
         executeRequestData += '},';
         executeRequestData += '"invokeType":"' + invokeType + '",';
+
+        if (navigationItemId != null &&
+            navigationItemId.trim().length > 0) {
+            executeRequestData += '"selectedNavigationItemId":"' + navigationItemId + '",';
+        } else {
+            executeRequestData += '"selectedNavigationItemId":null,';
+        }
+
         executeRequestData += '"mapElementInvokeRequest":{';
 
         if (formRequest == null &&
@@ -1011,6 +1030,8 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-position-altitudeAccuracy" value="0" />';
             html += '<input type="hidden" id="' + domId + '-position-heading" value="0" />';
             html += '<input type="hidden" id="' + domId + '-position-speed" value="0" />';
+            html += '<input type="hidden" id="' + domId + '-sync-timing" value="10000" />';
+            html += '<input type="hidden" id="' + domId + '-navigation-element-id" value="" />';
 
             html += '<div id="' + domId + '-debug" class="container-fluid manywho-debug-info">';
             html += '</div>';
@@ -1057,7 +1078,7 @@ permissions and limitations under the License.
                 $('#' + domId + '-share-flow-dialog').modal('hide');
             });
         },
-        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction) {
+        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
             var domId = $(this).attr('id');
 
             // Make the outcome panel blank if it's null
@@ -1102,6 +1123,16 @@ permissions and limitations under the License.
             $('#' + domId + '-mode').val(mode);
             $('#' + domId + '-session-id').val(sessionId);
             $('#' + domId + '-session-url').val(sessionUrl);
+
+            // Apply the sync timing if a value has been provided
+            if (syncTiming != null) {
+                $('#' + domId + '-sync-timing').val(syncTiming);
+            }
+
+            // Apply the navigation if a value has been provided
+            if (navigationElementId != null) {
+                $('#' + domId + '-navigation-element-id').val(navigationElementId);
+            }
 
             if (inputs == null) {
                 // Try getting the inputs from the query string input parameters
@@ -1168,6 +1199,18 @@ permissions and limitations under the License.
                 // Run the requested flow - geo location is not supported just yet
                 runFlow(domId);
             //}
+        },
+        navigate: function (navigationItemId) {
+            var domId = $(this).attr('id');
+
+            if (navigationItemId == null ||
+                navigationItemId.trim().length == 0) {
+                alert('The location cannot be set to nothing.');
+                return;
+            }
+
+            // Execute the engine based on the selected
+            execute(domId, 'NAVIGATE', null, createFormRequest(domId), navigationItemId);
         },
         clear: function () {
             var domId = $(this).attr('id');

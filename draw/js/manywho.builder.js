@@ -23,6 +23,7 @@ function configurePage() {
     // Hide all of the graph and getting started stuff until we're ready
     $('#flow-graph-wrapper').hide();
     $('#flow-getting-started').hide();
+    $('#flow-graph-loader').hide();
 
     // Show the loading dialog
     ManyWhoSharedServices.showLoadingDialog(true);
@@ -80,14 +81,32 @@ function configurePage() {
         }
     };
 
+    // Show or hide the flow loader/graph
+    //
+    var setFlowLoader = function (visible) {
+        if (visible == true) {
+            $('#flow-graph-wrapper').show();
+            $('#flow-graph-loader').show();
+        } else {
+            $('#flow-graph-loader').hide();
+            $('#flow-graph-wrapper').show();
+        }
+    };
+
     // Create the setup function
     var updateTools = function () {
         var authenticationToken = ManyWhoSharedServices.getAuthorAuthenticationToken();
+
+        // Hide the flow loader in all situations
+        $('#flow-graph-loader').hide();
 
         if (authenticationToken != null &&
             authenticationToken.trim().length > 0) {
             // Hide the loading dialog if it's showing
             ManyWhoSharedServices.showLoadingDialog(false);
+
+            // Populate the list of players
+            populatePlayers();
 
             // We don't want to do this initialization stuff if the user is already doing stuff
             if (ManyWhoSharedServices.getFlowId() != null &&
@@ -118,6 +137,38 @@ function configurePage() {
                 updateTools.call(this);
             });
         }
+    };
+
+    var getSelectedPlayer = function () {
+        var player = $('#manywho-available-players').val();
+
+        if (player == null ||
+            player.trim().length == 0) {
+            // If we don't have a player for any reason, we assume 'default'
+            player = 'default';
+        }
+
+        return player;
+    };
+
+    var populatePlayers = function () {
+        ManyWhoPlayer.loadAll('ManyWhoBuilder.PopulatePlayers',
+                              ManyWhoSharedServices.getTenantId(),
+                              null,
+                              function (data, status, xhr) {
+                                  // Check to see if we have any players
+                                  if (data != null &&
+                                      data.length > 0) {
+                                      // Clear the list of players
+                                      $('#manywho-available-players').html('');
+
+                                      // Populate the list of players to run the flow in
+                                      for (var i = 0; i < data.length; i++) {
+                                          $('#manywho-available-players').append('<option value="' + data[i] + '">' + data[i] + '</option>');
+                                      }
+                                  }
+                              },
+                              createErrorAlert);
     };
 
     var reLogin = function () {
@@ -171,11 +222,14 @@ function configurePage() {
                                                        $('#flow-developer-summary').html(flowDeveloperSummary);
                                                        $('#flow-start-map-element-id').val(flowStartMapElementId);
 
-                                                       // Update the tools
-                                                       updateTools.call(this);
+                                                       // Show the user the "flow loading" screen
+                                                       setFlowLoader(true);
 
                                                        // Synchronize the graph to load all of the elements
-                                                       $('#flow-graph').manywhoMxGraph('syncGraph', null);
+                                                       $('#flow-graph').manywhoMxGraph('syncGraph', function () {
+                                                           // Update the tools once the sync is complete
+                                                           updateTools.call(this);
+                                                       });
                                                    },
                                                    null,
                                                    createErrorAlert);
@@ -237,7 +291,7 @@ function configurePage() {
                                null,
                                function (data, status, xhr) {
                                    ManyWhoSharedServices.showBuildDialog(false);
-                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/default?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
                                },
                                createErrorAlert);
     });
@@ -257,7 +311,7 @@ function configurePage() {
                                    ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
 
                                    // Now we load the flow which allows the author to then share it with their friends
-                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/default?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
                                },
                                createErrorAlert);
     });
@@ -305,6 +359,9 @@ function configurePage() {
     // Update the toolbar
     updateTools.call(this);
 
+    // Make sure the graph is the same height as the left menu so we don't have disappearing graph problems
+    $('#manywho-flow-container').height($(document).height());
+
     // Set the timer to check if any changes to loaded flows have been made
     setInterval(function () {
             if (ManyWhoSharedServices.getFlowId() != null &&
@@ -321,7 +378,7 @@ function configurePage() {
                                                 if (data != null &&
                                                     data == true) {
                                                     // Sync the graph so we have the necessary changes
-                                                    $('#flow-graph').manywhoMxGraph('syncGraph', null);
+                                                    //$('#flow-graph').manywhoMxGraph('syncGraph', null);
                                                 }
                                             },
                                             createErrorAlert);

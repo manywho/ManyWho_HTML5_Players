@@ -128,7 +128,7 @@ var ManyWhoFlow = {
             ManyWhoLogging.consoleError(callingFunctionName + ' -> ManyWhoFlow.UpdateGraph: A flow id must be provided to sync.');
             return;
         } else {
-            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/flow/' + flowId;
+            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/flow';
             requestType = 'POST';
         }
 
@@ -169,34 +169,16 @@ var ManyWhoFlow = {
                          syncErrorCallback) {
         var requestUrl = null;
         var requestType = null;
-        var requestData = null;
-        var stringFlowMapElements = null;
+        var requestData = '';
 
         if (flowId == null ||
             flowId.trim().length == 0) {
             ManyWhoLogging.consoleError(callingFunctionName + ' -> ManyWhoFlow.SyncGraph: A flow id must be provided to sync.');
             return;
         } else {
-            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/sync/flow/' + flowId;
-            requestType = 'POST';
+            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/graph/flow/' + flowId;
+            requestType = 'GET';
         }
-
-        if (flowStartMapElementId == null) {
-            flowStartMapElementId = '';
-        }
-
-        if (flowMapElements != null) {
-            stringFlowMapElements = JSON.stringify(flowMapElements);
-        }
-
-        requestData = '{' +
-                    '"editingToken":"' + editingToken + '",' +
-                    '"id":{"id":"' + flowId + '"},' +
-                    '"developerName":"' + ManyWhoAjax.cleanJson(flowName) + '",' +
-                    '"developerSummary":"' + ManyWhoAjax.cleanJson(flowSummary) + '",' +
-                    '"startMapElementId":"' + flowStartMapElementId + '",' +
-                    '"mapElements":' + stringFlowMapElements +
-            '}';
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SyncGraph', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback, null, null, authenticationToken);
     },

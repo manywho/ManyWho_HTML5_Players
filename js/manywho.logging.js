@@ -21,7 +21,7 @@ var ManyWhoLogging = {
      * logging when necessary - but also add extra behaviours over time.
      */
     consoleLog: function (log) {
-        if (console != undefined) {
+        if (window.console && console.log) {
             console.log(log);
         }
     },
@@ -31,7 +31,7 @@ var ManyWhoLogging = {
      * logging when necessary - but also add extra behaviours over time.
      */
     consoleError: function (error) {
-        if (console != undefined) {
+        if (window.console && console.error) {
             console.error(error);
         }
     }

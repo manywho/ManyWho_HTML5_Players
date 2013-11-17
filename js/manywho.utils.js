@@ -31,8 +31,10 @@ var ManyWhoUtils = {
         return value;
     },
     updateUrl: function (data, url) {
-        history.replaceState(data, "grab share url page", url);
-        //window.location.replace(url);
+        // Check to make sure the browser supports the switch of the url
+        if (history && history.replaceState) {
+            history.replaceState(data, "grab share url page", url);
+        }
     },
     getInputQueryStringParams: function () {
         var params = $.query.get();

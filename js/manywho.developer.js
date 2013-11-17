@@ -109,7 +109,7 @@ var ManyWhoDeveloper = {
                                     null, 
                                     function (data, status, xhr) {
                                         // Populate the JSON with the callback data
-                                        populateJSONCallback.call(this, JSON.stringify(data, undefined, 2));
+                                        populateJSONCallback.call(this, JSON.stringify(data, undefined, 4));
                                     },
                                     errorCallback,
                                     headers,
@@ -163,9 +163,8 @@ var ManyWhoDeveloper = {
                 requestContent += '  "operations":[\n';
                 requestContent += '    {\n';
                 requestContent += '      "id":null,\n';
-                requestContent += '      "typeElementId":null,\n';
                 requestContent += '      "order":0,\n';
-                requestContent += '      "valueElementToReferenceId":{\n';
+                requestContent += '      "valueElementToApplyId":{\n';
                 requestContent += '        "id":null,\n';
                 requestContent += '        "command":null,\n';
                 requestContent += '        "typeElementPropertyId":null\n';
@@ -201,7 +200,7 @@ var ManyWhoDeveloper = {
                 requestContent += '      {\n';
                 requestContent += '        "id":null,\n';
                 requestContent += '        "developerName":null,\n';
-                requestContent += '        "valueElementToReferenceId":{\n';
+                requestContent += '        "valueElementToApplyId":{\n';
                 requestContent += '          "id":null,\n';
                 requestContent += '          "command":null,\n';
                 requestContent += '          "typeElementPropertyId":null\n';

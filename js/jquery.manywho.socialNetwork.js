@@ -1065,8 +1065,13 @@ permissions and limitations under the License.
             $('#' + currentOptions.domId + '-new-posts').hide();
 
             try {
+                // Make sure we're pointing at the correct collaboration space
+                var options = {
+                    origin: ManyWhoConstants.NODE_BASE_PATH + '/channel'
+                }
+
                 // Open the realtime socket for detecting changes to the feed - based on this stream identifier
-                sharejs.open(currentOptions.streamId, 'text', ManyWhoConstants.NODE_BASE_PATH + '/nodeApp/channel', function (error, doc) {
+                sharejs.open(currentOptions.streamId, 'text', options, function (error, doc) {
                     // Keep the document as a global value
                     $shareJsState = doc;
 

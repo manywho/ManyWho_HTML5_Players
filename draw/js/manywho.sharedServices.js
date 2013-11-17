@@ -352,7 +352,7 @@ var ManyWhoSharedServices = {
                                                                                         null,
                                                                                         ManyWhoSharedServices.getEditorModeId());
 
-                                   $('#manywho-dialog-sub').modal('show');
+                                   $('#manywho-dialog-sub').modal({ backdrop: 'static', show: true });
                                },
                                null);
     },
@@ -494,7 +494,7 @@ var ManyWhoSharedServices = {
                                                                                     null,
                                                                                     ManyWhoSharedServices.getEditorModeId());
 
-                                   $('#manywho-dialog').modal('show');
+                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
                                errorFunction);
     },
@@ -565,7 +565,7 @@ var ManyWhoSharedServices = {
                                                                                     ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
                                                                                     ManyWhoSharedServices.getEditorModeId());
 
-                                    $('#manywho-dialog').modal('show');
+                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                 },
                                 null);
     },
@@ -573,7 +573,7 @@ var ManyWhoSharedServices = {
         var doDelete = false;
         var inputs = null;
 
-        if (elementId == null) {
+        if (outcomeId == null) {
             doDelete = true;
         }
 
@@ -635,7 +635,7 @@ var ManyWhoSharedServices = {
                                                                                     ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
                                                                                     ManyWhoSharedServices.getEditorModeId());
 
-                                    $('#manywho-dialog').modal('show');
+                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                 },
                                 null);
     },
@@ -656,53 +656,53 @@ var ManyWhoSharedServices = {
             $('#manywho-dialog-title').html('Loading...');
         });
 
-        if (operation != null &&
-            operation.toLowerCase() == 'delete') {
-            alert('to do');
-        } else {
-            ManyWhoSharedServices.adjustDialog(550, null, true);
-            ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowGroupElementConfigDialog',
-                                   ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
-                                   'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
-                                   null,
-                                   null,
-                                   function (data, status, xhr) {
-                                       $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                        null,
-                                                                                        data.id.id,
-                                                                                        data.id.versionId,
-                                                                                        ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, elementType, locationX, locationY, height, width),
-                                                                                        function (outputValues) {
-                                                                                            var flowOutcome = null;
-                                                                                            var elementId = null;
-                                                                                            var elementDeveloperName = null;
+        // Send the inputs needed for the flow to make decisions
+        inputs = ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, elementType, locationX, locationY, height, width);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
-                                                                                            elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'Id');
-                                                                                            elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'DeveloperName');
-                                                                                            flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+        ManyWhoSharedServices.adjustDialog(550, null, true);
+        ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowGroupElementConfigDialog',
+                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                                'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                                null,
+                                null,
+                                function (data, status, xhr) {
+                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
+                                                                                    null,
+                                                                                    data.id.id,
+                                                                                    data.id.versionId,
+                                                                                    inputs,
+                                                                                    function (outputValues) {
+                                                                                        var flowOutcome = null;
+                                                                                        var elementId = null;
+                                                                                        var elementDeveloperName = null;
 
-                                                                                            if (flowOutcome == null ||
-                                                                                                flowOutcome.toLowerCase() != 'cancel') {
-                                                                                                $('#manywho-dialog').attr('data-keep', 'true');
-                                                                                                okCallback.call(this, elementType, elementId, graphId, elementDeveloperName);
-                                                                                            } else {
-                                                                                                cancelCallback.call(this, graphId, doDelete);
-                                                                                            }
+                                                                                        elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'Id');
+                                                                                        elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'DeveloperName');
+                                                                                        flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
 
-                                                                                            // Hide the dialog
-                                                                                            $('#manywho-dialog').modal('hide');
-                                                                                            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                            $('#manywho-dialog-title').html('Loading...');
-                                                                                        },
-                                                                                        'manywho-model-outcomes',
-                                                                                        'manywho-dialog-title',
-                                                                                        ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
-                                                                                        ManyWhoSharedServices.getEditorModeId());
+                                                                                        if (flowOutcome == null ||
+                                                                                            flowOutcome.toLowerCase() != 'cancel') {
+                                                                                            $('#manywho-dialog').attr('data-keep', 'true');
+                                                                                            okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
+                                                                                        } else {
+                                                                                            cancelCallback.call(this, graphId, doDelete);
+                                                                                        }
 
-                                       $('#manywho-dialog').modal('show');
-                                   },
-                                   null);
-        }
+                                                                                        // Hide the dialog
+                                                                                        $('#manywho-dialog').modal('hide');
+                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                                                                        $('#manywho-dialog-title').html('Loading...');
+                                                                                    },
+                                                                                    'manywho-model-outcomes',
+                                                                                    'manywho-dialog-title',
+                                                                                    ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
+                                                                                    ManyWhoSharedServices.getEditorModeId());
+
+                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
+                                },
+                                null);
     },
     showFlowConfigDialog: function (elementId, okCallback, cancelCallback, errorFunction) {
         ManyWhoSharedServices.adjustDialog(550, null, true);
@@ -759,7 +759,7 @@ var ManyWhoSharedServices = {
                                                                                     null,
                                                                                     ManyWhoSharedServices.getEditorModeId());
 
-                                   $('#manywho-dialog').modal('show');
+                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
                                errorFunction);
     },

@@ -445,8 +445,13 @@ permissions and limitations under the License.
             if (addSocial == true) {
                 var documentElement = document.getElementById(domId + '-' + field.id + '-field');
 
+                // Make sure we're pointing at the correct collaboration space
+                var options = {
+                    origin: ManyWhoConstants.NODE_BASE_PATH + '/channel'
+                }
+
                 // Open the share js connection for this state and this field
-                sharejs.open($('#' + domId + '-state-id').val() + '-' + field.id, 'text', ManyWhoConstants.NODE_BASE_PATH + '/nodeApp/channel', function (error, doc) {
+                sharejs.open($('#' + domId + '-state-id').val() + '-' + field.id, 'text', options, function (error, doc) {
                     // Grab the current value of the field
                     var documentValue = $('#' + domId + '-' + field.id + '-field').val();
 
@@ -887,35 +892,42 @@ permissions and limitations under the License.
                     // Make sure we don't cause any linking issues or page refreshes
                     event.preventDefault();
 
-                    // Disable all of the outcome buttons on the form
-                    $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
-
-                    if (externalDomId != null &&
-                        externalDomId.trim().length > 0) {
-                        $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
-                    }
-
-                    // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
-                    $('#' + domId + '-sections-selector').find('li').each(function (index) {
-                        // Check to see if this is the active tab - if so we save that info into the dom
-                        if (viewStateDomElement != null &&
-                            $(this).hasClass('active') == true) {
-                            $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
-                        }
-                    });
-
-                    // Check to make sure all of the fields are valid - and prompt the user if they're not
-                    var isValid = validateFieldValues(domId);
-
-                    if (isValid == true) {
-                        // If the form validates OK, we proceed with the onClick function
-                        onClickFunction.call(this, outcomeId);
-                    }
+                    // Execute the outcome
+                    executeSelectedOutcomeEvent(domId, externalDomId, viewStateDomElement, outcomeId, onClickFunction);
                 });
             } else {
                 // Disable the button as we can't use it - it's either not allowed or it's simply a placeholder
                 $('#' + domId + '-' + outcomeId).attr('disabled', 'disabled');
             }
+        }
+    };
+
+    // This is a utility function to manage an outcome click or simply an outcome automated click
+    //
+    var executeSelectedOutcomeEvent = function (domId, externalDomId, viewStateDomElement, outcomeId, onClickFunction) {
+        // Disable all of the outcome buttons on the form
+        $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+
+        if (externalDomId != null &&
+            externalDomId.trim().length > 0) {
+            $('#' + externalDomId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+        }
+
+        // Grab the list of sections and attempt to find the selected tab - we remember this in case we return to this form and step again
+        $('#' + domId + '-sections-selector').find('li').each(function (index) {
+            // Check to see if this is the active tab - if so we save that info into the dom
+            if (viewStateDomElement != null &&
+                $(this).hasClass('active') == true) {
+                $('#' + viewStateDomElement).data(mapElementId, $(this).attr('id'));
+            }
+        });
+
+        // Check to make sure all of the fields are valid - and prompt the user if they're not
+        var isValid = validateFieldValues(domId);
+
+        if (isValid == true) {
+            // If the form validates OK, we proceed with the onClick function
+            onClickFunction.call(this, outcomeId);
         }
     };
 
@@ -1497,7 +1509,7 @@ permissions and limitations under the License.
 
     // This is an iterative method for assembling the page containers
     //
-    var assemblePageContainers = function (domId, parentContainerType, parentPageContainerId, pageContainerResponses) {
+    var assemblePageContainers = function (domId, orderedContainerIds, parentContainerType, parentPageContainerId, pageContainerResponses) {
         if (pageContainerResponses != null &&
             pageContainerResponses.length > 0) {
             // Sort the page containers so they appear in the right order
@@ -1515,6 +1527,11 @@ permissions and limitations under the License.
             for (var i = 0; i < pageContainerResponses.length; i++) {
                 var pageContainerResponse = pageContainerResponses[i];
 
+                if (orderedContainerIds != null) {
+                    // Add this identifier to our ordered containers
+                    orderedContainerIds[orderedContainerIds.length] = pageContainerResponse.id;
+                }
+
                 // Check to see if this container is the active one
                 var selectedPageContainerId = ManyWhoUtils.getCookie($('#' + domId + '-state-id').val() + '-' + parentPageContainerId);
 
@@ -1522,14 +1539,21 @@ permissions and limitations under the License.
                 createPageContainer(parentContainerType, parentPageContainerId, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.label, selectedPageContainerId);
 
                 // If this page container has page containers, we write those now too
-                assemblePageContainers(domId, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.pageContainerResponses);
+                assemblePageContainers(domId, orderedContainerIds, pageContainerResponse.containerType, pageContainerResponse.id, pageContainerResponse.pageContainerResponses);
             }
         }
+
+        return orderedContainerIds;
     };
 
     // This is the main method for assembling / painting the complete form.
     //
     var assembleForm = function (domId, pageResponse, eventCallback, outcomeResponses, outcomeFunction, externalOutcomeDomId, formLabelPanel, viewStateDomElement, mapElementId) {
+        var defaultOutcome = null;
+        var selectedComponent = null;
+        var settingsResponse = null;
+        var orderedContainerIds = null;
+
         // First we assemble the whole page
         if (pageResponse != null) {
             // Write the label if one exists
@@ -1538,12 +1562,17 @@ permissions and limitations under the License.
                 $('#' + formLabelPanel).html(pageResponse.label);
             }
 
+            // Send through an array to give us the ordered containers back
+            var orderedContainerIds = new Array();
+
             // Assemble all of the page containers
-            assemblePageContainers(domId, null, domId + '-page', pageResponse.pageContainerResponses);
+            orderedContainerIds = assemblePageContainers(domId, orderedContainerIds, null, domId + '-page', pageResponse.pageContainerResponses);
 
             // Now that we have our page containers, we add the components
             if (pageResponse.pageComponentResponses != null &&
                 pageResponse.pageComponentResponses.length > 0) {
+                var firstContainerFound = false;
+
                 // Do a dual sort prioritizing page container id first
                 pageResponse.pageComponentResponses.sort(function (pageComponentResponseA, pageComponentResponseB) {
                     if (pageComponentResponseA.pageContainerId > pageComponentResponseB.pageContainerId) {
@@ -1562,21 +1591,64 @@ permissions and limitations under the License.
                     }
                 });
 
+                // Now we see if we can identify the first component in the first container!
+                if (orderedContainerIds != null &&
+                    orderedContainerIds.length > 0) {
+                    // Go through each of the ordered containers
+                    for (var c = 0; c < orderedContainerIds.length; c++) {
+                        var containerID = orderedContainerIds[c];
+
+                        if (firstContainerFound == true) {
+                            break;
+                        }
+
+                        // Go through the list of ordered component responses to find the components in this container
+                        for (var d = 0; d < pageResponse.pageComponentResponses.length; d++) {
+                            var pageComponentResponse = pageResponse.pageComponentResponses[d];
+
+                            // Check to make sure this component is in this container!
+                            if (pageComponentResponse.pageContainerId != null &&
+                                pageComponentResponse.pageContainerId.toLowerCase() == containerID.toLowerCase()) {
+                                var componentType = null;
+                                // Now we check to see if we have a component that meets our criteria in this container
+                                // Get the component type - and make upper case just in case
+                                componentType = pageComponentResponse.componentType.toUpperCase();
+
+                                // We want the first component that has focus to be a data entry component
+                                // This is a little tricky as we need to check the containers also - as there may be containers that appear before
+                                // but do not have any components - and components are ordered within the container
+                                if (componentType == ManyWhoConstants.COMPONENT_TYPE_CONTENT ||
+                                    componentType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX ||
+                                    componentType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
+                                    // This is a reference to the actual field as opposed to the shell div
+                                    selectedComponent = domId + '-' + pageComponentResponse.id + '-field';
+                                    firstContainerFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Now we write out the components
                 for (var l = 0; l < pageResponse.pageComponentResponses.length; l++) {
                     var pageComponentResponse = pageResponse.pageComponentResponses[l];
+                    var componentType = null;
+                    var fieldId = null;
 
                     // Get the data for this particular component
                     var pageComponentData = getFormMetaData(pageResponse.pageComponentDataResponses, pageComponentResponse.id);
 
                     // Create the field in our form
-                    createField(domId, pageComponentResponse, pageComponentData, outcomeResponses, eventCallback, outcomeFunction);
+                    fieldId = createField(domId, pageComponentResponse, pageComponentData, outcomeResponses, eventCallback, outcomeFunction);
                 }
             }
 
             // Finally, we print our the outcome responses for the user actions
             if (outcomeResponses != null &&
                 outcomeResponses.length > 0) {
+                var enterOutcomeFound = false;
+
                 // Sort the outcomes so they appear in the right order
                 outcomeResponses.sort(function (outcomeA, outcomeB) {
                     if (outcomeA.order > outcomeB.order) {
@@ -1592,10 +1664,26 @@ permissions and limitations under the License.
 
                 for (var j = 0; j < outcomeResponses.length; j++) {
                     var outcome = outcomeResponses[j];
+
+                    // Find the first outcome that has no object binding - that's our default "on enter" outcome
+                    if (enterOutcomeFound == false &&
+                        (outcome.pageObjectBindingId == null ||
+                         outcome.pageObjectBindingId.trim().length == 0)) {
+                        // Set this as the default outcome
+                        defaultOutcome = outcome.id;
+                        enterOutcomeFound = true;
+                    }
+
                     generateOutcome(domId, externalOutcomeDomId, outcome.id, outcome.label, outcomeFunction, outcome.pageObjectBindingId, outcome.pageActionBindingType, outcome.isBulkAction, outcome.pageActionType, viewStateDomElement, mapElementId);
                 }
             }
         }
+
+        settingsResponse = new Object();
+        settingsResponse.defaultOutcomeId = defaultOutcome;
+        settingsResponse.selectedComponentId = selectedComponent;
+
+        return settingsResponse;
     };
 
     // This form simply updates the values on the form without repainting the whole layout.
@@ -1989,6 +2077,7 @@ permissions and limitations under the License.
         },
         assemble: function (formResponse, eventCallback, outcomeResponses, outcomeFunction, externalOutcomeDomId, formLabelPanel, viewStateDomElement, mapElementId) {
             var domId = $(this).attr('id');
+            var settingsResponse = null;
 
             // If the form assembly is using an external outcome placeholder, we remove the one on this form
             if (externalOutcomeDomId != null &&
@@ -1997,10 +2086,38 @@ permissions and limitations under the License.
             }
 
             // Call the function to assemble the form
-            assembleForm(domId, formResponse, eventCallback, outcomeResponses, outcomeFunction, externalOutcomeDomId, formLabelPanel, viewStateDomElement, mapElementId);
+            settingsResponse = assembleForm(domId, formResponse, eventCallback, outcomeResponses, outcomeFunction, externalOutcomeDomId, formLabelPanel, viewStateDomElement, mapElementId);
 
             // Update the form with the form metadata
             updateForm(domId, formResponse, outcomeResponses, outcomeFunction);
+
+            // If we have the settings response, we apply the settings to the whole page
+            if (settingsResponse != null) {
+                // We wrap this code in a timeout to allow the parent engine to finish any work it needs to do before setting the focus
+                // This is really a patch and we should look to refactor this plugin to provide better support for "focus" and generally assembly
+                setTimeout(function () {
+                    // If we have a default outcome identifier, then we can use that for on enter events
+                    if (settingsResponse.defaultOutcomeId != null &&
+                        settingsResponse.defaultOutcomeId.trim().length > 0 &&
+                        outcomeFunction != null) {
+                        // Add an onenter event to the form - using the selected outcome as the outcome to use for the processing
+                        $(this).keypress(function (e) {
+                            if (e.which == 13) {
+                                // Execute the outcome
+                                executeSelectedOutcomeEvent(domId, externalOutcomeDomId, viewStateDomElement, settingsResponse.defaultOutcomeId, outcomeFunction);
+                            }
+                        });
+                    }
+
+                    // If we have the selected component identifier, we apply that so we don't need to manually set focus to the component
+                    if (settingsResponse.selectedComponentId != null &&
+                        settingsResponse.selectedComponentId.trim().length > 0) {
+                        // Set the focus to the field
+                        $('#' + settingsResponse.selectedComponentId).focus();
+                    }
+                },
+                500);
+            }
         },
         update: function (formResponse, outcomeResponses, outcomeFunction) {
             var domId = $(this).attr('id');
@@ -2073,8 +2190,7 @@ permissions and limitations under the License.
             $.each($(this).find('.manywho-runtime-content-field'), function (index) {
                 var editor = new wysihtml5.Editor($(this).attr('id'), {
                     toolbar: $(this).attr('id') + '-toolbar',
-                    parserRules: wysihtml5ParserRules,
-                    useLineBreaks: false
+                    parserRules: wysihtml5ParserRules
                 });
             });
         }

@@ -175,8 +175,13 @@ permissions and limitations under the License.
                                                                locationY,
                                                                height,
                                                                width,
-                                                               function (elementType, elementId, graphId, developerName) {
-                                                                   updateGroupElement(graphId, elementId, elementType, developerName);
+                                                               function (elementType, elementId, graphId, developerName, flowOutcome) {
+                                                                   if (flowOutcome != null &&
+                                                                       flowOutcome.toLowerCase() == 'delete') {
+                                                                       deleteGroupElement(graphId);
+                                                                   } else {
+                                                                       updateGroupElement(graphId, elementId, elementType, developerName);
+                                                                   }
                                                                    editing(false);
                                                                },
                                                                function (graphId, doDelete) {
@@ -275,7 +280,7 @@ permissions and limitations under the License.
                 var cell = cells[i];
 
                 if (cell.getValue() != null &&
-                    cell.getValue().getAttribute != undefined) {
+                    'getAttribute' in cell.getValue()) {
                     var elementId = cell.getValue().getAttribute('elementId');
                     var nodeType = cell.getValue().getAttribute('nodeType');
 
@@ -314,7 +319,7 @@ permissions and limitations under the License.
                 var cell = cells[i];
 
                 if (cell.getValue() != null &&
-                    cell.getValue().getAttribute != undefined) {
+                    'getAttribute' in cell.getValue()) {
                     var elementId = cell.getValue().getAttribute('elementId');
                     var nodeType = cell.getValue().getAttribute('nodeType');
 
@@ -369,7 +374,7 @@ permissions and limitations under the License.
                 // We have a group cell
                 if (parent != null &&
                     parent.getValue() != null &&
-                    parent.getValue().getAttribute != undefined) {
+                    'getAttribute' in parent.getValue()) {
                     groupElementId = parent.getValue().getAttribute('elementId');
                 }
 
@@ -422,15 +427,16 @@ permissions and limitations under the License.
         var y = cell.getGeometry().getPoint().y;
 
         if (cell.getValue() != null &&
-            cell.getValue().getAttribute != undefined) {
+            'getAttribute' in cell.getValue()) {
             var elementId = cell.getValue().getAttribute('elementId');
+            var elementType = cell.getValue().getAttribute('elementType');
             var nodeType = cell.getValue().getAttribute('nodeType');
 
             if (elementId != null &&
                 elementId != '' &&
                 nodeType != null &&
                 nodeType == 'map') {
-                mapElement = { 'Id': elementId, 'GroupElementId': groupElementId, 'X': x, 'Y': y };
+                mapElement = { 'id': elementId, 'elementType': elementType, 'groupElementId': groupElementId, 'x': x, 'y': y };
             }
         }
 
@@ -445,15 +451,16 @@ permissions and limitations under the License.
         var height = cell.getGeometry().height;
 
         if (cell.getValue() != null &&
-            cell.getValue().getAttribute != undefined) {
+            'getAttribute' in cell.getValue()) {
             var elementId = cell.getValue().getAttribute('elementId');
+            var elementType = cell.getValue().getAttribute('elementType');
             var nodeType = cell.getValue().getAttribute('nodeType');
 
             if (elementId != null &&
                 elementId != '' &&
                 nodeType != null &&
                 nodeType == 'group') {
-                groupElement = { 'id': elementId, 'x': x, 'y': y, 'height': height, 'width': width };
+                groupElement = { 'id': elementId, 'elementType': elementType, 'x': x, 'y': y, 'height': height, 'width': width };
             }
         }
 
@@ -630,8 +637,8 @@ permissions and limitations under the License.
 
                         // We have an edge rather than a full cell
                         if (cell.getValue() == null ||
-                            cell.getValue().getAttribute == undefined) {
-                            alert('edge found');
+                            'getAttribute' in cell.getValue() == false) {
+                            //alert('edge found');
                             continue;
                         }
 
@@ -824,6 +831,17 @@ permissions and limitations under the License.
                 cell.setValue(node);
             }
 
+            // IE8 doesn't like null assignments to attributes
+            if (developerName == null) {
+                developerName = '';
+            }
+            if (elementId == null) {
+                elementId = '';
+            }
+            if (elementType == null) {
+                elementType = '';
+            }
+
             cell.getValue().setAttribute('label', developerName);
             cell.getValue().setAttribute('elementId', elementId);
             cell.getValue().setAttribute('elementType', elementType);
@@ -859,6 +877,14 @@ permissions and limitations under the License.
                 cell.getValue().setAttribute('label', '<strong>' + developerName + '</strong>');
             } else {
                 cell.getValue().setAttribute('label', '<div style="margin-left: 35px; margin-right: 3px; color: #ffffff;">' + developerName + '</div>');
+            }
+
+            // IE8 doesn't like null assignments to attributes
+            if (elementId == null) {
+                elementId = '';
+            }
+            if (elementType == null) {
+                elementType = '';
             }
 
             cell.getValue().setAttribute('elementId', elementId);
@@ -1061,7 +1087,7 @@ permissions and limitations under the License.
         // Check to make sure that cell is a group
         if (parent != null &&
             parent.getValue() != null &&
-            parent.getValue().getAttribute != undefined) {
+            'getAttribute' in parent.getValue()) {
             if (parent.getValue().getAttribute('nodeType') != 'group') {
                 parent = null;
             } else if (isRelative == false) {
@@ -1095,6 +1121,14 @@ permissions and limitations under the License.
                 node.setAttribute('label', '<strong>' + developerName + '</strong>');
             } else {
                 node.setAttribute('label', '<div style="margin-left: 35px; margin-right: 3px; color: #ffffff;">' + developerName + '</div>');
+            }
+
+            // IE8 doesn't like null assignments to attributes
+            if (elementId == null) {
+                elementId = '';
+            }
+            if (elementType == null) {
+                elementType = '';
             }
 
             node.setAttribute('elementId', elementId);
@@ -1136,8 +1170,15 @@ permissions and limitations under the License.
             var doc = mxUtils.createXmlDocument();
             var node = doc.createElement('GroupElementNode');
 
+            // IE8 doesn't like null assignments to attributes
             if (developerName == null) {
                 developerName = '';
+            }
+            if (elementId == null) {
+                elementId = '';
+            }
+            if (elementType == null) {
+                elementType = '';
             }
 
             node.setAttribute('label', developerName);
@@ -1354,7 +1395,7 @@ permissions and limitations under the License.
 
             if (parent != null &&
                 parent.getValue() != null &&
-                parent.getValue().getAttribute != undefined) {
+                'getAttribute' in parent.getValue()) {
                 groupElementId = parent.getValue().getAttribute('elementId');
             }
 
@@ -1605,10 +1646,13 @@ permissions and limitations under the License.
                     elementType = cell.getValue().getAttribute('elementType');
                     elementId = cell.getValue().getAttribute('elementId');
 
-                    alert('check for children');
-
-                    // Show the group element dialog
-                    showGroupElementDialog(cell.id, 'delete', 0, 0, 0, 0, elementType, null, null);
+                    if (cell.getChildCount() > 0) {
+                        // Tell the user they cannot delete
+                        alert('You cannot delete a group that has map elements inside of it.');
+                    } else {
+                        // Show the group element dialog
+                        showGroupElementDialog(cell.id, 'delete', 0, 0, 0, 0, elementType, elementId);
+                    }
                     return;
                 } else if (nodeType == 'map') {
                     // Grab the element type and id from the cell
@@ -1753,7 +1797,7 @@ permissions and limitations under the License.
                             var cell = changes[i].cell;
 
                             if (cell.getValue() != null &&
-                                cell.getValue().getAttribute != undefined) {
+                                'getAttribute' in cell.getValue()) {
                                 var nodeType = cell.getValue().getAttribute('nodeType');
 
                                 if (nodeType != null &&
@@ -1763,7 +1807,7 @@ permissions and limitations under the License.
 
                                     if (parent != null &&
                                         parent.getValue() != null &&
-                                        parent.getValue().getAttribute != undefined) {
+                                        'getAttribute' in parent.getValue()) {
                                         groupElementId = parent.getValue().getAttribute('elementId');
                                     }
 
@@ -1948,7 +1992,7 @@ permissions and limitations under the License.
 
                     if (parent != null &&
                         parent.getValue() != null &&
-                        parent.getValue().getAttribute != undefined) {
+                        'getAttribute' in parent.getValue()) {
                         groupElementId = parent.getValue().getAttribute('elementId');
                     }
 

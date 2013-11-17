@@ -14,6 +14,13 @@ h3 {
     margin-bottom: 0px !important;
 }
 
+.manywho-toolbar-section {
+}
+
+.manywho-toolbar-section-title {
+    font-weight: bold;
+}
+
 .manywho-debug-info {
     margin-top: 10px !important;
 }
@@ -234,8 +241,9 @@ h3 {
 }*/
 
 #flow-error {
+    position: relative !important;
     min-height: 0px !important;
-    z-index: 100000000;
+    z-index: 1020;
 }
 
 /* CSS Specifically for the form builder START */

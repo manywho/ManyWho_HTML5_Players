@@ -1,5 +1,5 @@
 ﻿body {
-    padding-top: 15px;
+    padding-top: 40px;
 }
 
 h3 {
@@ -11,6 +11,7 @@ h3 {
 }
 
 .nav-pills {
+    margin-top: 0px !important;
     margin-bottom: 0px !important;
 }
 
