@@ -126,7 +126,7 @@ permissions and limitations under the License.
                     checkOrderObjectData.properties.length > 0) {
                     var needsOrdering = false;
 
-                    for (var a = 0; a < checkOrderObjectData.properties; a++) {
+                    for (var a = 0; a < checkOrderObjectData.properties.length; a++) {
                         if (checkOrderObjectData.properties[a].developerName.toLowerCase() == 'order') {
                             needsOrdering = true;
                             break;
@@ -2101,7 +2101,7 @@ permissions and limitations under the License.
                         settingsResponse.defaultOutcomeId.trim().length > 0 &&
                         outcomeFunction != null) {
                         // Add an onenter event to the form - using the selected outcome as the outcome to use for the processing
-                        $(this).keypress(function (e) {
+                        $('.manywho-runtime-inputbox-field').on('keypress', function (e) {
                             if (e.which == 13) {
                                 // Execute the outcome
                                 executeSelectedOutcomeEvent(domId, externalOutcomeDomId, viewStateDomElement, settingsResponse.defaultOutcomeId, outcomeFunction);
@@ -2126,6 +2126,9 @@ permissions and limitations under the License.
         },
         destroy: function () {
             var domId = $(this).attr('id');
+
+            // Remove all key press events from the document so we don't pile events on events
+            $('.manywho-runtime-inputbox-field').off('keypress', '**');
 
             // Clear any outcomes - the custom reference and/or the standard reference
             $('#' + $('#' + domId + '-form-outcome-reference').val()).html('');

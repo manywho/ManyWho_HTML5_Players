@@ -166,9 +166,58 @@ function configurePage() {
                                       for (var i = 0; i < data.length; i++) {
                                           $('#manywho-available-players').append('<option value="' + data[i] + '">' + data[i] + '</option>');
                                       }
+
+                                      // Auto select the default player
+                                      $('#manywho-available-players').val('default');
                                   }
                               },
                               createErrorAlert);
+    };
+
+    // Load the navigation elements for the flow.
+    //
+    var loadNavigationElements = function (callingFunctionName,
+                                           loadBeforeSend,
+                                           loadSuccessCallback,
+                                           loadErrorCallback) {
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + ManyWhoSharedServices.getFlowId() + '/' + ManyWhoSharedServices.getEditingToken() + '/element/navigation?filter=';
+        var requestType = 'GET';
+        var requestData = '';
+        var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.LoadNavigationElements', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers, null, ManyWhoSharedServices.getAuthorAuthenticationToken());
+    };
+
+    // Populate the list of navigation elements to choose from.
+    //
+    var populateNavigationElements = function () {
+        // Query the list of navigation elements - we'll use the same list for all nodes
+        loadNavigationElements('PopulateNavigationElements',
+                               null,
+                               function (data, status, xhr) {
+                                   var html = '';
+
+                                   // Clear the list of navigation entries
+                                   $('#manywho-model-select-run-navigation').html('');
+
+                                   if (data != null &&
+                                       data.length > 0) {
+                                       for (var a = 0; a < data.length; a++) {
+                                           // Turn off any existing click events for this option
+                                           $('#manywho-navigation-element-option-' + data[a].id).off('click');
+
+                                           // Append the menu with this option
+                                           $('#manywho-model-select-run-navigation').append('<li><a href="#" id="manywho-navigation-element-option-' + data[a].id + '" data-id="' + data[a].id + '">' + data[a].developerName + '</a></li>');
+
+                                           // Create a click event for this option
+                                           $('#manywho-navigation-element-option-' + data[a].id).on('click', function (event) {
+                                               // Grab the location stored in the dialog and append the navigation
+                                               window.open($('#manywho-dialog-select-navigation-location').val() + '&navigation-element-id=' + $(this).attr('data-id'));
+                                           });
+                                       }
+                                   }
+                               },
+                               null);
     };
 
     var reLogin = function () {
@@ -222,6 +271,9 @@ function configurePage() {
                                                        $('#flow-developer-summary').html(flowDeveloperSummary);
                                                        $('#flow-start-map-element-id').val(flowStartMapElementId);
 
+                                                       // Populate the list of navigation elements
+                                                       populateNavigationElements();
+
                                                        // Show the user the "flow loading" screen
                                                        setFlowLoader(true);
 
@@ -233,6 +285,15 @@ function configurePage() {
                                                    },
                                                    null,
                                                    createErrorAlert);
+    });
+
+    $("#manage-navigations").click(function (event) {
+        event.preventDefault();
+
+        ManyWhoSharedServices.showNavigationElementConfigDialog(ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_NAVIGATION, null, function () {
+            // Populate the list of navigation elements
+            populateNavigationElements();
+        }, createErrorAlert);
     });
 
     $("#manage-page-layouts").click(function (event) {
@@ -290,8 +351,22 @@ function configurePage() {
                                ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                null,
                                function (data, status, xhr) {
+                                   var location = null;
+
                                    ManyWhoSharedServices.showBuildDialog(false);
-                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+
+                                   // Assign the location
+                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+
+                                   // Check to see if the navigation has any entries for the user to select from
+                                   if ($('#manywho-model-select-run-navigation').html() != null &&
+                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                       // Show the navigation selection menu
+                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location);
+                                   } else {
+                                       // Load the window, we don't have any navigation to choose
+                                       window.open(location);
+                                   }
                                },
                                createErrorAlert);
     });
@@ -305,13 +380,26 @@ function configurePage() {
                                ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                null,
                                function (data, status, xhr) {
+                                   var location = null;
+
                                    ManyWhoSharedServices.showBuildDialog(false);
+
+                                   // Assign the location
+                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id;
 
                                    // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
                                    ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
 
-                                   // Now we load the flow which allows the author to then share it with their friends
-                                   window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId);
+                                   // Check to see if the navigation has any entries for the user to select from
+                                   if ($('#manywho-model-select-run-navigation').html() != null &&
+                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                       // Show the navigation selection menu
+                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location);
+                                   } else {
+                                       // Load the window, we don't have any navigation to choose
+                                       // Now we load the flow which allows the author to then share it with their friends
+                                       window.open(location);
+                                   }
                                },
                                createErrorAlert);
     });

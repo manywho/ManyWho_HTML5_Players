@@ -47,8 +47,8 @@ permissions and limitations under the License.
 
         // We don't yet have the flows for these map element types so need to show the developer tooling
         if (ManyWhoSharedServices.getDeveloperMode() == true ||
-            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase() ||
-            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase() ||
+            /*elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase() ||*/
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase() ||
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
@@ -67,10 +67,10 @@ permissions and limitations under the License.
                                                                           json,
                                                                           function (data, status, xhr) {
                                                                               // Tell the caller that the user decided to save
-                                                                              updateMapElement(graphId, data.id.id, elementType, data.developerName);
+                                                                              updateMapElement(graphId, data.id, elementType, data.developerName);
 
                                                                               // Give the data back to the caller
-                                                                              successCallback.call(this, JSON.stringify(data, undefined, 2));
+                                                                              successCallback.call(this, JSON.stringify(data, undefined, 4));
                                                                           },
                                                                           function () {
                                                                               alert('Whoops! Something bad happened - check the console logs in the browser for details');
@@ -139,10 +139,10 @@ permissions and limitations under the License.
                                                                           json,
                                                                           function (data, status, xhr) {
                                                                               // Tell the caller that the user decided to save
-                                                                              updateGroupElement(graphId, data.id.id, elementType, data.developerName);
+                                                                              updateGroupElement(graphId, data.id, elementType, data.developerName);
 
                                                                               // Give the data back to the caller
-                                                                              successCallback.call(this, JSON.stringify(data, undefined, 2));
+                                                                              successCallback.call(this, JSON.stringify(data, undefined, 4));
                                                                           },
                                                                           function () {
                                                                               alert('Whoops! Something bad happened - check the console logs in the browser for details');

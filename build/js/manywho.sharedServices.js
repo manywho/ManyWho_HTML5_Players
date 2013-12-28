@@ -66,17 +66,20 @@ var ManyWhoSharedServices = {
 
         return inputs;
     },
-    showAuthenticationDialog: function (okCallback, manywhoTenantId) {
+    showAuthenticationDialog: function (okCallback) {
+        var inputs = null;
+
+        // We want the user to authenticate against the draw plugin API
+        inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', ManyWhoConstants.BASE_PATH_URL + '/plugins/manywho/api/draw/1/authentication', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        // Also set the directory name so we have it
+        inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', 'ManyWho', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
-                               'MANYWHO__AUTHENTICATION__DEFAULT__FLOW',
+                               'MANYWHO__DRAW_AUTHENTICATION__DEFAULT__FLOW',
                                null,
                                null,
                                function (data, status, xhr) {
-                                   var inputs = null;
-
-                                   inputs = ManyWhoSharedServices.createInput(inputs, 'ManyWhoTenantId', manywhoTenantId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
                                                                                     null,
                                                                                     data.id.id,
@@ -88,6 +91,8 @@ var ManyWhoSharedServices = {
 
                                                                                         // Hide the dialog
                                                                                         $('#manywho-dialog').modal('hide');
+                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                                                                        $('#manywho-dialog-title').html('Loading...');
 
                                                                                         // Get the values out of the outputs
                                                                                         authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
@@ -101,6 +106,7 @@ var ManyWhoSharedServices = {
                                                                                     null,
                                                                                     null);
 
+                                   // Show the authentication dialog
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
                                null);

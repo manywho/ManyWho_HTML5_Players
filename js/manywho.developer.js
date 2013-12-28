@@ -154,10 +154,10 @@ var ManyWhoDeveloper = {
             requestContent += '  "developerSummary":null,\n';
             requestContent += '  "postUpdateToStream":false,\n';
             requestContent += '  "postUpdateWhenType":"ON_LOAD",\n';
-            requestContent += '  "userContent":"Put some content here for the user",\n';
-            requestContent += '  "statusMessage":"Hey, we\'re busy working on that for you...",\n';
-            requestContent += '  "postUpdateMessage":"The system is doing some work that you should know about...",\n';
-            requestContent += '  "notAuthorizedMessage":"Not going to let you see what we\'re doing, but you can chat if you like :)",\n';
+            requestContent += '  "userContent":null,\n';
+            requestContent += '  "statusMessage":null,\n';
+            requestContent += '  "postUpdateMessage":null,\n';
+            requestContent += '  "notAuthorizedMessage":null,\n';
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase()) {
                 requestContent += '  "operations":[\n';
@@ -304,6 +304,28 @@ var ManyWhoDeveloper = {
             requestContent += '    "locations":null\n';
             requestContent += '  }\n';
             requestContent += '}';
+        } else if (elementType == 'NAVIGATION'.toLowerCase()) {
+            requestContent += '{\n';
+            requestContent += '  "id":null,\n';
+            requestContent += '  "elementType":"NAVIGATION",\n';
+            requestContent += '  "developerName":null,\n';
+            requestContent += '  "developerSummary":null,\n';
+            requestContent += '  "label":null,\n';
+            requestContent += '  "navigationItems":[\n';
+            requestContent += '    {\n';
+            requestContent += '      "id":null,\n';
+            requestContent += '      "locationMapElementId":null,\n';
+            requestContent += '      "developerName":null,\n';
+            requestContent += '      "developerSummary":null,\n';
+            requestContent += '      "label":null,\n';
+            requestContent += '      "navigationItems":null,\n';
+            requestContent += '      "order":null,\n';
+            requestContent += '      "tags":null\n';
+            requestContent += '    }\n';
+            requestContent += '  ],\n';
+            requestContent += '  "tags":null,\n';
+            requestContent += '  "updateByName":false\n';
+            requestContent += '}\n';
         }
 
         return requestContent;

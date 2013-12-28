@@ -144,7 +144,12 @@ var ManyWhoUtils = {
 
                         // Assign the relevant information
                         if (property.developerName.toLowerCase() == typeElementEntryDeveloperName.toLowerCase()) {
-                            returnValue = property.contentValue;
+                            if (property.objectData != null &&
+                                property.objectData.length > 0) {
+                                returnValue = property.objectData;
+                            } else {
+                                returnValue = property.contentValue;
+                            }
                             found = true;
                             break;
                         }

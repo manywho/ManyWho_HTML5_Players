@@ -88,7 +88,7 @@ var ManyWhoSharedServices = {
 
         $('#manywho-model-runtime').attr('style', 'overflow: auto; height: ' + height + 'px;');
     },
-    showAuthenticationDialog: function (okCallback, loginUrl, manywhoTenantId) {
+    showAuthenticationDialog: function (okCallback, loginUrl, manywhoTenantId, directoryName) {
         ManyWhoSharedServices.adjustDialog(200, 550, false);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
@@ -100,6 +100,7 @@ var ManyWhoSharedServices = {
 
                                    inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', loginUrl, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
                                    inputs = ManyWhoSharedServices.createInput(inputs, 'ManyWhoTenantId', manywhoTenantId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                                   inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', directoryName, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
                                                                                     null,

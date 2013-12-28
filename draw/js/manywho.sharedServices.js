@@ -165,6 +165,22 @@ var ManyWhoSharedServices = {
             dialogHtml += '    </div>';
             dialogHtml += '</div>';
 
+            dialogHtml += '<div id="manywho-dialog-select-navigation" class="modal hide fade">';
+            dialogHtml += '    <div class="modal-header">';
+            dialogHtml += '        <button id="manywho-dialog-close-button-select-navigation" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
+            dialogHtml += '        <h3 id="manywho-dialog-title-select-navigation">Select Navigation</h3>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    <div id="manywho-model-select-navigation-dialog" class="modal-body">';
+            dialogHtml += '        <input type="hidden" id="manywho-dialog-select-navigation-location" value="" />';
+            dialogHtml += '        <div class="row-fluid"><p class="muted">Please select the navigation you\'d like to use:</p></div>';
+            dialogHtml += '        <div class="btn-group">';
+            dialogHtml += '            <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-globe icon-white"></i> Navigation</a> <span class="caret"></span></button>';
+            dialogHtml += '            <ul class="dropdown-menu" id="manywho-model-select-run-navigation">';
+            dialogHtml += '            </ul>';
+            dialogHtml += '        </div>';
+            dialogHtml += '    </div>';
+            dialogHtml += '</div>';
+
             dialogHtml += '<div id="manywho-dialog-loading" class="modal hide fade">';
             dialogHtml += '    <div class="modal-header">';
             dialogHtml += '        <button id="manywho-dialog-close-button-loading" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
@@ -181,6 +197,7 @@ var ManyWhoSharedServices = {
             $('#manywho-dialog-developer').modalmanager();
             $('#manywho-dialog-sub').modalmanager();
             $('#manywho-dialog-build').modalmanager();
+            $('#manywho-dialog-select-navigation').modalmanager();
             $('#manywho-dialog-loading').modalmanager();
             $('#manywho-dialog-fullscreen').hide();
 
@@ -217,6 +234,15 @@ var ManyWhoSharedServices = {
             $('#manywho-dialog-build').modal('show');
         } else {
             $('#manywho-dialog-build').modal('hide');
+        }
+    },
+    showSelectNavigationDialog: function (show, location) {
+        if (show == true) {
+            // Set the location to the provided location
+            $('#manywho-dialog-select-navigation-location').val(location);
+            $('#manywho-dialog-select-navigation').modal('show');
+        } else {
+            $('#manywho-dialog-select-navigation').modal('hide');
         }
     },
     showLoadingDialog: function (show) {
@@ -271,6 +297,8 @@ var ManyWhoSharedServices = {
         $('#manywho-model-runtime-sub').attr('style', 'overflow: auto; height: ' + height + 'px;');
     },
     showAuthenticationDialog: function (okCallback) {
+        var inputs = null;
+
         ManyWhoSharedServices.adjustDialog(200, 550, false);
 
         $('#manywho-dialog').on('hidden', function () {
@@ -278,9 +306,14 @@ var ManyWhoSharedServices = {
             $('#manywho-dialog-title').html('Loading...');
         });
 
+        // We want the user to authenticate against the draw plugin API
+        inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', ManyWhoConstants.BASE_PATH_URL + '/plugins/manywho/api/draw/1/authentication', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        // Also set the directory name so we have it
+        inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', 'ManyWho', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
-                               'MANYWHO__AUTHENTICATION__DEFAULT__FLOW',
+                               'MANYWHO__DRAW_AUTHENTICATION__DEFAULT__FLOW',
                                null,
                                null,
                                function (data, status, xhr) {
@@ -288,7 +321,7 @@ var ManyWhoSharedServices = {
                                                                                     null,
                                                                                     data.id.id,
                                                                                     data.id.versionId,
-                                                                                    null,
+                                                                                    inputs,
                                                                                     function (outputValues) {
                                                                                         var authenticationToken = null;
                                                                                         var manywhoTenantId = null;
@@ -387,6 +420,11 @@ var ManyWhoSharedServices = {
 
                                             restEditor.setValue(json);
                                             restEditor.gotoLine(0);
+
+                                            // Remove any existing event handlers so we don't execute all code that's ever been passed to this method!
+                                            $('#manywho-dialog-cancel-button-developer').off('click');
+                                            $('#manywho-dialog-save-button-developer').off('click');
+                                            $('#manywho-dialog-delete-button-developer').off('click');
 
                                             // Add the event for the close button
                                             $('#manywho-dialog-cancel-button-developer').on('click', function (event) {
@@ -498,6 +536,46 @@ var ManyWhoSharedServices = {
                                },
                                errorFunction);
     },
+    showNavigationElementConfigDialog: function (elementType, elementId, okCallback, errorFunction) {
+        ManyWhoSharedServices.adjustDialog(550, null, true);
+
+        $('#manywho-dialog').off('hidden');
+        $('#manywho-dialog').on('hidden', function () {
+            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+            $('#manywho-dialog-title').html('Loading...');
+        });
+
+        ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowNavigationElementConfigDialog',
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                               'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
+                               null,
+                               null,
+                               function (data, status, xhr) {
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
+                                                                                    null,
+                                                                                    data.id.id,
+                                                                                    data.id.versionId,
+                                                                                    ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, elementType),
+                                                                                    function (outputValues) {
+                                                                                        $('#manywho-dialog').modal('hide');
+                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                                                                        $('#manywho-dialog-title').html('Loading...');
+
+                                                                                        // Check to see if we have a callback function
+                                                                                        if (okCallback != null) {
+                                                                                            // Call the callback
+                                                                                            okCallback.call(this);
+                                                                                        }
+                                                                                    },
+                                                                                    'manywho-model-outcomes',
+                                                                                    'manywho-dialog-title',
+                                                                                    null,
+                                                                                    ManyWhoSharedServices.getEditorModeId());
+
+                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true });
+                               },
+                               errorFunction);
+    },
     showMapElementConfigDialog: function (elementType, elementId, groupElementId, graphId, operation, locationX, locationY, okCallback, cancelCallback) {
         var doDelete = false;
         var inputs = null;
@@ -592,7 +670,7 @@ var ManyWhoSharedServices = {
         inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', ManyWhoSharedServices.getAuthorAuthenticationToken(), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
-        ManyWhoSharedServices.adjustDialog(175, 550, true);
+        ManyWhoSharedServices.adjustDialog(200, 550, true);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowMapElementOutcomeConfigDialog',
                                 ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                 'MANYWHO__OUTCOME__DEFAULT__FLOW',

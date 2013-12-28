@@ -211,12 +211,22 @@ permissions and limitations under the License.
             // The system is telling us we can't login
             if (data.statusCode == '401') {
                 var loginUrl = null;
+                var directoryName = null;
 
                 if (data.authorizationContext != null) {
                     loginUrl = data.authorizationContext.loginUrl;
+                    directoryName = data.authorizationContext.directoryName;
+
+                    // Check to see what authentication type the flow is using
+                    if (data.authorizationContext.authenticationType != null &&
+                        data.authorizationContext.authenticationType.toLowerCase() == 'oauth2') {
+                        // Navigate the user to the oauth provider
+                        window.location = loginUrl;
+                        return;
+                    }
                 }
 
-                requestAuthentication(domId, loginUrl);
+                requestAuthentication(domId, loginUrl, directoryName);
                 return;
             }
 
@@ -292,12 +302,22 @@ permissions and limitations under the License.
             // The system is telling us we can't login
             if (data.statusCode == '401') {
                 var loginUrl = null;
+                var directoryName = null;
 
                 if (data.authorizationContext != null) {
                     loginUrl = data.authorizationContext.loginUrl;
+                    directoryName = data.authorizationContext.directoryName;
+
+                    // Check to see what authentication type the flow is using
+                    if (data.authorizationContext.authenticationType != null &&
+                        data.authorizationContext.authenticationType.toLowerCase() == 'oauth2') {
+                        // Navigate the user to the oauth provider
+                        window.location = loginUrl;
+                        return;
+                    }
                 }
 
-                requestAuthentication(domId, loginUrl);
+                requestAuthentication(domId, loginUrl, directoryName);
                 return;
             }
 
@@ -412,7 +432,7 @@ permissions and limitations under the License.
                     data.invokeType != 'SYNC') {
                     // Generate a new form
                     // TODO: need to change the register to this isn't being used for all apps
-                    $('#' + domId + '-screen-content').manywhoFormBootStrap({ id: 'form', label: null, addRealtime: getAddRealtime(domId), stateId: $('#' + domId + '-state-id').val(), tenantId: $('#' + domId + '-tenant-id').val(), sectionFormat: 'tabs', columnFormat: 'none', register: [{ tag: 'Form Editor', component: ManyWhoTagFormEditor }] });
+                    $('#' + domId + '-screen-content').manywhoFormBootStrap({ id: 'form', label: null, addRealtime: getAddRealtime(domId), stateId: $('#' + domId + '-state-id').val(), tenantId: $('#' + domId + '-tenant-id').val(), sectionFormat: 'tabs', columnFormat: 'none', register: [{ tag: 'Form Editor', component: ManyWhoTagFormEditor }, { tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor }] });
                 }
 
                 if (data.invokeType == 'SYNC') {
@@ -544,8 +564,18 @@ permissions and limitations under the License.
     };
 
     var join = function (domId) {
+        var mode = null;
+
+        // Apply the mode if we have one
+        if ($('#' + domId + '-mode').val() != null &&
+            $('#' + domId + '-mode').val().trim().length > 0) {
+            mode = '?mode=' + $('#' + domId + '-mode').val();
+        } else {
+            mode = '';
+        }
+
         // We don't show a wait as the user will already be looking at a wait spinner
-        var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val();
+        var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val() + mode;
         var requestType = 'GET';
         var requestData = '';
 
@@ -561,12 +591,22 @@ permissions and limitations under the License.
             // The system is telling us we can't login
             if (data.statusCode == '401') {
                 var loginUrl = null;
+                var directoryName = null;
 
                 if (data.authorizationContext != null) {
                     loginUrl = data.authorizationContext.loginUrl;
+                    directoryName = data.authorizationContext.directoryName;
+
+                    // Check to see what authentication type the flow is using
+                    if (data.authorizationContext.authenticationType != null &&
+                        data.authorizationContext.authenticationType.toLowerCase() == 'oauth2') {
+                        // Navigate the user to the oauth provider
+                        window.location = loginUrl;
+                        return;
+                    }
                 }
 
-                requestAuthentication(domId, loginUrl);
+                requestAuthentication(domId, loginUrl, directoryName);
                 return;
             }
 
@@ -795,7 +835,7 @@ permissions and limitations under the License.
     };
 
     // Create the setup function
-    var requestAuthentication = function (domId, loginUrl) {
+    var requestAuthentication = function (domId, loginUrl, directoryName) {
         var sessionId = null;
 
         sessionId = $('#' + domId + '-session-id').val();
@@ -826,7 +866,8 @@ permissions and limitations under the License.
                 runFlow.call(this, domId);
             },
             loginUrl,
-            $('#' + domId + '-tenant-id').val());
+            $('#' + domId + '-tenant-id').val(),
+            directoryName);
         }
     };
 
@@ -945,6 +986,12 @@ permissions and limitations under the License.
 
             // Initialize the shared services
             ManyWhoSharedServices.initialize('shared-services');
+
+            // Check to see if the caller explicitly provided the authorization token (used in oauth2 authentication flows)
+            if (opts.authorization != null &&
+                opts.authorization.trim().length > 0) {
+                ManyWhoSharedServices.setAuthenticationToken(opts.authorization);
+            }
 
             // Dialog for sharing the flow with other users
             html += '<div id="' + domId + '-share-flow-dialog" class="modal hide fade">';
@@ -1236,6 +1283,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null };
 
 })(jQuery);

@@ -360,3 +360,42 @@ h3 {
     top: 32px;
     left: 50%;
 }
+
+/* The css for the navigation editor */
+
+.manywho-navigation-editor {
+    margin-left: -25px !important;
+}
+
+.placeholder {
+	outline: 1px dashed #4183C4;
+}
+
+ol.manywho-navigation-editor-sortable, ol.manywho-navigation-editor-sortable ol {
+	list-style-type: none;
+}
+
+.manywho-navigation-editor-sortable li div  {
+    margin: 2px 2px 2px 2px !important;
+	cursor: move;
+}
+
+.manywho-navigation-editor-sortable li div input  {
+    margin: 0px 0px 0px 0px !important;
+}
+
+.manywho-navigation-editor-sortable li div select  {
+    margin: 0px 0px 0px 0px !important;
+}
+
+#manywho-navigation-element-name {
+    margin: 0px 0px 0px 0px !important;
+}
+
+#manywho-navigation-element-label {
+    margin: 0px 0px 0px 0px !important;
+}
+
+.manywho-navigation-editor-menu {
+    margin-top: 15px !important;
+}

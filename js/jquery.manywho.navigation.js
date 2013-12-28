@@ -14,7 +14,7 @@ permissions and limitations under the License.
 
 */
 
-function createNavigationItems(root, navigationItems) {
+function createNavigationItems(root, navigationItems, navigationItemDataResponses) {
     var html = '';
         
     if (navigationItems != null &&
@@ -30,11 +30,77 @@ function createNavigationItems(root, navigationItems) {
         if (navigationItems != null &&
             navigationItems.length > 0) {
             for (var i = 0; i < navigationItems.length; i++) {
-                // Create this navigation item
-                html += '<li><a href="#" id="' + navigationItems[i].id + '">' + navigationItems[i].label + '</a>';
+                var navigationItemDataResponse = null;
+                var additional = '';
+                var hasSubItems = false;
 
-                // Create the sub-navigation items
-                html += createNavigationItems(false, navigationItems.navigationItems);
+                // Go through the metadata responses and find the metadata for this navigation item
+                if (navigationItemDataResponses != null &&
+                    navigationItemDataResponses.length > 0) {
+                    for (var j = 0; j < navigationItemDataResponses.length; j++) {
+                        if (navigationItemDataResponses[j].navigationItemId == navigationItems[i].id) {
+                            navigationItemDataResponse = navigationItemDataResponses[j];
+                            break;
+                        }
+                    }
+                }
+
+                // If this item is not visible, we don't need to print it
+                if (navigationItemDataResponse.isVisible == false) {
+                    continue;
+                }
+
+                if (navigationItemDataResponse.isEnabled == false) {
+                    additional = ' disabled="disabled"';
+                }
+
+                // Check to see if we have any sub navigation
+                if (navigationItems[i].navigationItems != null &&
+                    navigationItems[i].navigationItems.length > 0) {
+                    hasSubItems = true;
+                }
+
+                if (navigationItemDataResponse.isCurrent == true) {
+                    if (hasSubItems == true) {
+                        html += '<li class="active dropdown">';
+                    } else {
+                        html += '<li class="active">';
+                    }
+                } else {
+                    if (hasSubItems == true) {
+                        html += '<li class="dropdown">';
+                    } else {
+                        html += '<li>';
+                    }
+                }
+
+                // Create this navigation item
+                html += '<a href="#" id="' + navigationItems[i].id + '"' + additional;
+
+                if (hasSubItems == true) {
+                    html += ' class="dropdown-toggle" data-toggle="dropdown"';
+                }
+
+                html += '>';
+
+                // Make the current element bold
+                if (navigationItemDataResponse.isActive == true) {
+                    html += '<strong>' + navigationItems[i].label + '</strong>';
+                } else {
+                    html += navigationItems[i].label;
+                }
+
+                if (hasSubItems == true) {
+                    html += ' <b class="caret"></b>';
+                }
+
+                html += '</a>';
+
+                // Check to see if we have any sub navigation
+                if (hasSubItems == true) {
+                    // Create the sub-navigation items
+                    html += createNavigationItems(false, navigationItems[i].navigationItems, navigationItemDataResponses);
+                }
 
                 // Close out the navigation item
                 html += '</li>';
@@ -81,31 +147,29 @@ function createNavigationItems(root, navigationItems) {
             
             // Build the base html we need to make the menu work
             html = '';
-            html += '<input type="hidden" id="' + domId + '-manywho-navigation-tenant-id" value="' + opts.tenantId + '" />';
-            html += '<input type="hidden" id="' + domId + '-manywho-navigation-state-id" value="' + opts.stateId + '" />';
-            html += '<input type="hidden" id="' + domId + '-manywho-navigation-state-token" value="' + opts.stateToken + '" />';
-            html += '<input type="hidden" id="' + domId + '-manywho-navigation-navigation-element-id" value="' + opts.navigationElementId + '" />';
+            html += '<div id="' + domId + '-manywho-navigation-data" style="display:none;"></div>';
             html += '<div id="' + domId + '-manywho-navigation" class="navbar navbar-inverse navbar-fixed-top"></div>';
 
             // Print to the dom
             $(this).html(html);
 
-            // This would be the start of a new function...
+            // Add the data to the dom
+            $('#' + domId + '-manywho-navigation-data').data('tenantId', opts.tenantId);
+            $('#' + domId + '-manywho-navigation-data').data('stateId', opts.stateId);
+            $('#' + domId + '-manywho-navigation-data').data('stateToken', opts.stateToken);
+            $('#' + domId + '-manywho-navigation-data').data('navigationElementId', opts.navigationElementId);
+            $('#' + domId + '-manywho-navigation-data').data('navigateFunction', opts.navigateFunction);
+        },
+        refresh: function () {
+            // Grab the dom id so we can get our values
+            var domId = $(this).attr('id');
 
-            //// Grab the dom id so we can get our values
-            //domId = $(this).attr('id');
-
-            //// Grab the values needed to refresh the navigation
-            //var tenantId = $('#' + domId + '-manywho-navigation-tenant-id').val();
-            //var stateId = $('#' + domId + '-manywho-navigation-state-id').val();
-            //var stateToken = $('#' + domId + '-manywho-navigation-state-token').val();
-            //var navigationElementId = $('#' + domId + '-manywho-navigation-navigation-element-id').val();
-
-            var tenantId = opts.tenantId;
-            var stateId = opts.stateId;
-            var stateToken = opts.stateToken;
-            var navigationElementId = opts.navigationElementId;
-            var providedNavigateFunction = opts.navigateFunction;
+            // Grab the values needed to refresh the navigation
+            var tenantId = $('#' + domId + '-manywho-navigation-data').data('tenantId');
+            var stateId = $('#' + domId + '-manywho-navigation-data').data('stateId');
+            var stateToken = $('#' + domId + '-manywho-navigation-data').data('stateToken');
+            var navigationElementId = $('#' + domId + '-manywho-navigation-data').data('navigationElementId');
+            var navigationFunction = $('#' + domId + '-manywho-navigation-data').data('navigateFunction');
 
             // Add the tenant to the header so we have it in the request
             var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
@@ -123,9 +187,9 @@ function createNavigationItems(root, navigationItems) {
                                         html +=     '<div class="container-fluid">';
 
                                         // Add the name of the menu
-                                        if (data.developerName != null &&
-                                            data.developerName.trim().length > 0) {
-                                            html +=     '<a class="brand" href="#">' + data.developerName + '</a>';
+                                        if (data.label != null &&
+                                            data.label.trim().length > 0) {
+                                            html +=     '<a class="brand" href="#">' + data.label + '</a>';
                                         }
 
                                         // The scaffolding to support a collapsing menu
@@ -139,7 +203,7 @@ function createNavigationItems(root, navigationItems) {
                                         html +=         '<div class="nav-collapse collapse">';
 
                                         // Create the navigation items
-                                        html += createNavigationItems(true, data.navigationItemResponses);
+                                        html += createNavigationItems(true, data.navigationItemResponses, data.navigationItemDataResponses);
 
                                         html +=         '</div>';
  
@@ -151,34 +215,18 @@ function createNavigationItems(root, navigationItems) {
                                         $('#' + domId + '-manywho-navigation').html(html);
 
                                         // Add a click event to all navigation links
-                                        $('.manywho-navigation-menu').find('a').click(function (event) {
+                                        $('.manywho-navigation-menu').find('a').not('.dropdown-toggle').click(function (event) {
                                             // Grab the identifier - this is our id
                                             var id = $(this).attr('id');
 
                                             // Tell the user if there isn't a navigate function - so therefore nothing to do
-                                            if (providedNavigateFunction == null) {
+                                            if (navigationFunction == null) {
                                                 alert('There is no navigation function specified - so there is nothing to do.');
                                             } else {
                                                 // Call the function with the selected identifier
-                                                providedNavigateFunction.call(this, id);
+                                                navigationFunction.call(this, id);
                                             }
                                         });
-                                                    
-                                        // Go through the metadata and make sure the navigation is in the right state
-                                        if (data.navigationItemDataResponses != null &&
-                                            data.navigationItemDataResponses.length > 0) {
-                                            for (var i = 0; i < data.navigationItemDataResponses.length; i++) {
-                                                var navigationItemDataResponse = data.navigationItemDataResponses[i];
-                                                            
-                                                if (navigationItemDataResponse.isEnabled == false) {
-                                                    $('#' + navigationItemDataResponse.navigationItemId).attr('disabled', 'disabled');
-                                                }
-                                                            
-                                                if (navigationItemDataResponse.isVisible == false) {
-                                                    $('#' + navigationItemDataResponse.navigationItemId).hide();
-                                                }
-                                            }
-                                        }
                                     },
                                     function (xhr, status, error) {
                                         alert('something went wrong');

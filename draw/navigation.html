@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<!-- icons & favicons -->
+	<!-- For iPhone 4 -->
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/localcdn/run/images/icons/h/apple-touch-icon.png">
+	<!-- For iPad 1-->
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/localcdn/run/images/icons/m/apple-touch-icon.png">
+	<!-- For iPhone 3G, iPod Touch and Android -->
+	<link rel="apple-touch-icon-precomposed" href="/localcdn/run/images/icons/l/apple-touch-icon-precomposed.png">
+	<!-- For Nokia -->
+	<link rel="shortcut icon" href="/localcdn/run/images/icons/l/apple-touch-icon.png">
+	<!-- For everything else -->
+    <link rel="shortcut icon" href="/localcdn/favicon.ico">
+
+    <title>ManyWho App</title>
+
+    <link type="text/css" href="/localcdn/css/run.css" rel="stylesheet" />
+
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="/localcdn/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+
+    <link type="text/css" href="/localcdn/extensions/chosen/chosen.css" rel="stylesheet" />
+    
+    <link type="text/css" href="/localcdn/extensions/jsoneditor/jsoneditor-min.css" rel="stylesheet" />
+
+    <link href="/localcdn/extensions/social/jquery-ui-1.8.22.custom.css" rel="stylesheet" type="text/css" />
+    <link href="/localcdn/extensions/social/jquery.fileupload-ui.css" rel="stylesheet" type="text/css" />    
+    <link href="/localcdn/extensions/social/ui.jqgrid.css" rel="stylesheet" type="text/css"/>
+    <link href="/localcdn/extensions/social/shCore.css" rel="stylesheet" type="text/css" />
+    <link href="/localcdn/extensions/social/shThemeDefault.css" rel="stylesheet" type="text/css" />
+
+	<style type="text/css">
+
+		.placeholder {
+			outline: 1px dashed #4183C4;
+		}
+
+		ol.manywho-navigation-editor-sortable, ol.manywho-navigation-editor-sortable ol {
+			list-style-type: none;
+		}
+
+		.manywho-navigation-editor-sortable li div  {
+            margin: 2px 2px 2px 2px !important;
+			cursor: move;
+		}
+
+        .manywho-navigation-editor-sortable li div input  {
+            margin: 0px 0px 0px 0px !important;
+		}
+
+        .manywho-navigation-editor-sortable li div select  {
+            margin: 0px 0px 0px 0px !important;
+		}
+
+	</style>
+
+    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-1.8.3.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/json2/json2.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/chosen/chosen.jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://collaboration.manywho.com/channel/bcsocket.js"></script>
+    <script type="text/javascript" src="https://collaboration.manywho.com/share/share.uncompressed.js"></script>
+    <script type="text/javascript" src="https://collaboration.manywho.com/share/textarea.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/wysihtml5/advanced.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/wysihtml5/wysihtml5-0.4.0pre.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/jsoneditor/jsoneditor-min.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/momentjs/moment.min.js"></script>
+
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.formBootStrap.js"></script>
+
+    <script type="text/javascript" src="/js/constants"></script>
+
+    <script type="text/javascript" src="/localcdn/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.objectDataProxy.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.social.js"></script>
+
+    <script type="text/javascript" src="/localcdn/run/js/manywho.runtime.engine.js"></script>
+    <script type="text/javascript" src="/localcdn/run/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="/localcdn/js/tag/manywho.tag.formEditor.js"></script>
+
+
+    <script type="text/javascript" src="/localcdn/extensions/social/shCore.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/shBrushXml.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/shBrushCSharp.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery-ui-1.8.22.custom.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/grid.locale-ru.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.jqGrid.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.jqDatePicker.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.maskedinput-1.2.2.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.fmatter.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/modernizr-1.7.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.rest.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.elastic.source.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.placeholder.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.livequery.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.color.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/moment-2.0.0.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.showLoading.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/tmpl.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/load-image.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/canvas-to-blob.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/bootstrap-image-gallery.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.iframe-transport.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.fileupload.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.fileupload-fp.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/social/jquery.fileupload-ui.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/cookie/jquery.cookie.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/nestedsortable/jquery.mjs.nestedSortable.js"></script>
+
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.navigationEditorBootstrap.js"></script>
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.socialNetwork.js"></script>
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.navigation.js"></script>
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $('#navigation').manywhoNavigationEditor();
+        });
+
+    </script>
+</head>
+<body>
+
+	<div id="navigation">
+	</div>
+
+</body>
+</html>
