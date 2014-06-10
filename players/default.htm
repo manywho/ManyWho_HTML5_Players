@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<!-- icons & favicons -->
+	<!-- For iPhone 4 -->
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://cdn.manywho.com/images/icons/h/apple-touch-icon.png">
+	<!-- For iPad 1-->
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="https://cdn.manywho.com/images/icons/m/apple-touch-icon.png">
+	<!-- For iPhone 3G, iPod Touch and Android -->
+	<link rel="apple-touch-icon-precomposed" href="https://cdn.manywho.com/images/icons/l/apple-touch-icon.png">
+	<!-- For Nokia -->
+	<link rel="shortcut icon" href="https://cdn.manywho.com/images/icons/l/apple-touch-icon.png">
+	<!-- For everything else -->
+    <link rel="shortcut icon" href="https://cdn.manywho.com/favicon.ico">
+
+    <title>ManyWho App</title>
+
+    <link type="text/css" href="https://cdn.manywho.com/css/run.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/chosen/chosen.css" rel="stylesheet" />
+    
+    <link type="text/css" href="https://cdn.manywho.com/extensions/jsoneditor/jsoneditor-min.css" rel="stylesheet" />
+
+        
+    <link href="https://cdn.manywho.com/extensions/social/jquery-ui-1.8.22.custom.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.manywho.com/extensions/social/jquery.fileupload-ui.css" rel="stylesheet" type="text/css" />    
+    <link href="https://cdn.manywho.com/extensions/social/ui.jqgrid.css" rel="stylesheet" type="text/css"/>
+    <link href="https://cdn.manywho.com/extensions/social/shCore.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.manywho.com/extensions/social/shThemeDefault.css" rel="stylesheet" type="text/css" />
+
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-1.8.3.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/json2/json2.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/chosen/chosen.jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://collaboration.manywho.com/channel/bcsocket.js"></script>
+    <script type="text/javascript" src="https://collaboration.manywho.com/share/share.uncompressed.js"></script>
+    <script type="text/javascript" src="https://collaboration.manywho.com/share/textarea.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/wysihtml5/advanced.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/wysihtml5/wysihtml5-0.4.0pre.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jsoneditor/jsoneditor-min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/momentjs/moment.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.formBootStrap.js"></script>
+
+    <script type="text/javascript" src="https://flow.manywho.com/js/constants"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.objectDataProxy.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.social.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/run/js/manywho.runtime.engine.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/run/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.formEditor.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.navigationEditor.js"></script>
+
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/shCore.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/shBrushXml.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/shBrushCSharp.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery-ui-1.8.22.custom.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/grid.locale-ru.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.jqGrid.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.jqDatePicker.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.maskedinput-1.2.2.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.fmatter.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/modernizr-1.7.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.rest.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.elastic.source.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.placeholder.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.livequery.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.color.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/moment-2.0.0.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.showLoading.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/tmpl.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/load-image.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/canvas-to-blob.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/bootstrap-image-gallery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.iframe-transport.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.fileupload.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.fileupload-fp.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/social/jquery.fileupload-ui.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/cookie/jquery.cookie.js"></script>
+
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.socialNetwork.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.navigation.js"></script>
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            // Support cross domain scripting
+            jQuery.support.cors = true;
+
+            // Add 'trim' to the string object for IE8
+            if (typeof String.prototype.trim !== 'function') {
+                String.prototype.trim = function () {
+                    return this.replace(/^\s+|\s+$/g, '');
+                }
+            }
+
+            // We get the tenant id from the url path
+            var providedTenantId = ManyWhoUtils.getQueryStringParam('tenant-id');
+
+            // If it's not in the URL, then try the path - which is standard in the build tool, but not necessarily for other runtimes
+            if (providedTenantId == null ||
+                providedTenantId.trim().length == 0) {
+                providedTenantId = location.pathname.split('/')[1];
+            }
+
+            var moveToJoin = true;
+            var stateId = ManyWhoUtils.getQueryStringParam('join');
+            var flowId = ManyWhoUtils.getQueryStringParam('flow-id');
+            var flowVersionId = ManyWhoUtils.getQueryStringParam('flow-version-id');
+            var mode = ManyWhoUtils.getQueryStringParam('mode');
+            var sessionId = ManyWhoUtils.getQueryStringParam('session-token');
+            var sessionUrl = ManyWhoUtils.getQueryStringParam('session-url');
+            var providedNavigationElementId = ManyWhoUtils.getQueryStringParam('navigation-element-id');
+
+            // Get the authorization if it has been provided as part of a join request
+            var authorizationToken = ManyWhoUtils.getQueryStringParam('authorization');
+
+            // Grab the inputs from the URL - this assumes a JSON format for the inputs parameter
+            var inputs = ManyWhoUtils.getQueryStringParam('inputs');
+
+            if (inputs != null &&
+                inputs.trim().length > 0) {
+                inputs = $.parseJSON(inputs);
+            }
+
+            if (stateId != null &&
+                stateId.trim().length > 0) {
+                moveToJoin = false;
+            }
+
+            // We set this flag so we only build the navigation once
+            var firstLoad = true;
+
+            $('#manywho-engine').manywhoRuntimeEngine({ tenantId: providedTenantId, rewriteUrl: moveToJoin, authorization: authorizationToken });
+            $('#manywho-engine').manywhoRuntimeEngine('run',
+                                                      stateId,
+                                                      flowId,
+                                                      flowVersionId,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      mode,
+                                                      sessionId,
+                                                      sessionUrl,
+                                                      function (data, previousData, previousSelectedOutcomeId) {
+                                                          // Check to see if we need to build the navigation
+                                                          if (providedNavigationElementId != null &&
+                                                              providedNavigationElementId.trim().length > 0) {
+                                                              if (firstLoad == true) {
+                                                                  $('#manywho-navigation').manywhoNavigation({
+                                                                      stateId: data.stateId,
+                                                                      stateToken: data.stateToken,
+                                                                      tenantId: providedTenantId,
+                                                                      navigationElementId: providedNavigationElementId,
+                                                                      navigateFunction: function (navigationItemId) {
+                                                                          $('#manywho-engine').manywhoRuntimeEngine('navigate', navigationItemId);
+                                                                      }
+                                                                  });
+                                                              }
+                                                              $('#manywho-navigation').manywhoNavigation('refresh');
+                                                          }
+
+                                                          // Set the flag to false so we don't build the menu again
+                                                          firstLoad = false;
+                                                      },
+                                                      null,
+                                                      providedNavigationElementId);
+        });
+	
+    </script>
+</head>
+<body>
+
+    <div id="manywho-navigation"></div>
+    <div id="shared-services"></div>
+    <div id="manywho-engine"></div>
+    <div id="manywho-social-network"></div>
+
+</body>
+</html>

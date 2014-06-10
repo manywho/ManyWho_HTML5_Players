@@ -1,0 +1,609 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>ManyWho Translation Tools</title>
+
+    <link type="text/css" href="/localcdn/css/translate.css" rel="stylesheet" />
+
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/translate-bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="/localcdn/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    
+    <script type="text/javascript" src="/localcdn/extensions/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/localcdn/extensions/ace/mode-json.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/json2/json2.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="/localcdn/extensions/cookie/jquery.cookie.js"></script>
+
+    <script type="text/javascript" src="/localcdn/translate/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="/js/constants"></script>
+
+    <script type="text/javascript" src="/localcdn/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.developer.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.culture.js"></script>
+
+    <script type="text/javascript" src="/localcdn/js/tag/manywho.tag.formEditor.js"></script>
+    <script type="text/javascript" src="/localcdn/js/tag/manywho.tag.navigationEditor.js"></script>
+
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.formBootStrap.js"></script>
+
+    <script type="text/javascript" src="/localcdn/run/js/manywho.runtime.engine.js"></script>
+
+    <script>
+
+        var restEditor = null;
+        var restResponse = null;
+
+        // Add 'trim' to the string object for IE8
+        //
+        if (typeof String.prototype.trim !== 'function') {
+            String.prototype.trim = function () {
+                return this.replace(/^\s+|\s+$/g, '');
+            }
+        }
+
+        // Populate the list of flows based on any search input
+        //
+        function populateFlowCombo() {
+            ManyWhoFlow.loadAllFromTranslate('Translate.PopulateFlowCombo',
+                                             $('#flow-search').val(),
+                                             ManyWhoSharedServices.getTenantId(),
+                                             null,
+                                             function (data, status, xhr) {
+                                                 if (data != null &&
+                                                     data.length > 0) {
+                                                     var html = '';
+
+                                                     // Go through each of the records in the list
+                                                     for (var i = 0; i < data.length; i++) {
+                                                         html += '<option value="' + data[i].id.id + '">' + data[i].developerName + '</option>';
+                                                     }
+
+                                                     // Apply the list to our dropdown
+                                                     $('#available-flows').html(html);
+                                                 } else {
+                                                     $('#available-flows').html('<option val="">-- None Found --</option>');
+                                                 }
+                                             },
+                                             null);
+        };
+
+        // Load the selected element for translation
+        //
+        function loadElementTranslation() {
+            var elementSelection = null;
+            var elementId = null;
+            var elementType = null;
+            var requestUrl = null;
+
+            // Grab the selection from the menu
+            elementSelection = $('#available-elements option:selected').val();
+
+            // Check to see if the user actually selected anything
+            if (elementSelection != null &&
+                elementSelection.trim().length > 0) {
+                // Grab the element identifier from the selection
+                elementId = elementSelection.substring(4);
+
+                // Make sure we have the correct resource location for the element
+                if (elementSelection.indexOf('nav:') == 0) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation/' + elementId;
+                } else if (elementSelection.indexOf('map:') == 0) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/' + elementId;
+                } else if (elementSelection.indexOf('pag:') == 0) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/element/page/' + elementId;
+                } else if (elementSelection.indexOf('val:') == 0) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/element/value/' + elementId;
+                }
+
+                // Execute the request to load the elements
+                ManyWhoAjax.callRestApi('REST.executeREST',
+                                        requestUrl,
+                                        'GET',
+                                        '',
+                                        null,
+                                        function (data, status, xhr) {
+                                            setJsonEditorContent(data);
+                                        },
+                                        null,
+                                        ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId()));
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to load! Please select an element to translate');
+            }
+        };
+
+        // Save the selected element for translation
+        //
+        function saveElementTranslation() {
+            var requestUrl = null;
+            var dataToSave = null;
+
+            // Grab the content of the rest editor
+            dataToSave = restEditor.getValue();
+
+            // Check to see if the user actually has some content to save
+            if (dataToSave != null &&
+                dataToSave.trim().length > 0) {
+                // Parse the document back to a javascript object
+                var json = null;
+
+                try {
+                    // Parse the string to json
+                    json = jQuery.parseJSON(dataToSave);
+                } catch (e) {
+                    // Give the user to parse error message
+                    alert(e.message);
+                    return;
+                }
+
+                // Replace the developer names with identifiers
+                dataToSave = replaceCultureDeveloperNameWithId(dataToSave);
+
+                // Make sure we have the correct resource location for the element
+                if (json.elementType.toLowerCase() == ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_NAVIGATION.toLowerCase()) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation';
+                } else if (json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_START.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_SUB_FLOW.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_SAVE.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
+                           json.elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map';
+                } else if (json.elementType.toLowerCase() == ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT.toLowerCase()) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/element/page';
+                } else if (json.elementType.toLowerCase() == ManyWhoConstants.SHARED_ELEMENT_TYPE_IMPLEMENTATION_VARIABLE.toLowerCase()) {
+                    requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/element/value';
+                } else {
+                    alert('Element type was not recognized: ' + json.elementType);
+                    return;
+                }
+
+                // Execute the request to load the elements
+                ManyWhoAjax.callRestApi('Translate.SaveElementTranslation',
+                                        requestUrl,
+                                        'POST',
+                                        dataToSave,
+                                        null,
+                                        function (data, status, xhr) {
+                                            alert('Saved!');
+                                        },
+                                        null,
+                                        ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId()));
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to save!');
+            }
+        };
+
+        // Load the selected flow into the editor for translation
+        //
+        function loadFlowForTranslation() {
+            var flowId = null;
+
+            // Grab the selection from the menu
+            flowId = $('#available-flows').val();
+
+            // Check to make sure we have a flow to load
+            if (flowId != null &&
+                flowId.trim().length > 0) {
+                ManyWhoFlow.loadFromTranslate('Translate.LoadFlowForTranslation',
+                                              ManyWhoSharedServices.getTenantId(),
+                                              flowId,
+                                              null,
+                                              function (data, status, xhr) {
+                                                  var html = null;
+
+                                                  if (data != null) {
+                                                      // Set the editing information so we have it in the doc (i.e. so the user doesn't confuse the editor by flipping the flow menu)
+                                                      setFlowId(data.id);
+                                                      setEditingToken(data.editingToken);
+
+                                                      // Now we print the document into the right read-only editor
+                                                      setResponseEditorContent(data);
+
+                                                      // Kick off the html for the elements drop-down
+                                                      html = '';
+
+                                                      // We also want to get all of the elements from the document for translation
+                                                      if (data.navigationElements != null &&
+                                                          data.navigationElements.length > 0) {
+                                                          // Add a section to the drop-down to indicate the type of element needing translation
+                                                          html += '<option value="">-- Navigation Elements --</option>';
+
+                                                          // Go through each of the elements and add them to the menu
+                                                          for (var j = 0; j < data.navigationElements.length; j++) {
+                                                              html += '<option value="nav:' + data.navigationElements[j].id + '">' + data.navigationElements[j].developerName + '</option>';
+                                                          }
+                                                      }
+
+                                                      if (data.mapElements != null &&
+                                                          data.mapElements.length > 0) {
+                                                          // Add a section to the drop-down to indicate the type of element needing translation
+                                                          html += '<option value="">-- Map Elements --</option>';
+
+                                                          // Go through each of the elements and add them to the menu
+                                                          for (var j = 0; j < data.mapElements.length; j++) {
+                                                              html += '<option value="map:' + data.mapElements[j].id + '">' + data.mapElements[j].developerName + '</option>';
+                                                          }
+                                                      }
+
+                                                      if (data.pageElements != null &&
+                                                          data.pageElements.length > 0) {
+                                                          // Add a section to the drop-down to indicate the type of element needing translation
+                                                          html += '<option value="">-- Page Elements --</option>';
+
+                                                          // Go through each of the elements and add them to the menu
+                                                          for (var j = 0; j < data.pageElements.length; j++) {
+                                                              html += '<option value="pag:' + data.pageElements[j].id + '">' + data.pageElements[j].developerName + '</option>';
+                                                          }
+                                                      }
+
+                                                      if (data.valueElements != null &&
+                                                          data.valueElements.length > 0) {
+                                                          // Add a section to the drop-down to indicate the type of element needing translation
+                                                          html += '<option value="">-- Value Elements --</option>';
+
+                                                          // Go through each of the elements and add them to the menu
+                                                          for (var j = 0; j < data.valueElements.length; j++) {
+                                                              html += '<option value="val:' + data.valueElements[j].id + '">' + data.valueElements[j].developerName + '</option>';
+                                                          }
+                                                      }
+
+                                                      // Apply the html to our element dropdown
+                                                      $('#available-elements').html(html);
+                                                  }
+                                              },
+                                              null);
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to load! Please search for and select a flow to translate');
+            }
+        };
+
+        // Refresh the flow currently loaded in the view
+        //
+        function refreshFlowView() {
+            var flowId = null;
+
+            // Grab the stored flow identifier
+            flowId = getFlowId();
+
+            // Check to make sure we have a flow to load
+            if (flowId != null &&
+                flowId.trim().length > 0) {
+                ManyWhoFlow.loadFromTranslate('Translate.RefreshFlowView',
+                                              ManyWhoSharedServices.getTenantId(),
+                                              flowId,
+                                              null,
+                                              function (data, status, xhr) {
+                                                  // Print the response data into the view
+                                                  setResponseEditorContent(data);
+                                              },
+                                              null);
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to refresh! Please search for and select a flow to translate');
+            }
+        };
+
+        // Set the flow identifier for the loaded document
+        //
+        function setFlowId(flowId) {
+            if (flowId == null) {
+                flowId = '';
+            }
+
+            $('#manywho-flow-id').val(flowId);
+        };
+
+        // Get the flow identifier for the loaded document
+        //
+        function getFlowId() {
+            var flowId = null;
+
+            flowId = $('#manywho-flow-id').val();
+
+            if (flowId == null ||
+                flowId.trim().length == 0) {
+                flowId = '{flowId}';
+            }
+
+            return flowId;
+        };
+
+        // Set the flow editing token for the loaded document
+        //
+        function setEditingToken(editingToken) {
+            if (editingToken == null) {
+                editingToken = '';
+            }
+
+            $('#manywho-editing-session-id').val(editingToken);
+        }
+
+        // Get the editing token for the loaded document
+        //
+        function getEditingToken() {
+            var editingToken = null;
+
+            editingToken = $('#manywho-editing-session-id').val();
+
+            if (editingToken == null ||
+                editingToken.trim().length == 0) {
+                editingToken = '{editingToken}';
+            }
+
+            return editingToken;
+        }
+
+        // Set the content of the response editor
+        //
+        function setResponseEditorContent(data) {
+            var jsonString = null;
+
+            // Convert the data to a string
+            jsonString = JSON.stringify(data, undefined, 4);
+
+            // Replace the ids with developer names
+            jsonString = replaceCultureIdWithDeveloperName(jsonString);
+
+            restResponse.setValue(jsonString);
+            restResponse.gotoLine(0);
+        };
+
+        // Replace culture ids with developer names
+        //
+        function replaceCultureIdWithDeveloperName(json) {
+            var cultures = null;
+
+            // Replace the values so they're not ids
+            cultures = $('#translate-data').data('cultures');
+
+            if (cultures != null &&
+                cultures.length > 0) {
+                // Go through each of the cultures and replace the values in the document
+                for (var i = 0; i < cultures.length; i++) {
+                    json = json.replace(cultures[i].id, '<!-- Culture: ' + cultures[i].developerName + ' -->');
+                }
+            }
+
+            return json;
+        };
+
+        // Replace culture developer names with ids
+        //
+        function replaceCultureDeveloperNameWithId(json) {
+            var cultures = null;
+
+            // Replace the values so they're not ids
+            cultures = $('#translate-data').data('cultures');
+
+            if (cultures != null &&
+                cultures.length > 0) {
+                // Go through each of the cultures and replace the values in the document
+                for (var i = 0; i < cultures.length; i++) {
+                    json = json.replace('<!-- Culture: ' + cultures[i].developerName + ' -->', cultures[i].id);
+                }
+            }
+
+            return json;
+        };
+
+        // Set the content of the json editor for translating
+        //
+        function setJsonEditorContent(data) {
+            var jsonString = null;
+
+            // Convert the data to a string
+            jsonString = JSON.stringify(data, undefined, 4);
+
+            // Replace the ids with developer names
+            jsonString = replaceCultureIdWithDeveloperName(jsonString);
+
+            restEditor.setValue(jsonString);
+            restEditor.gotoLine(0);
+        };
+
+        // Open the help documentation for the user
+        //
+        function openHelpDocumentation() {
+            window.open('http://manywho.com/wp-content/content/docs/index.html');
+        }
+
+        $(document).ready(function () {
+            var authenticationToken = null;
+            var manywhoTenantId = null;
+
+            // Grab any existing information from the cookie
+            authenticationToken = ManyWhoUtils.getCookie('authentication-token');
+            manywhoTenantId = ManyWhoUtils.getCookie('tenant-id');
+
+            // Set the page information to that stored in the cookie (as they user may have logged into the designer already or refreshed the page
+            ManyWhoSharedServices.setAuthenticationToken(authenticationToken);
+            ManyWhoSharedServices.setTenantId(manywhoTenantId);
+
+            // Set the tenant id in the UI
+            $('#manywho-tenant-id').html(manywhoTenantId);
+
+            // Check he authentication situation - also the tenant (we need both from authentication)
+            if (authenticationToken == null ||
+                authenticationToken.trim().length == 0 ||
+                manywhoTenantId == null ||
+                manywhoTenantId.trim().length == 0) {
+                // Show the authentication dialog as the user has not logged in
+                ManyWhoSharedServices.showAuthenticationDialog(function (authenticationToken, manywhoTenantId) {
+                    ManyWhoSharedServices.setAuthenticationToken(authenticationToken);
+                    ManyWhoSharedServices.setTenantId(manywhoTenantId);
+
+                    // Set the tenant id in the UI
+                    $('#manywho-tenant-id').html(manywhoTenantId);
+
+                    // Set the authentication token into the cookie also
+                    ManyWhoUtils.setCookie('authentication-token', authenticationToken, true);
+                    ManyWhoUtils.setCookie('tenant-id', manywhoTenantId);
+
+
+
+
+
+
+
+
+                    // Load the content value cultures
+                    ManyWhoCulture.loadAll("Translate",
+                                           ManyWhoSharedServices.getTenantId(),
+                                           null,
+                                           function (data, status, xhr) {
+                                               // Store the content value cultures in the dom
+                                               $('#translate-data').data('cultures', data);
+                                           },
+                                           null);
+
+                    // When a flow is loaded and an element is loaded, replace the ids with the culture strings
+                    // When the element is saved, replace the culture strings with the ids
+
+
+
+
+
+
+
+                },
+                ManyWhoSharedServices.getTenantId());
+            }
+
+            // Create the REST code editor for working against the ManyWho APIs
+            restEditor = ace.edit("rest-editor");
+            restEditor.getSession().setMode("ace/mode/javascript");
+
+            // Create the response editor to view the API responses
+            restResponse = ace.edit("rest-response");
+            restResponse.getSession().setMode("ace/mode/javascript");
+            restResponse.setReadOnly(true);
+
+            // Initialize shared services we need to standard operations
+            ManyWhoSharedServices.initialize('shared-services');
+
+            // Grab the authentication token from the authentication cookie
+            ManyWhoSharedServices.setAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
+
+            // Grab the tenant id from the cookie
+            ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
+
+            // Create the type ahead
+            $('#request-url').typeahead();
+
+            // Grab any flow data from url in case this was opened from the draw tool
+            setFlowId(ManyWhoUtils.getQueryStringParam('flow-id'));
+            setEditingToken(ManyWhoUtils.getQueryStringParam('editing-token'));
+        });
+
+    </script>
+</head>
+<body>
+    <div id="logo">
+        <img src="/localcdn/images/translate_tools_logo.png" height="60" width="233" alt="ManyWho Translation Tools" />
+    </div>
+
+    <div id="rest-tab">
+        <div>
+            <div class="input-append input-prepend" id="rest-toolbar">
+                <button class="btn btn-warning" type="button" onclick="javascript:openHelpDocumentation();">?</button>
+                <input class="span2" id="flow-search" type="text" placeholder="Search for flow" />
+                <button class="btn btn-inverse" type="button" onclick="javascript:populateFlowCombo();"><i class="icon-search icon-white"></i> Search</button>
+                <select id="available-flows" class="span2">
+                    <option value="">-- None --</option>
+                </select>
+                <button class="btn btn-success" type="button" onclick="javascript:loadFlowForTranslation();"><i class="icon-share icon-white"></i> Load</button>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span6">
+                <div class="input-append input-prepend" id="rest-editor-toolbar">
+                    <select id="available-elements" class="span6">
+                        <option value="">-- None --</option>
+                    </select>
+                    <button class="btn btn-success" type="button" onclick="javascript:loadElementTranslation();"><i class="icon-share icon-white"></i> Load Translations</button>
+                    <button class="btn btn-danger" type="button" onclick="javascript:saveElementTranslation();"><i class="icon-check icon-white"></i> Save Translations</button>
+                </div>
+            </div>
+            <div class="span6">
+                <button id="refresh-flow" class="btn btn-info pull-right" type="button" onclick="javascript:refreshFlowView();"><i class="icon-refresh icon-white"></i> Refresh Flow</button>
+            </div>
+        </div>
+        <div id="rest-editor"></div>
+        <div id="rest-response"></div>
+    </div>
+
+    <div id="shared-services"></div>
+    <div id="translate-data" style="display: none;"></div>
+
+    <input id="manywho-flow-id" type="hidden" />
+    <input id="manywho-editing-session-id" type="hidden" />
+    <input id="manywho-user-authentication-token" type="hidden" />
+
+<!-- begin olark code -->
+<script data-cfasync="false" type='text/javascript'>/*<![CDATA[*/window.olark || (function (c) {
+    var f = window, d = document, l = f.location.protocol == "https:" ? "https:" : "http:", z = c.name, r = "load"; var nt = function () {
+        f[z] = function () {
+            (a.s = a.s || []).push(arguments)
+        }; var a = f[z]._ = {
+        }, q = c.methods.length; while (q--) {
+            (function (n) {
+                f[z][n] = function () {
+                    f[z]("call", n, arguments)
+                }
+            })(c.methods[q])
+        } a.l = c.loader; a.i = nt; a.p = {
+            0: +new Date
+        }; a.P = function (u) {
+            a.p[u] = new Date - a.p[0]
+        }; function s() {
+            a.P(r); f[z](r)
+        } f.addEventListener ? f.addEventListener(r, s, false) : f.attachEvent("on" + r, s); var ld = function () {
+            function p(hd) {
+                hd = "head"; return ["<", hd, "></", hd, "><", i, ' onl' + 'oad="var d=', g, ";d.getElementsByTagName('head')[0].", j, "(d.", h, "('script')).", k, "='", l, "//", a.l, "'", '"', "></", i, ">"].join("")
+            } var i = "body", m = d[i]; if (!m) {
+                return setTimeout(ld, 100)
+            } a.P(1); var j = "appendChild", h = "createElement", k = "src", n = d[h]("div"), v = n[j](d[h](z)), b = d[h]("iframe"), g = "document", e = "domain", o; n.style.display = "none"; m.insertBefore(n, m.firstChild).id = z; b.frameBorder = "0"; b.id = z + "-loader"; if (/MSIE[ ]+6/.test(navigator.userAgent)) {
+                b.src = "javascript:false"
+            } b.allowTransparency = "true"; v[j](b); try {
+                b.contentWindow[g].open()
+            } catch (w) {
+                c[e] = d[e]; o = "javascript:var d=" + g + ".open();d.domain='" + d.domain + "';"; b[k] = o + "void(0);"
+            } try {
+                var t = b.contentWindow[g]; t.write(p()); t.close()
+            } catch (x) {
+                b[k] = o + 'd.write("' + p().replace(/"/g, String.fromCharCode(92) + '"') + '");d.close();'
+            } a.P(2)
+        }; ld()
+    }; nt()
+})({
+    loader: "static.olark.com/jsclient/loader0.js", name: "olark", methods: ["configure", "extend", "declare", "identify"]
+});
+    /* custom configuration goes here (www.olark.com/documentation) */
+    olark.identify('1806-919-10-8792');/*]]>*/</script><noscript><a href="https://www.olark.com/site/1806-919-10-8792/contact" title="Contact us" target="_blank">Questions? Feedback?</a> powered by <a href="http://www.olark.com?welcome" title="Olark live chat software">Olark live chat software</a></noscript>
+<!-- end olark code -->
+
+</body>
+</html>

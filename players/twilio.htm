@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ManyWho Draw</title>
+
+    <link type="text/css" href="https://cdn.manywho.com/css/draw.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+
+<!--    <link type="text/css" href="https://cdn.manywho.com/extensions/jquery/css/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />-->
+    <link type="text/css" href="https://cdn.manywho.com/extensions/jquery/css/jquery-ui-1.10.min.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/chosen/chosen.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/jsoneditor/jsoneditor-min.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-ui-1.10.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/json2/json2.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/mode-json.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/chosen/chosen.jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/wysihtml5/advanced.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/wysihtml5/wysihtml5-0.4.0pre.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/tinymce/tinymce.min.js"></script>
+
+	<script type="text/javascript">
+
+	    mxBasePath = 'https://cdn.manywho.com/extensions/mxgraph/src';
+
+	</script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/mxgraph/src/js/mxClient.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/cookie/jquery.cookie.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jsoneditor/jsoneditor-min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/momentjs/moment.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/nestedsortable/jquery.mjs.nestedSortable.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/draw/js/manywho.builder.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/draw/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.formBootStrap.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.mxgraph.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.socialNetwork.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.tagComponent.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.twimlEditorBootStrap.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.navigationEditorBootStrap.js"></script>
+
+    <script type="text/javascript" src="/js/constants"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.social.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.objectDataProxy.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.developer.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.player.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.formEditor.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.navigationEditor.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/run/js/manywho.runtime.engine.js"></script>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            // Add 'trim' to the string object for IE8
+            if (typeof String.prototype.trim !== 'function') {
+                String.prototype.trim = function () {
+                    return this.replace(/^\s+|\s+$/g, '');
+                }
+            }
+
+            configurePage();
+        });
+
+    </script>
+</head>
+<body>
+
+<form action="#" method="get">
+
+    <div id="shared-services"></div>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+        <div class="container-fluid">
+			<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+            <a class="brand" href="#"><img alt="ManyWho Flow Designer" src="https://cdn.manywho.com/images/designer-logo.png" class="logo" /></a>
+            <div class="nav-collapse collapse">
+                <ul class="nav">
+                    <li><a href="#" id="manage-flows"><i class="icon-leaf icon-white"></i> Flows</a></li>
+                    <li class="divider-vertical"></li>
+                    <li><a href="#" id="manage-page-layouts"><i class="icon-list-alt icon-white"></i> Page Layouts</a></li>
+                    <li><a href="#" id="manage-tags"><i class="icon-tags icon-white"></i> Tags</a></li>
+<!--                    <li><a href="#" id="manage-macros"><i class="icon-star icon-white"></i> Macros</a></li>-->
+                    <li><a href="#" id="manage-values"><i class="icon-inbox icon-white"></i> Values</a></li>
+                    <li><a href="#" id="manage-types"><i class="icon-asterisk icon-white"></i> Types</a></li>
+                    <li><a href="#" id="manage-services"><i class="icon-gift icon-white"></i> Services</a></li>
+                    <li class="divider-vertical"></li>
+                    <li class="dropdown menu-item"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-bookmark icon-white"></i> Options<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="http://manywho.com/wp-content/content/docs/gettingstarted.html" target="_blank"><i class="icon-book"></i> Docs</a></li>
+                            <li class="divider"></li>
+                            <li class="menu-item"><a href="#" id="open-developer-tools"><i class="icon-wrench"></i> Build</a></li>
+                            <li class="menu-item"><a href="#" id="open-translate-tools"><i class="icon-edit"></i> Translate</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#" id="sign-out"><i class="icon-user"></i> Sign Out</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row-fluid" id="flow-error">
+        </div>
+        <div class="row-fluid">
+            <div class="span2" id="manywho-left-toolbar">
+                <!--Sidebar content-->
+                <div class="media">
+                    <a class="pull-left" href="#">
+                        <img class="media-object" src="https://cdn.manywho.com/extensions/glyphicons/glyphicons_001_leaf@2x.png" alt="Flow" />
+                    </a>
+                    <div class="media-body">
+                        <h4 id="flow-developer-name" class="media-heading text-info"></h4>
+                        <span id="flow-developer-summary" class="muted"></span>
+                    </div>
+                </div>
+                
+                <p>&nbsp;</p>
+
+                <div class="manywho-toolbar-buttons">
+                    <a id="run-flow" class="btn btn-success flow-button" href="#"><i class="icon-play icon-white"></i> Run</a>
+                    <a id="activate-flow" class="btn btn-warning flow-button" href="#"><i class="icon-heart icon-white"></i> Activate</a>
+                    <a id="close-flow" class="btn btn-danger flow-button" href="#"><i class="icon-minus-sign icon-white"></i> Save & Close</a>
+                </div>
+
+                <p>&nbsp;</p>
+
+                <div id="navigation-elements" class="manywho-toolbar-section">
+                    <a id="manage-navigations" class="btn btn-inverse span12 flow-button" style="text-align: left;" href="#"><i class="icon-globe icon-white"></i> Navigation</a>
+                </div>
+
+                <div id="user-elements" class="manywho-toolbar-section">
+                    <div class="muted manywho-toolbar-section-title">User Elements</div>
+                </div>
+
+                <div id="logic-elements" class="manywho-toolbar-section">
+                    <div class="muted manywho-toolbar-section-title">Logic Elements</div>
+                </div>                
+
+                <div id="data-elements" class="manywho-toolbar-section">
+                    <div class="muted manywho-toolbar-section-title">Data Elements</div>
+                </div>                
+ 
+                <div id="group-elements" class="manywho-toolbar-section">
+                    <div class="muted manywho-toolbar-section-title">Group Elements</div>
+                </div>                
+            </div>
+            <div class="span10">
+                <div class="row-fluid" id="flow-graph-loader">
+                    <div class="span12">
+                        <p>&nbsp;</p>
+                        <p>&nbsp;</p>
+                        <h3 align="center" class="muted">Loading Flow...</h3>
+                        <p align="center"><img src="https://cdn.manywho.com/images/loading_indicator_64.gif" height="64" width="64" alt="Loading Flow..." /></p>
+                    </div>
+                </div>
+                <div class="row-fluid" id="flow-getting-started">
+                    <div class="span12">
+                        <p>&nbsp;</p>
+                        <h1 align="center">Get Started</h1>
+                        <p align="center"><img src="http://status.twilio.com/images/logo.png" height="178" width="178" alt="Welcome" /></p>
+                        <div class="alert">
+                            <strong>REQUIRED</strong> Make sure you read our <a href="http://manywho.com/wp-content/content/docs/gettingstarted.html" target="_blank">Getting Started</a> 
+                            guide before doing anything else. It contains a bunch of stuff you need to configure before you can begin creating flows!
+                        </div>
+                        <div class="alert alert-success">
+                            <strong>Get Going!</strong> Once that's done, click on the "Flows" button at the top left of the screen to start building!  Make sure you check out our 
+                            <a href="http://www.youtube.com/user/themanywho" target="_blank">YouTube Channel</a> also for demos and tutorials.
+                        </div>
+                    </div>
+                </div>
+                <div id="flow-graph-wrapper">
+                    <div id="flow-graph">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="is-editing" value="false" />
+    <input type="hidden" id="flow-start-map-element-id" value="" />
+    <input type="hidden" id="authorization-header" value="" />
+
+</form>
+
+</body>
+</html>

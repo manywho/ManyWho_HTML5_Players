@@ -1,0 +1,1198 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>ManyWho Developer Tools</title>
+
+    <link type="text/css" href="https://cdn.manywho.com/css/build.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+
+    <link type="text/css" href="https://cdn.manywho.com/extensions/bootstrap/css/darkstrap-v0.9.0.css" rel="stylesheet" media="screen" />
+    
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/mode-json.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/json2/json2.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/cookie/jquery.cookie.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/build/js/manywho.sharedServices.js"></script>
+
+    <script type="text/javascript" src="https://flow.manywho.com/js/constants"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.developer.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.formEditor.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.navigationEditor.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/js/jquery.manywho.formBootStrap.js"></script>
+
+    <script type="text/javascript" src="https://cdn.manywho.com/run/js/manywho.runtime.engine.js"></script>
+
+    <script>
+
+        var restEditor = null;
+        var restResponse = null;
+        var macroEditor = null;
+        var playerEditor = null;
+
+        // Add 'trim' to the string object for IE8
+        if (typeof String.prototype.trim !== 'function') {
+            String.prototype.trim = function () {
+                return this.replace(/^\s+|\s+$/g, '');
+            }
+        }
+
+        // Populate the list of macros based on any search input
+        //
+        function populateMacroCombo() {
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/element/macro?filter=';
+            var requestType = 'GET';
+            var requestData = '';
+
+            // Append the filter to the request url
+            if ($('#flow-search').val() != null &&
+                $('#flow-search').val().trim().length > 0) {
+                requestUrl += 'substringof(developerName, \'' + $('#flow-search').val() + '\')';
+            }
+
+            // Create a header for the tenant id
+            var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+
+            ManyWhoAjax.callRestApi('Translate.PopulateMacroCombo', requestUrl, requestType, requestData, null, function (data, status, xhr) {
+                if (data != null &&
+                    data.length > 0) {
+                    var html = '';
+
+                    // Go through each of the records in the list
+                    for (var i = 0; i < data.length; i++) {
+                        html += '<option value="' + data[i].id + '">' + data[i].developerName + '</option>';
+                    }
+
+                    // Apply the list to our dropdown
+                    $('#available-macros').html(html);
+                } else {
+                    $('#available-macros').html('<option val="">-- None Found --</option>');
+                }
+            }, null, headers);
+        };
+
+        // Load the selected macro for edit
+        //
+        function loadMacroForEdit() {
+            var macroElementId = null;
+            var requestUrl = null;
+
+            // Grab the selection from the menu
+            macroElementId = $('#available-macros option:selected').val();
+
+            // Check to see if the user actually selected anything
+            if (macroElementId != null &&
+                macroElementId.trim().length > 0) {
+                // Contruct the URL for the macro load
+                requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/element/macro/' + macroElementId;
+
+                // Execute the request to load the elements
+                ManyWhoAjax.callRestApi('LoadMacroForEdit',
+                                        requestUrl,
+                                        'GET',
+                                        '',
+                                        null,
+                                        function (data, status, xhr) {
+                                            if (data != null) {
+                                                // Save the object to the dom
+                                                $('#manywho-macro').data('macro', data);
+
+                                                // Grab out the code from this macro
+                                                macroEditor.setValue(data.code);
+                                                macroEditor.gotoLine(0);
+
+                                                // Get the name of the macro and stick it into the Name field
+                                                $('#macro-name').val(data.developerName);
+                                            }
+                                        },
+                                        null,
+                                        ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId()));
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to load! Please select a macro to edit');
+            }
+        };
+
+        // Create new macro
+        //
+        function createNewMacro() {
+            var macro = null;
+
+            // Create a new macro object and save it back to the system
+            macro = new Object();
+            macro.elementType = ManyWhoConstants.SHARED_ELEMENT_TYPE_IMPLEMENTATION_MACRO;
+            macro.developerName = 'New Macro';
+            macro.code = null;
+            macro.updateByName = false;
+
+            // Contruct the URL for the macro load
+            requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/element/macro';
+            requestType = 'POST';
+
+            // Execute the request to save the macro
+            ManyWhoAjax.callRestApi('CreateNewMacro',
+                                    requestUrl,
+                                    requestType,
+                                    JSON.stringify(macro),
+                                    null,
+                                    function (data, status, xhr) {
+                                        alert('Make sure you give your Macro a name before saving');
+
+                                        // Save the object to the dom
+                                        $('#manywho-macro').data('macro', macro);
+
+                                        // Set our example code into the editor
+                                        macroEditor.setValue('// Create functions like this\nfunction hello() {\n    // Some code here\n}\n\n// Call functions like this\nhello();\n\n// Set values in the state like this\nstate.setStringValue("{![My String Value]}", "The value I want it to be");\n\n// Get values in the state like this\nvar val = state.getNumberValue("{![My Number Value]}");\n\n// It\'s JavaScript!');
+                                    },
+                                    null,
+                                    ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId()));
+        };
+
+        // Save the macro
+        //
+        function saveMacro() {
+            var macro = null;
+
+            // Get the object from the dom
+            macro = $('#manywho-macro').data('macro');
+
+            // Check to see if the user actually selected anything
+            if (macro != null) {
+                // Contruct the URL for the macro load
+                requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/element/macro';
+                requestType = 'POST';
+
+                // Assign the latest info to the macro
+                macro.developerName = $('#macro-name').val();
+                macro.code = macroEditor.getValue();
+
+                // Execute the request to save the macro
+                ManyWhoAjax.callRestApi('SaveMacro',
+                                        requestUrl,
+                                        requestType,
+                                        JSON.stringify(macro),
+                                        null,
+                                        function (data, status, xhr) {
+                                            alert('Saved!');
+                                        },
+                                        null,
+                                        ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId()));
+            } else {
+                // Alert the user that there's nothing to load
+                alert('Nothing to save! Please make sure you have loaded a macro to edit');
+            }
+        };
+
+        function setFlowId(flowId) {
+            if (flowId == null) {
+                flowId = '';
+            }
+
+            $('#manywho-flow-id').val(flowId);
+        }
+
+        function getFlowId() {
+            var flowId = null;
+
+            flowId = $('#manywho-flow-id').val();
+
+            if (flowId == null ||
+                flowId.trim().length == 0) {
+                flowId = '{flowId}';
+            }
+
+            return flowId;
+        }
+
+        function setEditingToken(editingToken) {
+            if (editingToken == null) {
+                editingToken = '';
+            }
+
+            $('#manywho-editing-session-id').val(editingToken);
+        }
+
+        function getEditingToken() {
+            var editingToken = null;
+
+            editingToken = $('#manywho-editing-session-id').val();
+
+            if (editingToken == null ||
+                editingToken.trim().length == 0) {
+                editingToken = '{editingToken}';
+            }
+
+            return editingToken;
+        }
+
+        function getModelBuilderQuery() {
+            var query = null;
+
+            query = '';
+            query += '{\n';
+            query += '  "search":null,\n';
+            query += '  "comparisionType":"AND",\n';
+            query += '  "limit":50,\n';
+            query += '  "size":50,\n';
+            query += '  "orderBy":null,\n';
+            query += '  "orderDirection":"ASC",\n';
+            query += '  "flowId":null,\n';
+            query += '  "isSnapShot":false,\n';
+            query += '  "where":[\n';
+            query += '    {\n';
+            query += '      "columnName":null,\n';
+            query += '      "criteria":null,\n';
+            query += '      "contentValue":null\n';
+            query += '    }\n';
+            query += '  ]\n';
+            query += '}';
+
+            return query;
+        }
+
+        function executePlayerRequest() {
+            var playerName = $('#player-name').val();
+            var playerContent = playerEditor.getValue();
+
+            if (playerName == null ||
+                playerName.trim().length == 0) {
+                alert('You need to give your player a web friendly name!');
+            } else {
+                var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + $('#player-name').val();
+                var requestType = 'GET';
+                var requestData = null;
+
+                ManyWhoAjax.callGetRequest('REST.executePlayerRequest', requestUrl, requestType, requestData, 'html', executePlayerRequestSuccess);
+            }
+        }
+
+        function executeSavePlayerRequest() {
+            var playerName = $('#player-name').val();
+            var playerContent = playerEditor.getValue();
+
+            if (playerName == null ||
+                playerName.trim().length == 0) {
+                alert('You need to give your player a web friendly name!');
+            } else if (playerContent == null ||
+                       playerContent.trim().length == 0) {
+                alert('Please give your player some content!');
+            } else {
+                var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + $('#player-name').val();
+                var requestType = 'POST';
+                var requestData = { '': playerContent };
+
+                ManyWhoAjax.callGetRequest('REST.executePlayerRequest', requestUrl, requestType, requestData, 'html', null);
+            }
+        }
+
+        function executePlayerRequestSuccess(data, status, xhr) {
+            playerEditor.setValue(data);
+            playerEditor.gotoLine(0);
+        }
+
+        function executeREST() {
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/' + $('#request-url').val();
+            var requestType = $('#request-type').val();
+            var requestData = restEditor.getValue();
+            var builderAuthenticationToken = null;
+
+            if (requestType.toLowerCase() == 'get') {
+                requestData = '';
+            }
+
+            // Create a header for the tenant id
+            var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+
+            // If we're running a runtime rest call, we use the user credentials stored on this page
+            if (requestUrl.indexOf('api/run/1') >= 0 &&
+                requestUrl.indexOf('api/run/1/state/package') < 0) {
+                // Grab the builder authentication token
+                builderAuthenticationToken = ManyWhoSharedServices.getAuthenticationToken();
+
+                // Reset the token to the one provided by the runtime login
+                ManyWhoSharedServices.setAuthenticationToken($('#manywho-user-authentication-token').val());
+            }
+
+            try {
+                ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, requestType, requestData, null, executeRESTSuccess, null, headers);
+            } catch (e) {
+                // Don't do anything, we just want to make sure the authentication token gets set back no matter what
+            }
+
+            if (requestUrl.indexOf('api/run/1') >= 0 &&
+                requestUrl.indexOf('api/run/1/state/package') < 0) {
+                // Set the account credentials back
+                ManyWhoSharedServices.setAuthenticationToken(builderAuthenticationToken);
+            }
+        }
+
+        function executeRESTSuccess(data, status, xhr) {
+            // We do a little work on the rest response to help the developer with various identifiers
+            if (data != null) {
+                // Check to make sure we're dealing with an individual object and not an array
+                if (Object.prototype.toString.call(data) === '[object Array]' == false) {
+                    // Check to see if the data contains an editing session id
+                    if (data.hasOwnProperty('editingToken')) {
+                        setEditingToken(data.editingToken);
+                    }
+
+                    // Check to see if this is a flow object, and if so, grab the id - we do that by checking for the isActive property
+                    if (data.hasOwnProperty('isActive')) {
+                        setFlowId(data.id.id);
+                    }
+                }
+
+                // Refresh the type ahead urls
+                refreshTypeAheadSource();
+            }
+
+            restResponse.setValue(JSON.stringify(data, undefined, 4));
+            restResponse.gotoLine(0);
+        }
+
+        function refreshTypeAheadSource() {
+            var autocomplete = null;
+            var source = null;
+
+            source = [
+                    'api/run/1/authentication',
+                    'api/run/1/flow/name/{flowName}',
+                    'api/run/1/flow/' + getFlowId(),
+                    'api/run/1/flow',
+                    'api/run/1/response',
+                    'api/run/1/state/{stateId}',
+                    'api/run/1/state/package/{stateId}',
+                    'api/run/1/state/package',
+                    'api/run/1',
+                    'api/draw/1/flow/snap/' + getFlowId(),
+                    'api/draw/1/flow/snap/' + getFlowId() + '/{flowVersionId}',
+                    'api/draw/1/flow/snap/' + getFlowId() + '?filter=',
+                    'api/draw/1/flow/activation/' + getFlowId() + '/{flowVersionId}/{isDefault}/{isActivated}',
+                    'api/draw/1/flow?filter=',
+                    'api/draw/1/flow/' + getFlowId(),
+                    'api/draw/1/element/flow/' + getFlowId() + '/service/{serviceId}',
+                    'api/draw/1/element/service/{serviceId}',
+                    'api/draw/1/element/service?filter=',
+                    'api/draw/1/element/service',
+                    'api/draw/1/element/flow/' + getFlowId() + '/type/{typeId}',
+                    'api/draw/1/element/type/{typeId}',
+                    'api/draw/1/element/type?filter=',
+                    'api/draw/1/element/type',
+                    'api/draw/1/element/flow/' + getFlowId() + '/macro/{macroId}',
+                    'api/draw/1/element/macro/{macroId}',
+                    'api/draw/1/element/macro?filter=',
+                    'api/draw/1/element/macro',
+                    'api/draw/1/element/flow/' + getFlowId() + '/value/{valueId}',
+                    'api/draw/1/element/value/{valueId}',
+                    'api/draw/1/element/value?filter=',
+                    'api/draw/1/element/value',
+                    'api/draw/1/element/flow/' + getFlowId() + '/tag/{tagId}',
+                    'api/draw/1/element/tag/{tagId}',
+                    'api/draw/1/element/tag?filter=',
+                    'api/draw/1/element/tag',
+                    'api/draw/1/element/flow/' + getFlowId() + '/page/{pageId}',
+                    'api/draw/1/element/page/{pageId}',
+                    'api/draw/1/element/page?filter=',
+                    'api/draw/1/element/page',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation/{navigationElementId}',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation?filter=',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/{mapElementId}',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/{groupElementId}',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=',
+                    'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group',
+                    'api/translate/1/culture/{cultureId}',
+                    'api/translate/1/culture?filter=',
+                    'api/translate/1/culture',
+                    'api/package/1/flow/' + getFlowId(),
+                    'api/package/1/flow/' + getFlowId() + '/{flowVersionId}',
+                    'api/package/1/flow'
+            ];
+
+            autocomplete = $('#request-url').typeahead();
+            autocomplete.data('typeahead').source = source;
+        }
+        // Order of operations are
+        // 1. Developer types in url
+        //    If the URL is not found, we populate all request types and we do not auto fill any information
+        // 2. Url is selected from list which populates the request types with any options
+        //    If only one request type is available, that one is selected and the editor is populated
+        //    If more than one request type is available, the developer selects one and this grabs the correct JSON template
+        //
+        function grabJSONForRequest() {
+            var requestUrl = $('#request-url').val();
+            var requestType = $('#request-type').val();
+            var requestContent = null;
+
+            // Start by blanking the request content
+            requestContent = '';
+
+            if (requestUrl == 'api/run/1/authentication') {
+                // action = "Login"
+                requestContent += '{\n';
+                requestContent += '  "loginUrl":null,\n';
+                requestContent += '  "username":null,\n';
+                requestContent += '  "password":null,\n';
+                requestContent += '  "token":null\n';
+                requestContent += '}';
+            } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
+                // action = "LoadFlowByName"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/run/1/flow/') == 0) {
+                // action = "LoadFlowById"
+                requestContent = '';
+            } else if (requestUrl == 'api/run/1/flow') {
+                // action = "LoadAllFlows"
+                requestContent = '';
+            } else if (requestUrl == 'api/run/1/response') {
+                // action = "Response"
+                requestContent += '{\n';
+                requestContent += '  "stateToken":null,\n';
+                requestContent += '  "tenantId":"' + getTenantId() + '",\n';
+                requestContent += '  "invokeType":"FORWARD",\n';
+                requestContent += '  "waitMessage":"Please wait while our services does a bunch of work.",\n';
+                requestContent += '  "outputs":[\n';
+                requestContent += '    {\n';
+                requestContent += '      "id":null,\n';
+                requestContent += '      "typeElementId":null,\n';
+                requestContent += '      "typeElementPropertyId":null,\n';
+                requestContent += '      "developerName":null,\n';
+                requestContent += '      "typeElementDeveloperName":null,\n';
+                requestContent += '      "typeElementPropertyDeveloperName":null,\n';
+                requestContent += '      "contentValue":null,\n';
+                requestContent += '      "contentType":null,\n';
+                requestContent += '      "objectData":null\n';
+                requestContent += '    }\n';
+                requestContent += '  ],\n';
+                requestContent += '  "culture":null,\n';
+                requestContent += '  "rootFaults":null,\n';
+                requestContent += '  "valueFaults":null,\n';
+                requestContent += '  "annotations":null\n';
+                requestContent += '}';
+            } else if (requestUrl.indexOf('api/run/1/state/package') == 0) {
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/run/1/state/') == 0) {
+                // action = "Join" or "Execute"
+                if (requestType == 'GET') {
+                    requestContent = '';
+                } else {
+                    requestContent += '{\n';
+                    requestContent += '  "stateId":null,\n';
+                    requestContent += '  "stateToken":null,\n';
+                    requestContent += '  "currentMapElementId":null,\n';
+                    requestContent += '  "invokeType":"FORWARD",\n';
+                    requestContent += '  "annotations":null,\n';
+                    requestContent += '  "geoLocation":{\n';
+                    requestContent += '    "latitude":0,\n';
+                    requestContent += '    "longitude":0,\n';
+                    requestContent += '    "accuracy":0,\n';
+                    requestContent += '    "altitude":0,\n';
+                    requestContent += '    "altitudeAccuracy":0,\n';
+                    requestContent += '    "heading":0,\n';
+                    requestContent += '    "speed":0\n';
+                    requestContent += '  },\n';
+                    requestContent += '  "mapElementInvokeRequest":{\n';
+                    requestContent += '    "selectedOutcomeId":null\n';
+                    requestContent += '  },\n';
+                    requestContent += '  "mode":null\n';
+                    requestContent += '}';
+                }
+            } else if (requestUrl == 'api/run/1') {
+                // action = "Initialize"
+                requestContent += '{\n';
+                requestContent += '  "flowId":{\n';
+                requestContent += '    "id":"' + getFlowId() + '",\n';
+                requestContent += '    "versionId":"need to provide the version"\n';
+                requestContent += '  },\n';
+                requestContent += '  "annotations":null,\n';
+                requestContent += '  "inputs":[\n';
+                requestContent += '    {\n';
+                requestContent += '      "id":null,\n';
+                requestContent += '      "typeElementId":null,\n';
+                requestContent += '      "typeElementPropertyId":null,\n';
+                requestContent += '      "developerName":null,\n';
+                requestContent += '      "typeElementDeveloperName":null,\n';
+                requestContent += '      "typeElementPropertyDeveloperName":null,\n';
+                requestContent += '      "contentValue":null,\n';
+                requestContent += '      "contentType":null,\n';
+                requestContent += '      "objectData":null\n';
+                requestContent += '    }\n';
+                requestContent += '  ],\n';
+                requestContent += '  "mode":null\n';
+                requestContent += '}';
+            } else if (requestUrl.indexOf('api/draw/1/flow/activation/') == 0) {
+                // action = "ActivateFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/snap/' + getFlowId() + '/') == 0) {
+                // action = "GetFlowSnapShot"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/snap/' + getFlowId() + '?filter=') == 0) {
+                // action = "LoadSnapShotFlows"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/snap/') == 0) {
+                // action = "SnapShotFlow"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/flow?filter=') {
+                // action = "LoadTypeElements"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/service/') == 0) {
+                // action = "AddServiceElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/service/') == 0) {
+                // controller = "LoadServiceElement" or "DeleteServiceElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/service?filter=') {
+                // action = "LoadServiceElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/service') {
+                // action = "SaveServiceElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.SERVICE_ELEMENT_TYPE_IMPLEMENTATION_SERVICE);
+            } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/type/') == 0) {
+                // action = "AddTypeElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/type/') == 0) {
+                // controller = "LoadTypeElement" or "DeleteTypeElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/type?filter=') {
+                // action = "LoadTypeElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/type') {
+                // action = "SaveTypeElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.TYPE_ELEMENT_TYPE_IMPLEMENTATION_TYPE);
+            } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/macro/') == 0) {
+                // action = "AddMacroElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/macro/') == 0) {
+                // controller = "LoadMacroElement" or "DeleteMacroElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/macro?filter=') {
+                // action = "LoadMacroElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/macro') {
+                // action = "SaveMacroElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.SHARED_ELEMENT_TYPE_IMPLEMENTATION_MACRO);
+            } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/value/') == 0) {
+                // action = "AddValueElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/value/') == 0) {
+                // controller = "LoadValueElement" or "DeleteValueElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/value?filter=') {
+                // action = "LoadValueElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/value') {
+                // action = "SaveValueElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.SHARED_ELEMENT_TYPE_IMPLEMENTATION_VARIABLE);
+            } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/tag/') == 0) {
+                // action = "AddTagElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/tag/') == 0) {
+                // controller = "LoadTagElement" or "DeleteTagElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/tag?filter=') {
+                // action = "LoadTagElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/tag') {
+                // action = "SaveTagElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_TAG);
+            } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/page/') == 0) {
+                // action = "AddPageElementToFlow"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/draw/1/element/page/') == 0) {
+                // controller = "LoadPageElement" or "DeletePageElement"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/element/page?filter=') {
+                // action = "LoadPageElements"
+                requestContent += '';
+            } else if (requestUrl == 'api/draw/1/element/page') {
+                // action = "SavePageElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation/') == 0) {
+                // action = "LoadNavigationElement" or "DeleteNavigationElement"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation?filter=') == 0) {
+                // action = "LoadNavigationElements"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation') {
+                // action = "SaveNavigationElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate('NAVIGATION');
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
+                // action = "LoadMapElement" or "DeleteMapElement"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=') == 0) {
+                // action = "LoadMapElements"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
+                // action = "SaveMapElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP);
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/') == 0) {
+                // action = "LoadGroupElement" or "DeleteGroupElement"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=') == 0) {
+                // action = "LoadGroupElements"
+                requestContent = '';
+            } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
+                // action = "SaveGroupElement"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate(ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE);
+            } else if (requestUrl.indexOf('api/draw/1/flow/') == 0) {
+                // action = "GetFlowById"
+                requestContent = '';
+            } else if (requestUrl.indexOf('api/translate/1/culture/') == 0) {
+                // controller = "LoadCulture" or "DeleteCulture"
+                requestContent = '';
+            } else if (requestUrl == 'api/translate/1/culture?filter=') {
+                // action = "LoadCultures"
+                requestContent += '';
+            } else if (requestUrl == 'api/translate/1/culture') {
+                // action = "SaveCulture"
+                requestContent += ManyWhoDeveloper.createElementJSONTemplate('culture');
+            } else if (requestUrl == 'api/package/1/flow/' + getFlowId()) {
+                // action = "ExportFlowPackage"
+                requestContent += '';
+            } else if (requestUrl.indexOf('api/package/1/flow/' + getFlowId() + '/') == 0) {
+                // action = "ExportFlowPackage"
+                requestContent += '';
+            } else if (requestUrl == 'api/package/1/flow') {
+                // action = "ImportFlowPackage"
+                requestContent += '';
+            }
+
+            restEditor.setValue(requestContent);
+            restEditor.gotoLine(0);
+        }
+
+        // Set the runtime user authentication token separately so we can operate as a runtime user
+        function runtimeSignIn() {
+            var builderAuthenticationToken = null;
+
+            // Grab the builder authentication token
+            builderAuthenticationToken = ManyWhoSharedServices.getAuthenticationToken();
+
+            // Blank out authentication - were not logged in as a user if we click this button
+            ManyWhoSharedServices.setAuthenticationToken('');
+
+            ManyWhoSharedServices.showAuthenticationDialog(function (authenticationToken, manywhoTenantId) {
+                // Set the tenant id in the UI
+                $('#manywho-user-authentication-token').val(authenticationToken);
+
+                // Set the authentication back
+                ManyWhoSharedServices.setAuthenticationToken(builderAuthenticationToken);
+            },
+            ManyWhoSharedServices.getTenantId());
+        }
+
+        function openHelpDocumentation() {
+            window.open('http://manywho.com/wp-content/content/docs/index.html');
+        }
+
+        $(document).ready(function () {
+            var authenticationToken = null;
+            var manywhoTenantId = null;
+
+            // Grab any existing information from the cookie
+            authenticationToken = ManyWhoUtils.getCookie('authentication-token');
+            manywhoTenantId = ManyWhoUtils.getCookie('tenant-id');
+
+            // Set the page information to that stored in the cookie (as they user may have logged into the designer already or refreshed the page
+            ManyWhoSharedServices.setAuthenticationToken(authenticationToken);
+            ManyWhoSharedServices.setTenantId(manywhoTenantId);
+
+            // Set the tenant id in the UI
+            $('#manywho-tenant-id').html(manywhoTenantId);
+
+            // Check he authentication situation - also the tenant (we need both from authentication)
+            if (authenticationToken == null ||
+                authenticationToken.trim().length == 0 ||
+                manywhoTenantId == null ||
+                manywhoTenantId.trim().length == 0) {
+                // Show the authentication dialog as the user has not logged in
+                ManyWhoSharedServices.showAuthenticationDialog(function (authenticationToken, manywhoTenantId) {
+                    ManyWhoSharedServices.setAuthenticationToken(authenticationToken);
+                    ManyWhoSharedServices.setTenantId(manywhoTenantId);
+
+                    // Set the tenant id in the UI
+                    $('#manywho-tenant-id').html(manywhoTenantId);
+
+                    // Set the authentication token into the cookie also
+                    ManyWhoUtils.setCookie('authentication-token', authenticationToken, true);
+                    ManyWhoUtils.setCookie('tenant-id', manywhoTenantId);
+                },
+                ManyWhoSharedServices.getTenantId());
+            }
+
+            // Create the REST code editor for working against the ManyWho APIs
+            restEditor = ace.edit("rest-editor");
+            restEditor.setTheme("ace/theme/monokai");
+            restEditor.getSession().setMode("ace/mode/javascript");
+
+            // Create the response editor to view the API responses
+            restResponse = ace.edit("rest-response");
+            restResponse.setTheme("ace/theme/monokai");
+            restResponse.getSession().setMode("ace/mode/javascript");
+            restResponse.setReadOnly(true);
+
+            // Create the REST code editor for working with macros
+            macroEditor = ace.edit("macro-editor");
+            macroEditor.setTheme("ace/theme/monokai");
+            macroEditor.getSession().setMode("ace/mode/javascript");
+
+            // Create the player code editor for working with the player UI
+            playerEditor = ace.edit("player-editor");
+            playerEditor.setTheme("ace/theme/monokai");
+            playerEditor.getSession().setMode("ace/mode/javascript");
+            playerEditor.getSession().setMode("ace/mode/html");
+
+            // Initialize shared services we need to standard operations
+            ManyWhoSharedServices.initialize('shared-services');
+
+            // Grab the authentication token from the authentication cookie
+            ManyWhoSharedServices.setAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
+
+            // Grab the tenant id from the cookie
+            ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
+
+            // Create the type ahead
+            $('#request-url').typeahead();
+
+            // Grab any flow data from url in case this was opened from the draw tool
+            setFlowId(ManyWhoUtils.getQueryStringParam('flow-id'));
+            setEditingToken(ManyWhoUtils.getQueryStringParam('editing-token'));
+
+            // Refresh the source of the typeahead
+            refreshTypeAheadSource();
+
+            $('#request-url').blur(function () {
+                var requestUrl = $('#request-url').val();
+
+                if (requestUrl == 'api/run/1/authentication') {
+                    // action = "Login"
+                    // POST only
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
+                    // action = "LoadFlowByName"
+                    // GET only
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/run/1/flow/') == 0) {
+                    // action = "LoadFlowById"
+                    // GET only
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/run/1/flow') {
+                    // action = "LoadAllFlows"
+                    // GET only
+                    $('#request-type').html('');
+                    $('#request-type').html('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/run/1/response') {
+                    // action = "Response"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/run/1/state/package/') == 0) {
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/run/1/state/package') == 0) {
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/run/1/state/') == 0) {
+                    // action = "Join" or "Execute"
+                    // GET OR POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/run/1') {
+                    // action = "Initialize"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/draw/1/flow?filter=') {
+                    // action = "LoadFlows"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/activation/') == 0) {
+                    // action = "ActivateFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/snap/' + getFlowId() + '/') == 0) {
+                    // action = "LoadFlowSnapShot"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/snap/' + getFlowId() + '?filter=') == 0) {
+                    // action = "LoadFlowSnapShots"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/snap/' + getFlowId()) == 0) {
+                    // action = "SnapShotFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/service/') == 0) {
+                    // action = "AddServiceElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/service?filter=') {
+                    // action = "LoadServiceElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/service/') == 0) {
+                    // controller = "LoadServiceElement" of "DeleteServiceElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/service') {
+                    // action = "SaveServiceElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/type/') == 0) {
+                    // action = "AddTypeElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/type?filter=') {
+                    // action = "LoadTypeElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/type/') == 0) {
+                    // controller = "LoadTypeElement" of "DeleteTypeElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/type') {
+                    // action = "SaveTypeElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/macro/') == 0) {
+                    // action = "AddMacroElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/macro?filter=') {
+                    // action = "LoadMacroElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/macro/') == 0) {
+                    // controller = "LoadMacroElement" of "DeleteMacroElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/macro') {
+                    // action = "SaveMacroElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/value/') == 0) {
+                    // action = "AddValueElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/value?filter=') {
+                    // action = "LoadValueElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/value/') == 0) {
+                    // controller = "LoadValueElement" of "DeleteValueElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/value') {
+                    // action = "SaveTypeElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/tag/') == 0) {
+                    // action = "AddTagElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/tag?filter=') {
+                    // action = "LoadTagElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/tag/') == 0) {
+                    // controller = "LoadTagElement" of "DeleteTagElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/tag') {
+                    // action = "SaveTagElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/draw/1/element/flow/' + getFlowId() + '/page/') == 0) {
+                    // action = "AddPageElementToFlow"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/page?filter=') {
+                    // action = "LoadPageElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/draw/1/element/page/') == 0) {
+                    // controller = "LoadPageElement" of "DeletePageElement"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/draw/1/element/page') {
+                    // action = "SavePageElement"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation/') == 0) {
+                    // action = "LoadNavigationElement" or "DeleteNavigationElement"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation?filter=') == 0) {
+                    // action = "LoadNavigationElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/navigation') {
+                    // action = "SaveNavigationElement"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map/') == 0) {
+                    // action = "LoadMapElement" or "DeleteMapElement"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map?filter=') == 0) {
+                    // action = "LoadMapElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/map') {
+                    // action = "SaveMapElement"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/') == 0) {
+                    // action = "LoadGroupElement" or "DeleteGroupElement"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl.indexOf('api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=') == 0) {
+                    // action = "LoadGroupElements"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group') {
+                    // action = "SaveGroupElement"
+                    // POST ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl == 'api/translate/1/culture?filter=') {
+                    // action = "LoadCultures"
+                    // GET ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl.indexOf('api/translate/1/culture/') == 0) {
+                    // controller = "LoadCulture" of "DeleteCulture"
+                    // GET AND DELETE ONLY
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                } else if (requestUrl == 'api/translate/1/culture') {
+                    // action = "SaveCulture"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else if (requestUrl.indexOf('api/package/1/flow/') == 0) {
+                    // action = "ExportFlowPackage"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                } else if (requestUrl == 'api/package/1/flow') {
+                    // action = "ImportFlowPackage"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+
+                } else {
+                    // We don't know the url, so we populate all of the parameters for request type
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="PUT">PUT</option>');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
+                }
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <div id="logo">
+        <img src="https://cdn.manywho.com/images/developer_tools_logo.png" height="60" width="233" alt="ManyWho Developer Tools" />
+        <div class="pull-right" style="color: #ffffff;">
+            Tenant Id: <strong><span id="manywho-tenant-id">Unknown</span></strong>
+        </div>
+    </div>
+
+    <div class="tabbable">
+        <ul class="nav nav-tabs" id="tools-tabs">
+            <li class="active"><a href="#rest-tab" data-toggle="tab">JSON API</a></li>
+            <li><a href="#macro-tab" data-toggle="tab">Macros</a></li>
+            <li><a href="#player-tab" data-toggle="tab">Players</a></li>
+        </ul>
+ 
+        <div class="tab-content">
+          <div class="tab-pane active" id="rest-tab">
+            <div>
+              <div class="input-append input-prepend" id="rest-toolbar">
+                <button class="btn btn-warning" type="button" onclick="javascript:openHelpDocumentation();">?</button>
+                <input class="span5" id="request-url" type="text" placeholder="Where do you want to make the request?" />
+                <select id="request-type" class="span2">
+                  <option value="GET">GET</option>
+                  <option value="PUT">PUT</option>
+                  <option value="POST">POST</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+                <button class="btn btn-primary" type="button" onclick="javascript:grabJSONForRequest();"><i class="icon-align-left icon-white"></i> Grab JSON</button>
+                <button class="btn btn-info" type="button" onclick="javascript:runtimeSignIn();"><i class="icon-user icon-white"></i> Runtime Sign In</button>
+                <button class="btn btn-danger" type="button" onclick="javascript:executeREST();"><i class="icon-play icon-white"></i> Run Command</button>
+              </div>
+            </div>
+            <div id="rest-editor"></div>
+            <div id="rest-response"></div>
+          </div>
+          <div class="tab-pane" id="macro-tab">
+            <div>
+              <div class="input-append input-prepend" id="macro-toolbar">
+                <button class="btn btn-warning" type="button" onclick="javascript:openHelpDocumentation();">?</button>
+                <button class="btn btn-primary" type="button" onclick="javascript:createNewMacro();"><i class="icon-star icon-white"></i> New</button>
+                <input class="span2" id="macro-search" type="text" placeholder="Search for macro" />
+                <button class="btn btn-inverse" type="button" onclick="javascript:populateMacroCombo();"><i class="icon-search icon-white"></i> Search</button>
+                <select id="available-macros" class="span2">
+                    <option value="">-- None --</option>
+                </select>
+                <button class="btn btn-success" type="button" onclick="javascript:loadMacroForEdit();"><i class="icon-share icon-white"></i> Load</button>
+                <input class="span2" id="macro-name" type="text" placeholder="Name of macro" />
+                <button class="btn btn-danger" type="button" onclick="javascript:saveMacro();"><i class="icon-check icon-white"></i> Save</button>
+              </div>
+            </div>
+            <div id="macro-editor"></div>
+          </div>
+          <div class="tab-pane" id="player-tab">
+            <div>
+              <div class="input-append input-prepend" id="player-toolbar">
+                <button class="btn btn-warning" type="button">?</button>
+                <button class="btn btn-success" type="button" onclick="javascript:alert('to do');"><i class="icon-search icon-white"></i> Select Existing</button>
+                <input class="span5" id="player-name" type="text" placeholder="What do you want the player path to be?" />
+                <button class="btn btn-success" type="button" onclick="javascript:executePlayerRequest();"><i class="icon-download icon-white"></i> Get Player</button>
+                <button class="btn btn-danger" type="button" onclick="javascript:executeSavePlayerRequest();"><i class="icon-upload icon-white"></i> Save Player</button>
+              </div>
+            </div>
+            <div id="player-editor"></div>
+            <form id="player-form" method="post">
+                <input type="hidden" id="player" name="player" />
+            </form>
+          </div>
+        </div>
+
+    </div>
+
+    <div id="shared-services"></div>
+    <div id="manywho-macro"></div>
+
+    <input id="manywho-flow-id" type="hidden" />
+    <input id="manywho-editing-session-id" type="hidden" />
+    <input id="manywho-user-authentication-token" type="hidden" />
+
+<!-- begin olark code -->
+<script data-cfasync="false" type='text/javascript'>/*<![CDATA[*/window.olark || (function (c) {
+    var f = window, d = document, l = f.location.protocol == "https:" ? "https:" : "http:", z = c.name, r = "load"; var nt = function () {
+        f[z] = function () {
+            (a.s = a.s || []).push(arguments)
+        }; var a = f[z]._ = {
+        }, q = c.methods.length; while (q--) {
+            (function (n) {
+                f[z][n] = function () {
+                    f[z]("call", n, arguments)
+                }
+            })(c.methods[q])
+        } a.l = c.loader; a.i = nt; a.p = {
+            0: +new Date
+        }; a.P = function (u) {
+            a.p[u] = new Date - a.p[0]
+        }; function s() {
+            a.P(r); f[z](r)
+        } f.addEventListener ? f.addEventListener(r, s, false) : f.attachEvent("on" + r, s); var ld = function () {
+            function p(hd) {
+                hd = "head"; return ["<", hd, "></", hd, "><", i, ' onl' + 'oad="var d=', g, ";d.getElementsByTagName('head')[0].", j, "(d.", h, "('script')).", k, "='", l, "//", a.l, "'", '"', "></", i, ">"].join("")
+            } var i = "body", m = d[i]; if (!m) {
+                return setTimeout(ld, 100)
+            } a.P(1); var j = "appendChild", h = "createElement", k = "src", n = d[h]("div"), v = n[j](d[h](z)), b = d[h]("iframe"), g = "document", e = "domain", o; n.style.display = "none"; m.insertBefore(n, m.firstChild).id = z; b.frameBorder = "0"; b.id = z + "-loader"; if (/MSIE[ ]+6/.test(navigator.userAgent)) {
+                b.src = "javascript:false"
+            } b.allowTransparency = "true"; v[j](b); try {
+                b.contentWindow[g].open()
+            } catch (w) {
+                c[e] = d[e]; o = "javascript:var d=" + g + ".open();d.domain='" + d.domain + "';"; b[k] = o + "void(0);"
+            } try {
+                var t = b.contentWindow[g]; t.write(p()); t.close()
+            } catch (x) {
+                b[k] = o + 'd.write("' + p().replace(/"/g, String.fromCharCode(92) + '"') + '");d.close();'
+            } a.P(2)
+        }; ld()
+    }; nt()
+})({
+    loader: "static.olark.com/jsclient/loader0.js", name: "olark", methods: ["configure", "extend", "declare", "identify"]
+});
+    /* custom configuration goes here (www.olark.com/documentation) */
+    olark.identify('1806-919-10-8792');/*]]>*/</script><noscript><a href="https://www.olark.com/site/1806-919-10-8792/contact" title="Contact us" target="_blank">Questions? Feedback?</a> powered by <a href="http://www.olark.com?welcome" title="Olark live chat software">Olark live chat software</a></noscript>
+<!-- end olark code -->
+
+</body>
+</html>
