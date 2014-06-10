@@ -10,6 +10,10 @@ h3 {
     overflow: hidden !important;
 }
 
+.input-append {
+    margin-bottom: 0px !important;
+}
+
 .nav-pills {
     margin-bottom: 0px !important;
 }
@@ -398,4 +402,12 @@ ol.manywho-navigation-editor-sortable, ol.manywho-navigation-editor-sortable ol 
 
 .manywho-navigation-editor-menu {
     margin-top: 15px !important;
+}
+
+.manywho-runtime-table-actions-header {
+    width: 180px;
+}
+
+.manywho-runtime-table-actions-entry {
+    width: 180px;
 }

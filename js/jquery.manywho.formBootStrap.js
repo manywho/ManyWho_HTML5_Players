@@ -16,7 +16,8 @@ permissions and limitations under the License.
 
 (function ($) {
 
-    var RESULT_LIMIT = 10;
+    var TABLE_RESULT_LIMIT = 10;
+    var SELECT_RESULT_LIMIT = 10;
 
     // This method works out if the action type should be shown inline with table records or not. The decision will determine if the outcome
     // button is displayed at the top of the table or if it's shown as a link against each record in the table
@@ -54,66 +55,45 @@ permissions and limitations under the License.
         var actionLinkCount = 0;
         var hasActionLinks = false;
         var records = 0;
+        var acceptedOutcomeResponses = null;
 
-        // Job number 1 is to create the headings for the table - so the user knows what each column is for
-        if (columns != null &&
-            columns.length > 0) {
+        // Create the action links for any outcomes
+        // Check to see if this table has any bound outcomes
+        if (outcomeResponses != null &&
+            outcomeResponses.length > 0) {
+            // We keep a sub list of accepted outcome responses that should be used inline
+            acceptedOutcomeResponses = new Array();
 
-            html += '<thead class="header"><tr>';
+            for (var a = 0; a < outcomeResponses.length; a++) {
+                // The outcome is bound to this table and it's not a bulk action (i.e. it should be inline)
+                if (outcomeResponses[a].pageObjectBindingId == field.id &&
+                    outcomeResponses[a].isBulkAction == false &&
+                    isInlinePageActionType(outcomeResponses[a].pageActionType) == true) {
+                    // Construct the temp link which may need some additional formatting
+                    var tempActionLink = '<li><a href="#" id="' + outcomeResponses[a].id + '" class="manywho-table-outcome-action" data-isout="' + outcomeResponses[a].isOut + '" data-outcomeid="' + outcomeResponses[a].id + '">' + outcomeResponses[a].label + '</a></li>';
 
-            // Check to see if this table has any bound outcomes
-            if (outcomeResponses != null &&
-                outcomeResponses.length > 0) {
-                for (var a = 0; a < outcomeResponses.length; a++) {
-                    // The outcome is bound to this table and it's not a bulk action (i.e. it should be inline)
-                    if (outcomeResponses[a].pageObjectBindingId == field.id &&
-                        outcomeResponses[a].isBulkAction == false &&
-                        isInlinePageActionType(outcomeResponses[a].pageActionType) == true) {
-                        // Construct the temp link which may need some additional formatting
-                        var tempActionLink = '<li><a href="#" class="manywho-table-outcome-action" data-outcomeid="' + outcomeResponses[a].id + '">' + outcomeResponses[a].label + '</a></li>';
-
-                        // We add a bar to act as a link separator
-                        if (actionLinkCount == 0) {
-                            actionLinks += '<ul class="nav nav-pills">' + tempActionLink;
-                        } else {
-                            actionLinks += tempActionLink;
-                        }
-
-                        // Tell the algorithm we have action links
-                        hasActionLinks = true;
-
-                        // Increment the counter so we know to put in the bar
-                        actionLinkCount++;
+                    // We add a bar to act as a link separator
+                    if (actionLinkCount == 0) {
+                        actionLinks += '<ul class="nav nav-pills">' + tempActionLink;
+                    } else {
+                        actionLinks += tempActionLink;
                     }
+
+                    // Tell the algorithm we have action links
+                    hasActionLinks = true;
+
+                    // Add this outcome response to our list of inline accepted responses
+                    acceptedOutcomeResponses[acceptedOutcomeResponses.length] = outcomeResponses[a];
+
+                    // Increment the counter so we know to put in the bar
+                    actionLinkCount++;
                 }
             }
-
-            // If we have action links, we add a column for those
-            if (hasActionLinks == true) {
-                // Add the closing UL to the action links
-                actionLinks += '</ul>';
-
-                // Add the column to the table
-                html += '<th class="manywho-runtime-table-actions-header">Action</th>';
-            }
-
-            // Go through the list of columns provided and print the header information
-            for (var i = 0; i < columns.length; i++) {
-                var column = columns[i];
-
-                if (column.isDisplayValue == true) {
-                    html += '<th>' + column.label + '</th>';
-                }
-            }
-
-            html += '</tr></thead>';
         }
 
-        // Now we have the header, we can print the individual rows for the table - if we have any data
+        // Handle the ordering of data that's stored in the service - also get some information about the number of records!
         if (objectData != null &&
             objectData.length > 0) {
-            html += '<tbody>';
-
             // Assign the number of records so we have it
             records - objectData.length;
 
@@ -150,48 +130,220 @@ permissions and limitations under the License.
                     }
                 }
             }
+        }
 
-            // Go through each of the object data records
-            for (var i = 0; i < objectData.length; i++) {
-                var objectEntry = objectData[i];
+        // Before doing anything, we need to know the width of the screen, we'll change the table depending on the width - using the standard
+        // bootstrap convention of shifting UI behaviour below 980px
+        if ($(window).width() < 980) {
+            // List the table as thumbnails
+            //html += '<ul class="thumbnails">';
+            //TEST
+            html += '<ul class="nav nav-tabs nav-stacked">';
 
-                // We add the id to the row so we can identify it for selections
-                html += '<tr id="' + objectEntry.externalId + '">';
+            // Go through the object data and print the entries as provided
+            if (objectData != null &&
+                objectData.length > 0) {
+                // Go through each of the object data records
+                for (var i = 0; i < objectData.length; i++) {
+                    var objectEntry = objectData[i];
+                    var firstColumnIsImage = false;
+                    var firstColumnImage = null;
+                    var isFirstColumn = true;
+                    var rowHtml = '';
 
-                // If we have action links, we add them first here
-                if (hasActionLinks == true) {
-                    html += '<td class="manywho-runtime-table-actions-entry">' + actionLinks + '</td>';
-                }
+                    // If we only have one outcome response apply it to the entry - we don't need buttons
+                    if (acceptedOutcomeResponses != null &&
+                        acceptedOutcomeResponses.length == 1) {
+                        html += '<li id="' + objectEntry.externalId + '" class="manywho-reduced-table-entry-embedded-outcome">';
+                        html += '<a href="#" class="manywho-table-outcome-action" id="' + acceptedOutcomeResponses[0].id + '" data-isout="' + acceptedOutcomeResponses[0].isOut + '" data-outcomeid="' + acceptedOutcomeResponses[0].id + '">';
+                    } else {
+                        // We add the id to the row so we can identify it for selections
+                        html += '<li id="' + objectEntry.externalId + '" class="manywho-reduced-table-entry-outcome-buttons">';
 
-                // Go through each of the columns and find the matching property.  We do this to ensure the columns
-                // are always rendered in the correct order for the headings
-                for (var k = 0; k < columns.length; k++) {
-                    var column = columns[k];
+                        // If we have more than one action button, we use the tiles provided by thumbnail
+                        html += '<div class="thumbnail span12">';
+                    }
 
-                    // Check to make sure it's a display column
-                    if (column.isDisplayValue == true) {
-                        // Now go through the properties to find the one that matches
-                        for (var j = 0; j < objectEntry.properties.length; j++) {
-                            var property = objectEntry.properties[j];
+                    // Go through each of the columns and find the matching property.  We do this to ensure the columns
+                    // are always rendered in the correct order for the headings
+                    for (var k = 0; k < columns.length; k++) {
+                        var column = columns[k];
 
-                            if (column.typeElementPropertyId == property.typeElementPropertyId) {
-                                var fieldValue = '';
+                        // Check to make sure it's a display column
+                        if (column.isDisplayValue == true) {
+                            // Now go through the properties to find the one that matches
+                            for (var j = 0; j < objectEntry.properties.length; j++) {
+                                var property = objectEntry.properties[j];
 
-                                if (property.contentValue != null) {
-                                    fieldValue = property.contentValue;
+                                if (column.typeElementPropertyId == property.typeElementPropertyId) {
+                                    var fieldValue = '';
+
+                                    if (property.contentValue != null) {
+                                        fieldValue = property.contentValue;
+                                    }
+
+                                    if (isFirstColumn == true &&
+                                        fieldValue.indexOf('<img ') >= 0) {
+                                        firstColumnIsImage = true;
+                                        firstColumnImage = fieldValue;
+                                        
+                                        // No need to do any more as we have the contents for this column
+                                        continue;
+                                    }
+
+                                    rowHtml += '<div>';
+
+                                    if (column.label != null &&
+                                        column.label.trim().length > 0) {
+                                        rowHtml += '<strong>' + column.label + ':</strong> ';
+                                    }
+
+                                    rowHtml += fieldValue;
+                                    rowHtml += '</div>';
+
+                                    break;
                                 }
-
-                                html += '<td>' + fieldValue + '</td>';
-                                break;
                             }
                         }
+
+                        // Tell the player that this is not the first column
+                        firstColumn = false;
+                    }
+
+                    // If we have action links, we add them at the end of the list of entries
+                    if (hasActionLinks == true &&
+                        (acceptedOutcomeResponses == null ||
+                         acceptedOutcomeResponses.length == 0 ||
+                         acceptedOutcomeResponses.length > 1)) {
+                        rowHtml += '<div class="manywho-runtime-table-actions-entry">' + actionLinks + '</div>';
+                    }
+
+                    // If the first column is an image, then we wrap the response slightly differently
+                    if (firstColumnIsImage == true) {
+                        if (hasActionLinks == true) {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="15%" class="manywho-reduced-table-entry-image-column">' + firstColumnImage + '</td>';
+                            html += '<td width="84%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '<td width="1%" class="manywho-reduced-table-entry-chevron-column"><i class="icon-chevron-right"></i></td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        } else {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="15%" class="manywho-reduced-table-entry-image-column">' + firstColumnImage + '</td>';
+                            html += '<td width="85%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        }
+                    } else {
+                        // Simply print the row html
+                        if (hasActionLinks == true) {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="99%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '<td width="1%" class="manywho-reduced-table-entry-chevron-column"><i class="icon-chevron-right"></i></td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        } else {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="100%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        }
+                    }
+
+                    // Finish off the link
+                    if (acceptedOutcomeResponses != null &&
+                        acceptedOutcomeResponses.length == 1) {
+                        html += '</a>';
+                    } else {
+                        html += '</div>';
+                    }
+
+                    html += '</li>';
+                }
+
+                // Finish up the thumbnails listing
+                html += '</ul>';
+            }
+        } else {
+            // Job number 1 is to create the headings for the table - so the user knows what each column is for
+            if (columns != null &&
+                columns.length > 0) {
+
+                html += '<thead class="header"><tr>';
+
+                // Check the window width before printing out the table
+                // If we have action links, we add a column for those
+                if (hasActionLinks == true) {
+                    // Add the closing UL to the action links
+                    actionLinks += '</ul>';
+
+                    // Add the column to the table
+                    html += '<th class="manywho-runtime-table-actions-header">Action</th>';
+                }
+
+                // Go through the list of columns provided and print the header information
+                for (var i = 0; i < columns.length; i++) {
+                    var column = columns[i];
+
+                    if (column.isDisplayValue == true) {
+                        html += '<th>' + column.label + '</th>';
                     }
                 }
 
-                html += '</tr>';
+                html += '</tr></thead>';
             }
 
-            html += '</tbody>';
+            // Now we have the header, we can print the individual rows for the table - if we have any data
+            if (objectData != null &&
+                objectData.length > 0) {
+                html += '<tbody>';
+
+                // Go through each of the object data records
+                for (var i = 0; i < objectData.length; i++) {
+                    var objectEntry = objectData[i];
+
+                    // We add the id to the row so we can identify it for selections
+                    html += '<tr id="' + objectEntry.externalId + '">';
+
+                    // If we have action links, we add them first here
+                    if (hasActionLinks == true) {
+                        html += '<td class="manywho-runtime-table-actions-entry">' + actionLinks + '</td>';
+                    }
+
+                    // Go through each of the columns and find the matching property.  We do this to ensure the columns
+                    // are always rendered in the correct order for the headings
+                    for (var k = 0; k < columns.length; k++) {
+                        var column = columns[k];
+
+                        // Check to make sure it's a display column
+                        if (column.isDisplayValue == true) {
+                            // Now go through the properties to find the one that matches
+                            for (var j = 0; j < objectEntry.properties.length; j++) {
+                                var property = objectEntry.properties[j];
+
+                                if (column.typeElementPropertyId == property.typeElementPropertyId) {
+                                    var fieldValue = '';
+
+                                    if (property.contentValue != null) {
+                                        fieldValue = property.contentValue;
+                                    }
+
+                                    html += '<td>' + fieldValue + '</td>';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    html += '</tr>';
+                }
+
+                html += '</tbody>';
+            }
         }
 
         // If we have the same number of records or more than the limit, we enable the 'next' button
@@ -203,6 +355,11 @@ permissions and limitations under the License.
 
             if (hasMoreResults == false) {
                 $('#' + domId + '-' + field.id + '-field-pagination-next-entry').addClass('disabled');
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+            }
+
+            // We need to show the previous if we're offset
+            if (isOffset == true) {
                 $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
             }
         } else {
@@ -383,14 +540,14 @@ permissions and limitations under the License.
         } else if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
             // We need to add the events for the table here
             // Add individual row selection support
-            $('#' + domId + '-' + field.id + '-field').find('tr').click(function (e) {
+            $('#' + domId + '-' + field.id + '-field').find('tr, li').click(function (e) {
                 if ($(this).hasClass('success')) {
                     // Remove the selection from the already selected row
                     $(this).removeClass('success');
                 }
                 else {
                     // Remove any selections that exist on the table
-                    $('#' + domId + '-' + field.id + '-field').find('tr').removeClass('success');
+                    $('#' + domId + '-' + field.id + '-field').find('tr, li').removeClass('success');
 
                     // Make the current row selected
                     $(this).addClass('success');
@@ -403,10 +560,10 @@ permissions and limitations under the License.
                 event.preventDefault();
 
                 // Remove any selections that exist on the table
-                $('#' + domId + '-' + field.id + '-field').find('tr').removeClass('success');
+                $('#' + domId + '-' + field.id + '-field').find('tr, li').removeClass('success');
 
                 // Make the current row selected - this is needed so we have the value of the row
-                $(this).parents('tr').addClass('success');
+                $(this).parents('tr, li').addClass('success');
 
                 // Disable all of the outcome buttons on the form
                 $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
@@ -503,7 +660,10 @@ permissions and limitations under the License.
         }
 
         if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE ||
-            field.componentType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
+            field.componentType == ManyWhoConstants.COMPONENT_TYPE_TAG ||
+            (field.componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION &&
+             (span == null ||
+              span.trim().length == 0))) {
             html += '<div id="' + domId + '-' + field.id + '">';
         } else if (span != null &&
                    span.trim().length > 0) {
@@ -520,7 +680,7 @@ permissions and limitations under the License.
             html += '<div class="input-append">';
             html += '<input type="text" id="' + domId + '-' + field.id + '-field-search" class="span8">';
             html += '<button type="button" id="' + domId + '-' + field.id + '-field-search-button" class="btn btn-inverse" style="margin-top: 0px !important;"><i class="icon-search icon-white"></i> Search</button>';
-            html += '</div>';
+            html += '</div>&nbsp;';
         }
 
         html += '</div>';
@@ -592,12 +752,18 @@ permissions and limitations under the License.
             $('#' + domId + '-' + field.id + '-field-search').keypress(function (event) {
                 // Check to see if this is the enter key
                 if (event.which == 13) {
+                    // Reset the paging
+                    $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
+
                     // Dispatch the data population as the user has hit enter
                     dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 }
             });
 
             $('#' + domId + '-' + field.id + '-field-search-button').click(function (event) {
+                // Reset the paging
+                $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
+
                 // Dispatch the search as the user has clicked the button
                 dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
             });
@@ -626,18 +792,17 @@ permissions and limitations under the License.
                 var page = $('#' + domId + '-' + field.id + '-field').attr('data-page');
                 page = parseInt(page);
 
-                if (page < 0) {
-                    page = 0;
+                // We ignore the click if we're at the 0 page
+                if (page > 0) {
+                    // Decrement the page
+                    page--;
+
+                    // Apply the change
+                    $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
+
+                    // Requiry the system
+                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 }
-
-                // Decrement the page
-                page--;
-
-                // Apply the change
-                $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
-
-                // Requiry the system
-                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
             });
         }
 
@@ -661,7 +826,7 @@ permissions and limitations under the License.
             $('#' + domId + '-manywho-runtime-form-event-data').data(field.id + '-process-events', 'true');
 
             // Finally - add the event listener to notify the event manager
-            $('#' + domId + '-' + field.id + '-field').die('change').live('change', function () {
+            $('#' + domId + '-' + field.id + '-field').off('change').on('change', function () {
                 eventManager(domId, field.id, eventCallback);
             });
         }
@@ -778,31 +943,32 @@ permissions and limitations under the License.
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT.toUpperCase()) {
-            fieldHtml = '';
-            fieldHtml += '<div id="' + domId + '-' + field.id + '-field-toolbar">';
-            fieldHtml += '<div class="btn-toolbar">';
-            fieldHtml += '<div class="btn-group">';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="bold" title="CTRL+B" href="#"><small><b>B</b></small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="italic" title="CTRL+I" href="#"><small><i>I</i></small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1"><small>H1</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2"><small>H2</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="insertUnorderedList"><small>&bull; List</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="insertOrderedList"><small>Order</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="createLink" title="CTRL+L" href="#"><small>Link</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-command="insertSpeech"><small>Speech</small></a>';
-            fieldHtml += '<a class="btn" data-wysihtml5-action="change_view"><small>Source</small></a>';
-            fieldHtml += '</div>';
-            fieldHtml += '</div>';
-            fieldHtml += '<div data-wysihtml5-dialog="createLink" style="display: none;">';
-            fieldHtml += '<label>';
-            fieldHtml += 'Link:';
-            fieldHtml += '<input data-wysihtml5-dialog-field="href" value="http://">';
-            fieldHtml += '</label>';
-            fieldHtml += '<a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>';
-            fieldHtml += '</div>';
-            fieldHtml += '</div>';
+            //fieldHtml = '';
+            //fieldHtml += '<div id="' + domId + '-' + field.id + '-field-toolbar">';
+            //fieldHtml += '<div class="btn-toolbar">';
+            //fieldHtml += '<div class="btn-group">';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="bold" title="CTRL+B" href="#"><small><b>B</b></small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="italic" title="CTRL+I" href="#"><small><i>I</i></small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1"><small>H1</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2"><small>H2</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="insertUnorderedList"><small>&bull; List</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="insertOrderedList"><small>Order</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="createLink" title="CTRL+L" href="#"><small>Link</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-command="insertSpeech"><small>Speech</small></a>';
+            //fieldHtml += '<a class="btn" data-wysihtml5-action="change_view"><small>Source</small></a>';
+            //fieldHtml += '</div>';
+            //fieldHtml += '</div>';
+            //fieldHtml += '<div data-wysihtml5-dialog="createLink" style="display: none;">';
+            //fieldHtml += '<label>';
+            //fieldHtml += 'Link:';
+            //fieldHtml += '<input data-wysihtml5-dialog-field="href" value="http://">';
+            //fieldHtml += '</label>';
+            //fieldHtml += '<a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>';
+            //fieldHtml += '</div>';
+            //fieldHtml += '</div>';
 
-            fieldHtml += '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-content-field" placeholder="' + field.hintValue + '" style="height: ' + (field.height * 10) + 'px; width: ' + (field.width * 4) + 'px;">' + formMetaData.contentValue + '</textarea>';
+            //fieldHtml += '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-content-field" placeholder="' + field.hintValue + '" style="height: ' + (field.height * 10) + 'px; width: ' + (field.width * 4) + 'px;">' + formMetaData.contentValue + '</textarea>';
+            fieldHtml = '<textarea id="' + domId + '-' + field.id + '-field" class="manywho-runtime-content-field" data-height="' + (field.height * 12) + '" data-width="' + (field.width * 5) + '">' + formMetaData.contentValue + '</textarea>';
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX.toUpperCase()) {
             if (formMetaData.contentValue != null &&
                 formMetaData.contentValue.trim().toLowerCase() == 'true') {
@@ -824,7 +990,13 @@ permissions and limitations under the License.
             fieldHtml = '';
             fieldHtml += '<div class="manywho-runtime-table-field-container">';
             fieldHtml += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-table-loading-indicator"></div>';
-            fieldHtml += '<table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></table>';
+
+            if ($(window).width() < 980) {
+                fieldHtml += '<div id="' + domId + '-' + field.id + '-field" class="manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></div>';
+            } else {
+                fieldHtml += '<table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></table>';
+            }
+
             fieldHtml += '<div id="' + domId + '-' + field.id + '-field-pagination" class="pagination">';
             fieldHtml += '<ul>';
             fieldHtml += '<li id="' + domId + '-' + field.id + '-field-pagination-prev-entry"><a href="#" id="' + domId + '-' + field.id + '-field-pagination-prev">Prev</a></li>';
@@ -845,9 +1017,10 @@ permissions and limitations under the License.
 
     // This is the generic method for creating outcomes.
     //
-    var generateOutcome = function (domId, externalDomId, outcomeId, label, onClickFunction, formElementBindingId, formActionBinding, isBulkAction, formActionType, viewStateDomElement, mapElementId) {
+    var generateOutcome = function (domId, externalDomId, outcomeId, label, onClickFunction, formElementBindingId, formActionBinding, isBulkAction, formActionType, viewStateDomElement, mapElementId, isOut) {
         var outcomeDomId = null;
         var buttonClass = 'btn';
+        var optimizeForMobile = false;
 
         // Check to see if the user wants the outcomes to be printed somewhere else
         if (formElementBindingId != null &&
@@ -859,6 +1032,9 @@ permissions and limitations under the License.
         } else {
             outcomeDomId = domId + '-outcomes';
         }
+
+        // Get the mobile optimization status
+        optimizeForMobile = ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val());
 
         if (formActionBinding == ManyWhoConstants.ACTION_BINDING_SAVE ||
             (formElementBindingId != null &&
@@ -876,8 +1052,23 @@ permissions and limitations under the License.
             isInlinePageActionType(formActionType) == true) {
             // Do nothing as we'll add the action to the component control
         } else {
-            // Print the outcome button
-            $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + domId + '-' + outcomeId + '" data-actionbinding="' + formActionBinding + '">' + label + '</button>&nbsp;');
+            // If we're optimizing for mobile, we put the button on a new line
+            if (optimizeForMobile == true) {
+                buttonClass += ' span12';
+            }
+
+            if (formActionType != 'LINK') {
+                // Print the outcome button
+                $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</button>');
+            } else {
+                // Print the outcome link
+                $('#' + outcomeDomId).append('<p class="manywho-outcome-link" align="center"><a href="#" class="manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</a></p>');
+            }
+
+            // If we're not optimizing for mobile, we add a space to the end
+            if (optimizeForMobile == false) {
+                $('#' + outcomeDomId).append('&nbsp;');
+            }
 
             // Make sure we show the field outcomes action div
             if (formElementBindingId != null &&
@@ -888,7 +1079,7 @@ permissions and limitations under the License.
             // Don't add the button click if we're using one of these action types for the outcome
             if (formActionType != 'PLACEHOLDER' &&
                 formActionType != 'NOT_ALLOWED') {
-                $('#' + domId + '-' + outcomeId).click(function (event) {
+                $('#' + outcomeId).click(function (event) {
                     // Make sure we don't cause any linking issues or page refreshes
                     event.preventDefault();
 
@@ -897,7 +1088,7 @@ permissions and limitations under the License.
                 });
             } else {
                 // Disable the button as we can't use it - it's either not allowed or it's simply a placeholder
-                $('#' + domId + '-' + outcomeId).attr('disabled', 'disabled');
+                $('#' + outcomeId).attr('disabled', 'disabled');
             }
         }
     };
@@ -1154,13 +1345,14 @@ permissions and limitations under the License.
                 // This is so moment doesn't fix anything that will then pass validation
                 if (moment(value).isValid() == true) {
                     // Overwrite the value with the full date as this is the value that will be posted back to the service
-                    value = moment(value).toString();
+                    value = moment(value).format('YYYY-MM-DD');
                 }
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TEXTBOX) {
             value = $('#' + domId + '-' + fieldId + '-field').val();
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT) {
-            value = $('#' + domId + '-' + fieldId + '-field').val();
+            // value = $('#' + domId + '-' + fieldId + '-field').val();
+            value = tinyMCE.get(domId + '-' + fieldId + '-field').getContent();
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
             // The value will be the unique identifier for the selected object
             value = $('#' + domId + '-' + fieldId + '-field').val();
@@ -1190,7 +1382,7 @@ permissions and limitations under the License.
             var storageObject = $('#' + domId + '-' + fieldId + '-database').data(fieldId);
 
             // Find the selected rows and grab the id from the tr
-            $.each($('#' + domId + '-' + fieldId + '-field').find('tr.success'), function (index) {
+            $.each($('#' + domId + '-' + fieldId + '-field').find('tr.success, li.success'), function (index) {
                 var mode = null;
                 var entryId = $(this).attr('id');
 
@@ -1211,7 +1403,7 @@ permissions and limitations under the License.
             });
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CHECKBOX) {
             if ($('#' + domId + '-' + fieldId).attr('data-visible') != 'false') {
-                if ($('#' + domId + '-' + fieldId + '-field').attr('checked') != null) {
+                if ($('#' + domId + '-' + fieldId + '-field').prop('checked') == true) {
                     value = 'true';
                 } else {
                     value = 'false';
@@ -1248,7 +1440,7 @@ permissions and limitations under the License.
                 if (value != null &&
                     value.trim().length > 0) {
                     // Format the date using something that's acceptable to most!
-                    value = moment(value).format('DD MMM YYYY');
+                    value = moment(value).format('YYYY-MM-DD');
                 } else {
                     // Blank out the date if it isn't valid
                     value = '';
@@ -1272,9 +1464,9 @@ permissions and limitations under the License.
             if (value == true ||
                 (value != null &&
                  value.toLowerCase() == 'true')) {
-                $('#' + domId + '-' + fieldId + '-field').attr('checked', 'checked');
+                $('#' + domId + '-' + fieldId + '-field').prop('checked', true);
             } else {
-                $('#' + domId + '-' + fieldId + '-field').removeAttr('checked');
+                $('#' + domId + '-' + fieldId + '-field').prop('checked', false);
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
             $('#' + domId + '-' + fieldId + '-field').html(value);
@@ -1379,7 +1571,7 @@ permissions and limitations under the License.
         // We also use this call as an opportune moment to grab the active tabs
         $('ul.nav-tabs li.active').each(function (index, value) {
             // Go through each of the selected tabs and save them to a local cookie
-            ManyWhoUtils.setCookie($('#' + domId + '-state-id').val() + '-' + $(this).attr('data-parentcontainerid'), $(this).attr('data-containerid'));
+            ManyWhoUtils.setCookie($('#' + domId + '-state-id').val() + '-' + $(this).attr('data-parentcontainerid'), $(this).attr('data-containerid'), true);
         });
 
         return fields;
@@ -1674,7 +1866,7 @@ permissions and limitations under the License.
                         enterOutcomeFound = true;
                     }
 
-                    generateOutcome(domId, externalOutcomeDomId, outcome.id, outcome.label, outcomeFunction, outcome.pageObjectBindingId, outcome.pageActionBindingType, outcome.isBulkAction, outcome.pageActionType, viewStateDomElement, mapElementId);
+                    generateOutcome(domId, externalOutcomeDomId, outcome.id, outcome.label, outcomeFunction, outcome.pageObjectBindingId, outcome.pageActionBindingType, outcome.isBulkAction, outcome.pageActionType, viewStateDomElement, mapElementId, outcome.isOut);
                 }
             }
         }
@@ -1772,8 +1964,12 @@ permissions and limitations under the License.
             formMetaDataEntry.objectDataRequest.listFilter = new Object();
         }
 
-        // Set the limit to 10 no matter what
-        formMetaDataEntry.objectDataRequest.listFilter.limit = RESULT_LIMIT;
+        // Set the resultset limit appropriately
+        if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
+            formMetaDataEntry.objectDataRequest.listFilter.limit = SELECT_RESULT_LIMIT;
+        } else {
+            formMetaDataEntry.objectDataRequest.listFilter.limit = TABLE_RESULT_LIMIT;
+        }
 
         // Check to see if we're going to add a search on top of our query
         if (field.isSearchable == true) {
@@ -1809,11 +2005,17 @@ permissions and limitations under the License.
         if ($('#' + domId + '-' + field.id + '-field').attr('data-page') != null) {
             var page = parseInt($('#' + domId + '-' + field.id + '-field').attr('data-page'));
             var offset = 0;
+            var resultSetLimit = TABLE_RESULT_LIMIT;
             
+            // Set the resultset limit appropriately
+            if (field.componentType.toUpperCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX) {
+                resultSetLimit = SELECT_RESULT_LIMIT;
+            }
+
             // We need to calculate the offset
             if (page > 0) {
                 // The offset is equivalent to the page number multiplied by the limit
-                offset = page * RESULT_LIMIT;
+                offset = page * resultSetLimit;
                 isOffset = true;
             }
 
@@ -1869,10 +2071,16 @@ permissions and limitations under the License.
             // Get the options provided by the user
             var opts = $.extend({}, $.fn.manywhoFormBootStrap.defaults, options);
 
+            // Assign the resultset sizes
+            TABLE_RESULT_LIMIT = opts.tableResultSetSize;
+            SELECT_RESULT_LIMIT = opts.selectResultSetSize;
+
             $(this).append('<input type="hidden" id="' + domId + '-form-outcome-reference" value="" />');
             $(this).append('<input type="hidden" id="' + domId + '-tenant-id" value="' + opts.tenantId + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-state-id" value="' + opts.stateId + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-add-social" value="' + opts.addRealtime + '" />');
+            $(this).append('<input type="hidden" id="' + domId + '-optimize-for-mobile" value="' + opts.optimizeForMobile + '" />');
+
             $(this).append('<div id="' + domId + '-registry" style="display:none;"></div>');
             $(this).append('<div id="' + domId + '-manywho-runtime-form-event-data" style="display:none;"></div>');
 
@@ -2134,6 +2342,14 @@ permissions and limitations under the License.
             $('#' + $('#' + domId + '-form-outcome-reference').val()).html('');
             $('#' + domId + '-outcomes').html('');
 
+            $.each($(this).find('.manywho-runtime-content-field'), function (index) {
+                var textareaId = $(this).attr('id');
+
+                if (tinymce.get(textareaId) != null) {
+                    tinymce.get(textareaId).destroy();
+                }
+            });
+
             // Destroy and ckeditors
             //$(this).find('.manywho-runtime-content-field').ckeditor(function () { this.destroy(); });
 
@@ -2155,33 +2371,60 @@ permissions and limitations under the License.
 
                 // This section gives us the correct user experience depending on the mode of the table
                 if (mode == 'select') {
+                    if ($(window).width() < 980) {
+                        // This is a copy of the table code below, but for li
+                        $.each($(this).find('li'), function (index) {
+                            var actions = null;
 
-                    // Check to see if we have any currently selected entries and enable/disable the buttons accordingly so the initially
-                    // loaded state of the outcomes is OK
-                    $.each($(this).find('tr'), function (index) {
-                        var actions = null;
+                            // Get the reference to the actions bar
+                            actions = domId.substring(0, domId.length - '-field'.length);
+                            actions = actions + '-actions';
 
-                        // Get the reference to the actions bar
-                        actions = domId.substring(0, domId.length - '-field'.length);
-                        actions = actions + '-actions';
+                            // This is a selected row
+                            if ($(this).hasClass('success')) {
+                                // Enabled the edit and delete actions if they exist
+                                $.each($('#' + actions).find('button'), function (index) {
+                                    if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
+                                        //$(this).removeAttr('disabled');
+                                    }
+                                });
+                            } else {
+                                // Enabled the edit and delete actions if they exist
+                                $.each($('#' + actions).find('button'), function (index) {
+                                    if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
+                                        //$(this).attr('disabled', 'disabled');
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        // Check to see if we have any currently selected entries and enable/disable the buttons accordingly so the initially
+                        // loaded state of the outcomes is OK
+                        $.each($(this).find('tr'), function (index) {
+                            var actions = null;
 
-                        // This is a selected row
-                        if ($(this).hasClass('success')) {
-                            // Enabled the edit and delete actions if they exist
-                            $.each($('#' + actions).find('button'), function (index) {
-                                if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
-                                    //$(this).removeAttr('disabled');
-                                }
-                            });
-                        } else {
-                            // Enabled the edit and delete actions if they exist
-                            $.each($('#' + actions).find('button'), function (index) {
-                                if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
-                                    //$(this).attr('disabled', 'disabled');
-                                }
-                            });
-                        }
-                    });
+                            // Get the reference to the actions bar
+                            actions = domId.substring(0, domId.length - '-field'.length);
+                            actions = actions + '-actions';
+
+                            // This is a selected row
+                            if ($(this).hasClass('success')) {
+                                // Enabled the edit and delete actions if they exist
+                                $.each($('#' + actions).find('button'), function (index) {
+                                    if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
+                                        //$(this).removeAttr('disabled');
+                                    }
+                                });
+                            } else {
+                                // Enabled the edit and delete actions if they exist
+                                $.each($('#' + actions).find('button'), function (index) {
+                                    if ($(this).attr('data-actionbinding') == ManyWhoConstants.ACTION_BINDING_SAVE) {
+                                        //$(this).attr('disabled', 'disabled');
+                                    }
+                                });
+                            }
+                        });
+                    }
                 } else if (mode == 'multiselect') {
                     $('#' + domId + ' tr').click(function () {
                         $(this).toggleClass('success');
@@ -2189,11 +2432,41 @@ permissions and limitations under the License.
                 }
             });
 
-            // Convert all of the content fields to have the wysihtml5 editor
+            // Convert all of the content fields to the tiny mce editor
             $.each($(this).find('.manywho-runtime-content-field'), function (index) {
-                var editor = new wysihtml5.Editor($(this).attr('id'), {
-                    toolbar: $(this).attr('id') + '-toolbar',
-                    parserRules: wysihtml5ParserRules
+                var heightAttr = null;
+                var widthAttr = null;
+                var editorFormats = null;
+
+                // Grab the height from the data attribute
+                heightAttr = $(this).attr('data-height');
+                widthAttr = $(this).attr('data-width');
+
+                // Get the formats from shared services
+                editorFormats = ManyWhoSharedServices.getEditorFormats();
+
+                tinymce.init({
+                    statusbar: false,
+                    height: parseInt(heightAttr),
+                    width: parseInt(widthAttr),
+                    selector: 'textarea#' + $(this).attr('id'),
+                    plugins: [
+                        "advlist autolink lists link image charmap anchor",
+                        "searchreplace visualblocks code",
+                        "media table contextmenu paste fullscreen",
+                        "manywho_elements"
+                    ],
+                    external_plugins: {
+                        "moxiemanager": "https://flow.manywho.com/extensions/moxiemanager/plugin.js",
+                        "nanospell": "https://flow.manywho.com/extensions/nanospell/plugin.js",
+                    },
+                    content_css: "https://cdn.manywho.com/css/tinymce.css",
+                    nanospell_server: "asp.net",
+                    style_formats: editorFormats,
+                    moxiemanager_title: 'Flow Assets',
+                    moxiemanager_fullscreen: false,
+                    menubar: "edit insert view format table tools",
+                    toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | manywho_elements"
                 });
             });
         }
@@ -2211,6 +2484,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null };
+    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false };
 
 })(jQuery);

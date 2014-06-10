@@ -98,6 +98,9 @@ permissions and limitations under the License.
         // Blank and re-enable the text area for the file post
         $('#' + currentOptions.domId + '-new-file-text').val('');
         $('#' + currentOptions.domId + '-new-file-text').prop('disabled', false);
+
+        // Remove the file information in the uploader area
+        $('#manywho-social-uploadedfiles').html('');
     };
 
     // Sends the file post over to the social network
@@ -568,8 +571,8 @@ permissions and limitations under the License.
                             html += '        <div class="media">';
                             html += '          <img class="pull-left" src=' + data.attachments[i].iconUrl + '" />';
                             html += '          <div class="media-body">';
-                            html += '            File Size: ' + data.attachments[i].size + '<br />';
-                            html += '            <a class="downloadUri" href="' + data.attachments[i].downloadUrl + '"><i class="icon-download-alt"></i> Download file: ' + data.attachments[i].name + '</a>';
+                            //html += '            File Size: ' + data.attachments[i].size + '<br />';
+                            html += '            <a class="downloadUri" href="' + data.attachments[i].downloadUrl + '" target="_blank">' + data.attachments[i].name + '</a>';
                             html += '          </div>';
                             html += '        </div>';
                             html += '      </li>';
@@ -1025,7 +1028,7 @@ permissions and limitations under the License.
             html += '                    </div>';
             html += '                    <div class="fileupload-loading"></div>';
             html += '                    <div role="presentation" class="span12 table table-striped">';
-            html += '                      <div class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></div>';
+            html += '                      <div class="files" id="manywho-social-uploadedfiles" data-toggle="modal-gallery" data-target="#modal-gallery"></div>';
             html += '                    </div>';
             html += '                  </form>';
             html += '                </div>';
@@ -1319,17 +1322,18 @@ permissions and limitations under the License.
 
                             if (file.error) {
                                 row += '<div class="template-upload row-fluid">';
-                                row += '  <div class="span12">';
+                                row += '  <div class="row-fluid">';
                                 row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
+                                row += '  </div>';
+                                row += '  <div class="row-fluid">';
                                 row += '    <div><span class="label label-important">Error</span> ' + file.error + '</div>';
                                 row += '  </div>';
                                 row += '</div>';
                             } else {
                                 row += '<div id="' + file.id + '" data-name="' + file.name + '" data-type="' + file.type + '" class="template-upload row-fluid manywho-social-file">';
-                                row += '  <div class="span12">';
-                                row += '    <div>' + (file.thumbnailUrl ? '<img alt="' + file.name + '" src="' + file.thumbnailUrl + '" />' : '') + '</div>';
-                                row += '    <div>' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
-                                row += '    <button class="btn btn-danger delete" data-type="DELETE" data-url="' + ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file/' + file.id + '" ' + (file.delete_with_credentials ? 'data-xhr-fields="{"withCredentials":true}"' : '') + '><i class="icon-trash icon-white"></i> <span>Delete</span></button>';
+                                row += '  <div class="row-fluid">';
+                                //row += '    <div>' + (file.thumbnailUrl ? '<img alt="' + file.name + '" src="' + file.thumbnailUrl + '" />' : '') + '</div>';
+                                row += '    <div class="span12"><button class="btn btn-danger delete" data-type="DELETE" data-url="' + ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file/' + file.id + '" ' + (file.delete_with_credentials ? 'data-xhr-fields="{"withCredentials":true}"' : '') + '><i class="icon-trash icon-white"></i> <span>Delete</span></button> ' + file.name + ' (' + data.formatFileSize(file.size) + ')</div>';
                                 row += '  </div>';
                                 row += '</div>';
                             }
@@ -1357,6 +1361,7 @@ permissions and limitations under the License.
 
                 $(this).bind('fileuploadsubmit', function (e, destroyData) {
                     // Do nothing currently
+                    alert('fileuploadsubmit');
                 });
             });
 

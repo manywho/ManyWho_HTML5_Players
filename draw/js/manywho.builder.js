@@ -14,7 +14,7 @@ permissions and limitations under the License.
 
 */
 
-function configurePage() {
+function configurePage(options) {
 
     // Initialize the shared services
     ManyWhoSharedServices.initialize('shared-services');
@@ -42,6 +42,18 @@ function configurePage() {
     // Grab the authentication token from the authentication cookie
     ManyWhoSharedServices.setAuthorAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
     ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
+
+    // If we have the authentication and tenant information being provided in the options, we use that instead
+    if (options &&
+        options.authenticationToken &&
+        options.tenantId &&
+        options.authenticationToken != null &&
+        options.authenticationToken.trim().length > 0 &&
+        options.tenantId != null &&
+        options.tenantId.trim().length > 0) {
+        ManyWhoSharedServices.setAuthorAuthenticationToken(options.authenticationToken);
+        ManyWhoSharedServices.setTenantId(options.tenantId);
+    }
 
     // Create the function for creating error alerts in the designer
     var createErrorAlert = function (xhr, status, responseMessage) {
@@ -130,8 +142,11 @@ function configurePage() {
                 ManyWhoSharedServices.setTenantId(manywhoTenantId);
 
                 // Set the authentication token into the cookie also
-                ManyWhoUtils.setCookie('authentication-token', authenticationToken);
+                ManyWhoUtils.setCookie('authentication-token', authenticationToken, true);
                 ManyWhoUtils.setCookie('tenant-id', manywhoTenantId);
+
+                // Set the cookie for moxie manager
+                ManyWhoUtils.setCookie('ManyWhoTenant', manywhoTenantId);
 
                 // Update the tools menu
                 updateTools.call(this);
@@ -139,16 +154,47 @@ function configurePage() {
         }
     };
 
-    var getSelectedPlayer = function () {
-        var player = $('#manywho-available-players').val();
-
-        if (player == null ||
-            player.trim().length == 0) {
-            // If we don't have a player for any reason, we assume 'default'
-            player = 'default';
+    var openFlow = function(flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
+        // If we have a flow loaded already, we save any changes - everything is on the service - so we don't need to wait for this to complete
+        if (ManyWhoSharedServices.getFlowId() != null &&
+            ManyWhoSharedServices.getFlowId().trim().length > 0) {
+            // Save the currently cached model so we have all of the changes
+            ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
+                                    ManyWhoSharedServices.getEditingToken(),
+                                    ManyWhoSharedServices.getFlowId(),
+                                    $('#flow-developer-name').html(),
+                                    $('#flow-developer-summary').html(),
+                                    ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                    null,
+                                    function (data, status, xhr) {
+                                    },
+                                    createErrorAlert);
         }
 
-        return player;
+        // Clear the graph of any current flow
+        $('#flow-graph').manywhoMxGraph('clear', null);
+        $('#flow-graph-wrapper').show();
+        $('#flow-getting-started').hide();
+
+        // Assign the relevant information here to the various designer properties
+        ManyWhoSharedServices.setEditingToken(flowEditingToken);
+        ManyWhoSharedServices.setFlowId(flowId);
+
+        $('#flow-developer-name').html(flowDeveloperName);
+        $('#flow-developer-summary').html(flowDeveloperSummary);
+        $('#flow-start-map-element-id').val(flowStartMapElementId);
+
+        // Populate the list of navigation elements
+        populateNavigationElements();
+
+        // Show the user the "flow loading" screen
+        setFlowLoader(true);
+
+        // Synchronize the graph to load all of the elements
+        $('#flow-graph').manywhoMxGraph('syncGraph', function () {
+            // Update the tools once the sync is complete
+            updateTools.call(this);
+        });
     };
 
     var populatePlayers = function () {
@@ -160,15 +206,15 @@ function configurePage() {
                                   if (data != null &&
                                       data.length > 0) {
                                       // Clear the list of players
-                                      $('#manywho-available-players').html('');
+                                      $('#manywho-model-select-run-player').html('');
 
                                       // Populate the list of players to run the flow in
                                       for (var i = 0; i < data.length; i++) {
-                                          $('#manywho-available-players').append('<option value="' + data[i] + '">' + data[i] + '</option>');
+                                          $('#manywho-model-select-run-player').append('<option value="' + data[i] + '">' + data[i] + '</option>');
                                       }
 
                                       // Auto select the default player
-                                      $('#manywho-available-players').val('default');
+                                      $('#manywho-model-select-run-player').val('default');
                                   }
                               },
                               createErrorAlert);
@@ -203,17 +249,8 @@ function configurePage() {
                                    if (data != null &&
                                        data.length > 0) {
                                        for (var a = 0; a < data.length; a++) {
-                                           // Turn off any existing click events for this option
-                                           $('#manywho-navigation-element-option-' + data[a].id).off('click');
-
                                            // Append the menu with this option
-                                           $('#manywho-model-select-run-navigation').append('<li><a href="#" id="manywho-navigation-element-option-' + data[a].id + '" data-id="' + data[a].id + '">' + data[a].developerName + '</a></li>');
-
-                                           // Create a click event for this option
-                                           $('#manywho-navigation-element-option-' + data[a].id).on('click', function (event) {
-                                               // Grab the location stored in the dialog and append the navigation
-                                               window.open($('#manywho-dialog-select-navigation-location').val() + '&navigation-element-id=' + $(this).attr('data-id'));
-                                           });
+                                           $('#manywho-model-select-run-navigation').append('<option value="' + data[a].id + '">' + data[a].developerName + '</option>');
                                        }
                                    }
                                },
@@ -241,48 +278,7 @@ function configurePage() {
     $("#manage-flows").click(function (event) {
         event.preventDefault();
         ManyWhoSharedServices.showFlowConfigDialog(null,
-                                                   function (flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
-                                                       // If we have a flow loaded already, we save any changes - everything is on the service - so we don't need to wait for this to complete
-                                                       if (ManyWhoSharedServices.getFlowId() != null &&
-                                                           ManyWhoSharedServices.getFlowId().trim().length > 0) {
-                                                           // Save the currently cached model so we have all of the changes
-                                                           ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
-                                                                                ManyWhoSharedServices.getEditingToken(),
-                                                                                ManyWhoSharedServices.getFlowId(),
-                                                                                $('#flow-developer-name').html(),
-                                                                                $('#flow-developer-summary').html(),
-                                                                                ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                                                                                null,
-                                                                                function (data, status, xhr) {
-                                                                                },
-                                                                                createErrorAlert);
-                                                       }
-
-                                                       // Clear the graph of any current flow
-                                                       $('#flow-graph').manywhoMxGraph('clear', null);
-                                                       $('#flow-graph-wrapper').show();
-                                                       $('#flow-getting-started').hide();
-
-                                                       // Assign the relevant information here to the various designer properties
-                                                       ManyWhoSharedServices.setEditingToken(flowEditingToken);
-                                                       ManyWhoSharedServices.setFlowId(flowId);
-
-                                                       $('#flow-developer-name').html(flowDeveloperName);
-                                                       $('#flow-developer-summary').html(flowDeveloperSummary);
-                                                       $('#flow-start-map-element-id').val(flowStartMapElementId);
-
-                                                       // Populate the list of navigation elements
-                                                       populateNavigationElements();
-
-                                                       // Show the user the "flow loading" screen
-                                                       setFlowLoader(true);
-
-                                                       // Synchronize the graph to load all of the elements
-                                                       $('#flow-graph').manywhoMxGraph('syncGraph', function () {
-                                                           // Update the tools once the sync is complete
-                                                           updateTools.call(this);
-                                                       });
-                                                   },
+                                                   openFlow,
                                                    null,
                                                    createErrorAlert);
     });
@@ -307,16 +303,6 @@ function configurePage() {
 
         ManyWhoSharedServices.showSharedElementConfigDialog('TAG', null, null, createErrorAlert);
     });
-
-    //$("#manage-macros").click(function (event) {
-    //    event.preventDefault();
-
-    //    if (ManyWhoSharedServices.getDeveloperMode() == true) {
-    //        ManyWhoSharedServices.showSharedElementConfigDialog('MACRO', null, null, createErrorAlert);
-    //    } else {
-    //        alert('Coming soon!');
-    //    }
-    //});
 
     $("#manage-types").click(function (event) {
         event.preventDefault();
@@ -345,71 +331,85 @@ function configurePage() {
     // Button to allow the user to snapshot and run the flow
     $('#run-flow').click(function (event) {
         event.preventDefault();
-        ManyWhoSharedServices.showBuildDialog(true);
-        ManyWhoFlow.snapAndRun('ManyWhoBuilder.RunFlow',
-                               ManyWhoSharedServices.getFlowId(),
-                               ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                               null,
-                               function (data, status, xhr) {
-                                   var location = null;
 
-                                   ManyWhoSharedServices.showBuildDialog(false);
+        if ($(this).attr('disabled') != 'disabled') {
+            ManyWhoSharedServices.showBuildDialog(true);
+            ManyWhoFlow.snapAndRun('ManyWhoBuilder.RunFlow',
+                                   ManyWhoSharedServices.getFlowId(),
+                                   ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                   null,
+                                   function (data, status, xhr) {
+                                       var location = null;
 
-                                   // Assign the location
-                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+                                       ManyWhoSharedServices.showBuildDialog(false);
 
-                                   // Check to see if the navigation has any entries for the user to select from
-                                   if ($('#manywho-model-select-run-navigation').html() != null &&
-                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
-                                       // Show the navigation selection menu
-                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location);
-                                   } else {
-                                       // Load the window, we don't have any navigation to choose
-                                       window.open(location);
-                                   }
-                               },
-                               createErrorAlert);
+                                       // Assign the location
+                                       location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+
+                                       // Check to see if the navigation has any entries for the user to select from
+                                       if ($('#manywho-model-select-run-navigation').html() != null &&
+                                           $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                           // Show the navigation selection menu
+                                           ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, data.id.versionId);
+                                       } else {
+                                           // Show the dialog, but no need to have navigation selection
+                                           ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, data.id.versionId);
+                                       }
+                                   },
+                                   createErrorAlert);
+        }
     });
 
     // Button to allow the user to snapshot and run the flow
     $('#activate-flow').click(function (event) {
         event.preventDefault();
-        ManyWhoSharedServices.showBuildDialog(true);
-        ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
-                               ManyWhoSharedServices.getFlowId(),
-                               ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                               null,
-                               function (data, status, xhr) {
-                                   var location = null;
 
-                                   ManyWhoSharedServices.showBuildDialog(false);
+        if ($(this).attr('disabled') != 'disabled') {
+            ManyWhoSharedServices.showBuildDialog(true);
+            ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
+                                   ManyWhoSharedServices.getFlowId(),
+                                   ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                   null,
+                                   function (data, status, xhr) {
+                                       var location = null;
 
-                                   // Assign the location
-                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play/' + getSelectedPlayer() + '?tenant-id=' + ManyWhoSharedServices.getTenantId() + '&flow-id=' + data.id.id;
+                                       ManyWhoSharedServices.showBuildDialog(false);
 
-                                   // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
-                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
+                                       // Assign the location
+                                       location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
 
-                                   // Check to see if the navigation has any entries for the user to select from
-                                   if ($('#manywho-model-select-run-navigation').html() != null &&
-                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
-                                       // Show the navigation selection menu
-                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location);
-                                   } else {
-                                       // Load the window, we don't have any navigation to choose
-                                       // Now we load the flow which allows the author to then share it with their friends
-                                       window.open(location);
-                                   }
-                               },
-                               createErrorAlert);
+                                       // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
+                                       ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
+
+                                       // Check to see if the navigation has any entries for the user to select from
+                                       if ($('#manywho-model-select-run-navigation').html() != null &&
+                                           $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                           // Show the navigation selection menu
+                                           ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, null);
+                                       } else {
+                                           // Show the dialog, but no need to have navigation selection
+                                           ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, null);
+                                       }
+                                   },
+                                   createErrorAlert);
+        }
     });
 
     $('#open-developer-tools').click(function (event) {
         event.preventDefault();
 
         if ($(this).attr('disabled') != 'disabled') {
-            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken());
+            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken(), true);
             window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/build?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
+        }
+    });
+
+    $('#open-translate-tools').click(function (event) {
+        event.preventDefault();
+
+        if ($(this).attr('disabled') != 'disabled') {
+            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken(), true);
+            window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/translate?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
         }
     });
 
@@ -420,35 +420,57 @@ function configurePage() {
         reLogin(this);
     });
 
+    $('#create-sub-tenant').click(function (event) {
+        event.preventDefault();
+
+        var manywhoTenantId = ManyWhoSharedServices.getTenantId();
+        var authenticationToken = ManyWhoSharedServices.getAuthorAuthenticationToken();
+
+        // Open the sub-tenant flow dialog
+        ManyWhoSharedServices.showSubTenantDialog(function (authenticationToken, manywhoTenantId) {});
+    });
+
     $('#close-flow').click(function (event) {
         event.preventDefault();
 
-        // Save the currently cached model so we have all of the changes
-        ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
-                             ManyWhoSharedServices.getEditingToken(),
-                             ManyWhoSharedServices.getFlowId(),
-                             $('#flow-developer-name').html(),
-                             $('#flow-developer-summary').html(),
-                             ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                             null,
-                             function (data, status, xhr) {
-                             },
-                             createErrorAlert);
+        if ($(this).attr('disabled') != 'disabled') {
+            // Save the currently cached model so we have all of the changes
+            ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
+                                 ManyWhoSharedServices.getEditingToken(),
+                                 ManyWhoSharedServices.getFlowId(),
+                                 $('#flow-developer-name').html(),
+                                 $('#flow-developer-summary').html(),
+                                 ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                 null,
+                                 function (data, status, xhr) {
+                                 },
+                                 createErrorAlert);
 
-        // Clear the graph also so we don't have any data lying around - we don't wait for the save flow async call to complete
-        $('#flow-graph').manywhoMxGraph('clear');
-        $('#flow-graph-wrapper').hide();
-        $('#flow-getting-started').show();
+            // Clear the graph also so we don't have any data lying around - we don't wait for the save flow async call to complete
+            $('#flow-graph').manywhoMxGraph('clear');
+            $('#flow-graph-wrapper').hide();
+            $('#flow-getting-started').show();
 
-        // Tell the designer to update the tools accordingly
-        updateTools.call(this);
+            // Tell the designer to update the tools accordingly
+            updateTools.call(this);
+        }
     });
+
+    // Just before we update the tools, we want to see if flow information was passed into this initial page configuration
+
+
+
+
+
+
+
+
 
     // Update the toolbar
     updateTools.call(this);
 
     // Make sure the graph is the same height as the left menu so we don't have disappearing graph problems
-    $('#manywho-flow-container').height($(document).height());
+    $('#manywho-flow-container').height($(document).height() - 45);
 
     // Set the timer to check if any changes to loaded flows have been made
     setInterval(function () {

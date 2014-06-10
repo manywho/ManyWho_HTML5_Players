@@ -37,6 +37,11 @@ var ManyWhoAjax = {
             data: requestData,
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+
+                // Assign the culture if one has been explicity set for this user
+                if (ManyWhoSharedServices.getCultureHeader() != null) {
+                    xhr.setRequestHeader('Culture', ManyWhoSharedServices.getCultureHeader());
+                }
             },
             success: function (data, status, xhr) {
                 // Log the response from the call to the server
@@ -105,6 +110,11 @@ var ManyWhoAjax = {
                     xhr.setRequestHeader('Authorization', authenticationToken);
                 } else {
                     xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+                }
+
+                // Assign the culture if one has been explicity set for this user
+                if (ManyWhoSharedServices.getCultureHeader() != null) {
+                    xhr.setRequestHeader('Culture', ManyWhoSharedServices.getCultureHeader());
                 }
 
                 // If the calling function has additional headers to add, we add those here

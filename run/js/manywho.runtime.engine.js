@@ -166,7 +166,8 @@ permissions and limitations under the License.
                                                        '"annotations":' + JSON.stringify(annotations) + ',' +
                                                        '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
                                                        '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
-                                                       '"mode":"' + $('#' + domId + '-mode').val() + '"' +
+                                                       '"mode":"' + $('#' + domId + '-mode').val() + '",' +
+                                                       '"reportingMode":"' + $('#' + domId + '-reporting-mode').val() + '"' +
                                                '}';
 
                                  // Create a header for the tenant id
@@ -189,7 +190,8 @@ permissions and limitations under the License.
                                   '"annotations":' + JSON.stringify(annotations) + ',' +
                                   '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
                                   '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
-                                  '"mode":"' + $('#' + domId + '-mode').val() + '"' +
+                                  '"mode":"' + $('#' + domId + '-mode').val() + '",' +
+                                  '"reportingMode":"' + $('#' + domId + '-reporting-mode').val() + '"' +
                           '}';
 
             // Create a header for the tenant id
@@ -226,12 +228,23 @@ permissions and limitations under the License.
                     }
                 }
 
-                requestAuthentication(domId, loginUrl, directoryName);
+                requestAuthentication(domId, loginUrl, directoryName, data.stateId);
                 return;
             }
 
             // Store the state id so we're referencing the correct instance data
             $('#' + domId + '-state-id').val(data.stateId);
+
+            // Store the parent state id as we may have one of those
+            if (data.parentStateId != null &&
+                data.parentStateId.trim().length > 0) {
+                $('#' + domId + '-parent-state-id').val(data.parentStateId);
+
+                // Show the parent control buttons
+                $('#' + domId + '-parent-state-buttons').show();
+            } else {
+                $('#' + domId + '-parent-state-id').val('');
+            }
 
             // Store the current element information
             $('#' + domId + '-element-id').val(data.currentMapElementId);
@@ -266,6 +279,67 @@ permissions and limitations under the License.
             // Initialize the feed
             $('#' + domId + '-social-feed').manywhoSocialNetwork(options);
         }
+    };
+
+    // This method is used to make a final call to the engine based on this state before transfering to a new state and flow
+    //
+    var flowOutAndExecute = function (domId, invokeType, selectedOutcomeId, formRequest) {
+        // Stop automatic synchronization
+        checkStateChanges(domId, false);
+
+        // Clear any system faults
+        $('#' + domId + '-system-faults').html('');
+        $('#' + domId + '-system-faults').hide();
+
+        showWait(domId, 'Executing Flow');
+
+        if (invokeType == null) {
+            invokeType = 'FORWARD';
+        }
+
+        var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val();
+        var requestType = 'POST';
+        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, null);
+
+        // Create a header for the tenant id
+        var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
+
+        // Send the request to the engine to start the flow
+        ManyWhoAjax.callRestApi('Execute', requestUrl, requestType, requestData, null, flowOutAndExecuteSuccess(domId, selectedOutcomeId), manageError(domId), headers);
+    };
+
+    // The flow out and execute success callback function
+    //
+    var flowOutAndExecuteSuccess = function (domId, selectedOutcomeId) {
+        return function (data, status, xhr) {
+            // Now we've completed the callback, we need to get the flow out information
+            var requestUrl = $('#' + domId + '-engine-url').val() + '/state/out/' + $('#' + domId + '-state-id').val() + '/' + selectedOutcomeId;
+            var requestType = 'POST';
+            var requestData = '';
+
+            // Create a header for the tenant id
+            var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
+
+            // Send the request to the engine to get the flow out information
+            ManyWhoAjax.callRestApi('GetOut', requestUrl, requestType, requestData, null, getOutSuccess(domId), manageError(domId), headers);
+        };
+    };
+
+    // The flow out call has executed successfully and the user can now join the newly initialized flow
+    //
+    var getOutSuccess = function (domId) {
+        return function (data, status, xhr) {
+            // Reset the engine information accordingly
+            $('#' + domId + '-state-id').val(data.stateId);
+            $('#' + domId + '-flow-id').val('');
+            $('#' + domId + '-flow-version-id').val('');
+
+            // Update the runtime with the join url in case the user refreshes - this value comes from the service
+            updateUrl(domId, data, data.joinFlowUri);
+
+            // Join the flow based on this new identifier
+            join(domId);
+        };
     };
 
     // This method is used to make a call to the engine to execute.
@@ -317,12 +391,16 @@ permissions and limitations under the License.
                     }
                 }
 
-                requestAuthentication(domId, loginUrl, directoryName);
+                requestAuthentication(domId, loginUrl, directoryName, data.stateId);
                 return;
             }
 
             // Update the runtime with the join url in case the user refreshes - this value comes from the service
             updateUrl(domId, data, data.joinFlowUri);
+
+            // Re-enable the outcome buttons so the user can take action as needed - if this comes back as a sync, we don't want to leave them with
+            // unclickable buttons
+            $('#' + domId).find('.manywho-outcome-button').removeAttr('disabled');
 
             // We'll use this in the logic to help us debug flows
             var debugging = false;
@@ -392,6 +470,18 @@ permissions and limitations under the License.
                 $('#' + domId + '-screen-content').manywhoFormBootStrap('destroy');
             }
 
+            // Apply the parent state identifier if it exists
+            if (data.parentStateId != null &&
+                data.parentStateId.trim().length > 0) {
+                $('#' + domId + '-parent-state-id').val(data.parentStateId);
+
+                // Show the parent control buttons
+                $('#' + domId + '-parent-state-buttons').show();
+            } else {
+                // Hide the parent control buttons
+                $('#' + domId + '-parent-state-buttons').hide();
+            }
+
             if (data.invokeType != 'STATUS' &&
                 data.invokeType != 'SYNC') {
                 // Clear the toolbar buttons for navigation
@@ -432,7 +522,7 @@ permissions and limitations under the License.
                     data.invokeType != 'SYNC') {
                     // Generate a new form
                     // TODO: need to change the register to this isn't being used for all apps
-                    $('#' + domId + '-screen-content').manywhoFormBootStrap({ id: 'form', label: null, addRealtime: getAddRealtime(domId), stateId: $('#' + domId + '-state-id').val(), tenantId: $('#' + domId + '-tenant-id').val(), sectionFormat: 'tabs', columnFormat: 'none', register: [{ tag: 'Form Editor', component: ManyWhoTagFormEditor }, { tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor }] });
+                    $('#' + domId + '-screen-content').manywhoFormBootStrap({ id: 'form', label: null, addRealtime: getAddRealtime(domId), stateId: $('#' + domId + '-state-id').val(), tenantId: $('#' + domId + '-tenant-id').val(), sectionFormat: 'tabs', columnFormat: 'none', tableResultSetSize: parseInt($('#' + domId + '-table-size').val()), selectResultSetSize: parseInt($('#' + domId + '-select-size').val()), optimizeForMobile: ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val()), register: [{ tag: 'Form Editor', component: ManyWhoTagFormEditor }, { tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor }] });
                 }
 
                 if (data.invokeType == 'SYNC') {
@@ -443,8 +533,15 @@ permissions and limitations under the License.
                                                                                 // Store the selected outcome so we have it
                                                                                 $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', outcomeId);
 
-                                                                                // Tell the engine to go forward based on the outcome being clicked
-                                                                                execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                // Check to see if this is an out call
+                                                                                if ($('#' + outcomeId).attr('data-isout') != null &&
+                                                                                    $('#' + outcomeId).attr('data-isout').toLowerCase() == 'true') {
+                                                                                    // The user needs to leave this flow and execute through a sub-flow
+                                                                                    flowOutAndExecute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                } else {
+                                                                                    // Tell the engine to go forward based on the outcome being clicked
+                                                                                    execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                }
                                                                             });
                 } else {
                     $('#' + domId + '-screen-content').manywhoFormBootStrap('assemble',
@@ -458,8 +555,15 @@ permissions and limitations under the License.
                                                                                 // Store the selected outcome so we have it
                                                                                 $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', outcomeId);
 
-                                                                                // Tell the engine to go forward based on the outcome being clicked
-                                                                                execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                // Check to see if this is an out call
+                                                                                if ($('#' + outcomeId).attr('data-isout') != null &&
+                                                                                    $('#' + outcomeId).attr('data-isout').toLowerCase() == 'true') {
+                                                                                    // The user needs to leave this flow and execute through a sub-flow
+                                                                                    flowOutAndExecute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                } else {
+                                                                                    // Tell the engine to go forward based on the outcome being clicked
+                                                                                    execute(domId, 'FORWARD', outcomeId, createFormRequest(domId));
+                                                                                }
                                                                             },
                                                                             $('#' + domId + '-outcome-panel').val(),
                                                                             $('#' + domId + '-form-label-panel').val(),
@@ -606,7 +710,7 @@ permissions and limitations under the License.
                     }
                 }
 
-                requestAuthentication(domId, loginUrl, directoryName);
+                requestAuthentication(domId, loginUrl, directoryName, data.stateId);
                 return;
             }
 
@@ -809,8 +913,8 @@ permissions and limitations under the License.
 
     var trackUserPosition = function (domId) {
         navigator.geolocation.getCurrentPosition(function (position) {
-                                                     assignUserPosition(domId, position);
-                                                 }, 
+            assignUserPosition(domId, position);
+        }, 
                                                  null,
                                                  {timeout:60000});
     };
@@ -824,18 +928,140 @@ permissions and limitations under the License.
         if (stateId != null &&
             stateId.trim().length > 0) {
             join(domId);
-        // If the state is null, then we're running an actual flow
+            // If the state is null, then we're running an actual flow
         } else if (flowId != null &&
                    flowId.trim().length > 0) {
             initializeFlow(domId);
-        // If we don't have anything to do, we tell the user
+            // If we don't have anything to do, we tell the user
         } else {
             alert('Nothing to do!');
         }
     };
 
+    var doRun = function (domId, stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
+        // Make the outcome panel blank if it's null
+        if (outcomePanel == null) {
+            outcomePanel = '';
+        }
+
+        if (formLabelPanel == null) {
+            formLabelPanel = '';
+        }
+
+        if (mode == null) {
+            mode = '';
+        }
+
+        if (flowVersionId == null) {
+            flowVersionId = '';
+        }
+
+        // Set the done callback function to the provided value
+        //doneCallback = doneCallbackFunction;
+
+        // Clear the values so we don't get bleeding if the browser caches anything
+        $('#' + domId + '-flow-id').val('');
+        $('#' + domId + '-flow-version-id').val('');
+        $('#' + domId + '-state-id').val('');
+        $('#' + domId + '-parent-state-id').val('');
+        $('#' + domId + '-state-token').val('');
+        $('#' + domId + '-element-id').val('');
+        $('#' + domId + '-recording-settings-id').val('');
+        $('#' + domId + '-recording-settings-mode').val('');
+        $('#' + domId + '-recording-name').val('');
+        $('#' + domId + '-outcome-panel').val('');
+        $('#' + domId + '-form-label-panel').val('');
+        $('#' + domId + '-mode').val('');
+
+        // Store the values in the dom
+        $('#' + domId + '-state-id').val(stateId);
+        $('#' + domId + '-flow-id').val(flowId);
+        $('#' + domId + '-flow-version-id').val(flowVersionId);
+        $('#' + domId + '-outcome-panel').val(outcomePanel);
+        $('#' + domId + '-form-label-panel').val(formLabelPanel);
+        $('#' + domId + '-mode').val(mode);
+        $('#' + domId + '-session-id').val(sessionId);
+        $('#' + domId + '-session-url').val(sessionUrl);
+
+        // Apply the sync timing if a value has been provided
+        if (syncTiming != null) {
+            $('#' + domId + '-sync-timing').val(syncTiming);
+        }
+
+        // Apply the navigation if a value has been provided
+        if (navigationElementId != null) {
+            $('#' + domId + '-navigation-element-id').val(navigationElementId);
+        }
+
+        if (inputs == null) {
+            // Try getting the inputs from the query string input parameters
+            inputs = ManyWhoUtils.getInputQueryStringParams();
+        }
+
+        // Store the inputs in the page database
+        $('#' + domId + '-inputs-database').data('inputs', inputs);
+        $('#' + domId + '-inputs-database').data('annotations', annotations);
+        $('#' + domId + '-inputs-database').data('doneCallback', doneCallbackFunction);
+        $('#' + domId + '-inputs-database').data('updateCallback', updateCallbackFunction);
+        $('#' + domId + '-inputs-database').data('updateCallbackPrevious', null);
+        $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', null);
+
+        if (mode == ManyWhoConstants.MODE_DEBUG ||
+            mode == ManyWhoConstants.MODE_DEBUG_STEPTHROUGH) {
+            // Create the alert html just in case it has been deleted
+            //$('#' + domId + '-debug').html(createAlert(domId));
+
+            //// Put an event on the debug info so if the user closes it, we stop sending the debug mode through
+            //$('#' + domId + '-debug-alert').bind('close', function () {
+            //    // Blank out the mode so we're no longer doing the step-through
+            //    $('#' + domId + '-mode').val('');
+            //})
+
+            // Show the debug panel
+            $('#' + domId + '-debug').show();
+        } else {
+            // Hide the debug panel
+            $('#' + domId + '-debug').hide();
+        }
+
+        // Finally, we grab the geo location - commented out as we have this turned off by default
+        //if (navigator.geolocation){
+        //    // timeout at 60000 milliseconds (60 seconds)
+        //    var options = {timeout:1000};
+
+        //    // Tell the user we're trying to find their location                
+        //    showWait(domId, 'Finding your location...');
+
+        //    // Get the navigator current position
+        //    navigator.geolocation.getCurrentPosition(function (position) {
+        //                                                 // Hide the finding wait message
+        //                                                 hideWait(domId);
+
+        //                                                 // Grab the position data so we have the geo location of our user
+        //                                                 assignUserPosition(domId, position);
+
+        //                                                 // Run the requested flow
+        //                                                 runFlow(domId);
+
+        //                                                 // Kick off a thread to keep the location data up-to-date
+        //                                                 $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
+        //                                             }, 
+        //                                             function () {
+        //                                                 // Hide the finding wait message
+        //                                                 hideWait(domId);
+
+        //                                                 // Run the requested flow - we had an error grabbing geo location
+        //                                                 runFlow(domId);
+        //                                             },
+        //                                             options);
+        //} else {
+        // Run the requested flow - geo location is not supported just yet
+        runFlow(domId);
+        //}
+    };
+
     // Create the setup function
-    var requestAuthentication = function (domId, loginUrl, directoryName) {
+    var requestAuthentication = function (domId, loginUrl, directoryName, stateId) {
         var sessionId = null;
 
         sessionId = $('#' + domId + '-session-id').val();
@@ -845,6 +1071,7 @@ permissions and limitations under the License.
             // Grab the session id and sessionurl here and do an automated login from the player
             ManyWhoFlow.loginBySession("Engine.RequestAuthentication", 
                                        $('#' + domId + '-tenant-id').val(),
+                                       stateId,
                                        loginUrl,
                                        sessionId,
                                        $('#' + domId + '-session-url').val(),
@@ -867,7 +1094,8 @@ permissions and limitations under the License.
             },
             loginUrl,
             $('#' + domId + '-tenant-id').val(),
-            directoryName);
+            directoryName,
+            stateId);
         }
     };
 
@@ -979,11 +1207,16 @@ permissions and limitations under the License.
         init: function (options) {
             var html = null;
             var domId = $(this).attr('id');
+            var containerCss = 'container-fluid';
 
             var opts = $.extend({}, $.fn.manywhoRuntimeEngine.defaults, options);
 
             html = '';
 
+            if (opts.isFullWidth == false) {
+                containerCss = 'container';
+            }
+            
             // Initialize the shared services
             ManyWhoSharedServices.initialize('shared-services');
 
@@ -991,6 +1224,11 @@ permissions and limitations under the License.
             if (opts.authorization != null &&
                 opts.authorization.trim().length > 0) {
                 ManyWhoSharedServices.setAuthenticationToken(opts.authorization);
+            }
+
+            // Check to see if a culture has been provided for this user - if so - assign it so it will be included in headers
+            if (opts.culture != null) {
+                ManyWhoSharedServices.setCultureHeader(opts.culture.brand, opts.culture.country, opts.culture.language, opts.culture.variant);
             }
 
             // Dialog for sharing the flow with other users
@@ -1010,8 +1248,19 @@ permissions and limitations under the License.
             html += '    </div>';
             html += '</div>';
 
+            // The parent button div
+            html += '<div id="' + domId + '-parent-state-buttons" class="' + containerCss + '">';
+            html += '    <div class="row-fluid">';
+            html += '        <div class="span12">';
+            html += '            <div class="pull-left">';
+            html += '                <button id="' + domId + '-return-to-parent" class="btn btn-inverse"><i class="icon-arrow-up icon-white"></i> Return to Parent</button>';
+            html += '            </div>';
+            html += '        </div>';
+            html += '    </div>';
+            html += '</div>';
+
             // The buttons for following the flow and refreshing the feed
-            html += '<div id="' + domId + '-social-feed-buttons" class="container-fluid">';
+            html += '<div id="' + domId + '-social-feed-buttons" class="' + containerCss + '">';
             html += '    <div class="row-fluid">';
             html += '        <div class="span12">';
             html += '            <div class="pull-right">';
@@ -1022,17 +1271,17 @@ permissions and limitations under the License.
             html += '    </div>';
             html += '</div>';
 
-            html += '<div id="' + domId + '-system-faults" class="container-fluid">';
+            html += '<div id="' + domId + '-system-faults" class="' + containerCss + '">';
             html += '</div>';
 
-            html += '<div id="' + domId + '-root-faults" class="container-fluid">';
+            html += '<div id="' + domId + '-root-faults" class="' + containerCss + '">';
             html += '</div>';
 
-            html += '<div id="' + domId + '-screen-content" class="container-fluid">';
+            html += '<div id="' + domId + '-screen-content" class="' + containerCss + '">';
             html += '</div>';
 
             // The span for the flow followers
-            html += '<div id="' + domId + '-social-feed-followers" class="container-fluid" style="display: none;">';
+            html += '<div id="' + domId + '-social-feed-followers" class="' + containerCss + '" style="display: none;">';
             html += '    <div class="row-fluid">';
             html += '        <div id="' + domId + '-followers" class="span12 well well-small"></div>';
             html += '    </div>';
@@ -1055,6 +1304,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-flow-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-flow-version-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-state-id" value="" />';
+            html += '<input type="hidden" id="' + domId + '-parent-state-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-state-token" value="" />';
             html += '<input type="hidden" id="' + domId + '-element-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-tenant-id" value="" />';
@@ -1079,8 +1329,12 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-position-speed" value="0" />';
             html += '<input type="hidden" id="' + domId + '-sync-timing" value="10000" />';
             html += '<input type="hidden" id="' + domId + '-navigation-element-id" value="" />';
+            html += '<input type="hidden" id="' + domId + '-reporting-mode" value="" />';
+            html += '<input type="hidden" id="' + domId + '-table-size" value="10" />';
+            html += '<input type="hidden" id="' + domId + '-select-size" value="10" />';
+            html += '<input type="hidden" id="' + domId + '-optimize-for-mobile" value="false" />';
 
-            html += '<div id="' + domId + '-debug" class="container-fluid manywho-debug-info">';
+            html += '<div id="' + domId + '-debug" class="' + containerCss + ' manywho-debug-info">';
             html += '</div>';
 
             // Write the html to the parent element
@@ -1092,6 +1346,28 @@ permissions and limitations under the License.
             $('#' + domId + '-share-flow-button').click(function (event) {
                 event.preventDefault();
                 $('#' + domId + '-share-flow-dialog').modal('show');
+            });
+
+            // Add the click event for returning to the parent
+            $('#' + domId + '-return-to-parent').click(function (event) {
+                event.preventDefault();
+
+                // Run the flow based on the parent - joining the parent
+                doRun(domId,
+                      $('#' + domId + '-parent-state-id').val(),
+                      null,
+                      null,
+                      null,
+                      $('#' + domId + '-inputs-database').data('doneCallback'),
+                      $('#' + domId + '-outcome-panel').val(),
+                      $('#' + domId + '-form-label-panel').val(),
+                      null,
+                      $('#' + domId + '-mode').val(),
+                      null,
+                      null,
+                      $('#' + domId + '-inputs-database').data('updateCallback'),
+                      $('#' + domId + '-sync-timing').val(),
+                      null);
             });
 
             // Create the alert html
@@ -1106,6 +1382,9 @@ permissions and limitations under the License.
             // Hide the debug panel
             $('#' + domId + '-debug').hide();
 
+            // Hide the parent control buttons
+            $('#' + domId + '-parent-state-buttons').hide();
+
             // Hide the feed control buttons
             $('#' + domId + '-social-feed-buttons').hide();
 
@@ -1118,6 +1397,10 @@ permissions and limitations under the License.
             $('#' + domId + '-engine-url').val(ManyWhoConstants.BASE_PATH_URL + '/api/run/1');
             $('#' + domId + '-tenant-id').val(opts.tenantId);
             $('#' + domId + '-rewrite-url').val(opts.rewriteUrl);
+            $('#' + domId + '-reporting-mode').val(opts.reportingMode != null ? opts.reportingMode : '');
+            $('#' + domId + '-table-size').val(opts.tableResultSetSize);
+            $('#' + domId + '-select-size').val(opts.selectResultSetSize);
+            $('#' + domId + '-optimize-for-mobile').val(opts.optimizeForMobile);
 
             // If the user clicks the cancel button, we hide the sharing modal dialog
             $('#' + domId + '-cancel-post-button').click(function (event) {
@@ -1126,126 +1409,8 @@ permissions and limitations under the License.
             });
         },
         run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
-            var domId = $(this).attr('id');
-
-            // Make the outcome panel blank if it's null
-            if (outcomePanel == null) {
-                outcomePanel = '';
-            }
-
-            if (formLabelPanel == null) {
-                formLabelPanel = '';
-            }
-
-            if (mode == null) {
-                mode = '';
-            }
-
-            if (flowVersionId == null) {
-                flowVersionId = '';
-            }
-
-            // Set the done callback function to the provided value
-            //doneCallback = doneCallbackFunction;
-
-            // Clear the values so we don't get bleeding if the browser caches anything
-            $('#' + domId + '-flow-id').val('');
-            $('#' + domId + '-flow-version-id').val('');
-            $('#' + domId + '-state-id').val('');
-            $('#' + domId + '-state-token').val('');
-            $('#' + domId + '-element-id').val('');
-            $('#' + domId + '-recording-settings-id').val('');
-            $('#' + domId + '-recording-settings-mode').val('');
-            $('#' + domId + '-recording-name').val('');
-            $('#' + domId + '-outcome-panel').val('');
-            $('#' + domId + '-form-label-panel').val('');
-            $('#' + domId + '-mode').val('');
-
-            // Store the values in the dom
-            $('#' + domId + '-state-id').val(stateId);
-            $('#' + domId + '-flow-id').val(flowId);
-            $('#' + domId + '-flow-version-id').val(flowVersionId);
-            $('#' + domId + '-outcome-panel').val(outcomePanel);
-            $('#' + domId + '-form-label-panel').val(formLabelPanel);
-            $('#' + domId + '-mode').val(mode);
-            $('#' + domId + '-session-id').val(sessionId);
-            $('#' + domId + '-session-url').val(sessionUrl);
-
-            // Apply the sync timing if a value has been provided
-            if (syncTiming != null) {
-                $('#' + domId + '-sync-timing').val(syncTiming);
-            }
-
-            // Apply the navigation if a value has been provided
-            if (navigationElementId != null) {
-                $('#' + domId + '-navigation-element-id').val(navigationElementId);
-            }
-
-            if (inputs == null) {
-                // Try getting the inputs from the query string input parameters
-                inputs = ManyWhoUtils.getInputQueryStringParams();
-            }
-
-            // Store the inputs in the page database
-            $('#' + domId + '-inputs-database').data('inputs', inputs);
-            $('#' + domId + '-inputs-database').data('annotations', annotations);
-            $('#' + domId + '-inputs-database').data('doneCallback', doneCallbackFunction);
-            $('#' + domId + '-inputs-database').data('updateCallback', updateCallbackFunction);
-            $('#' + domId + '-inputs-database').data('updateCallbackPrevious', null);
-            $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', null);
-
-            if (mode == ManyWhoConstants.MODE_DEBUG ||
-                mode == ManyWhoConstants.MODE_DEBUG_STEPTHROUGH) {
-                // Create the alert html just in case it has been deleted
-                //$('#' + domId + '-debug').html(createAlert(domId));
-
-                //// Put an event on the debug info so if the user closes it, we stop sending the debug mode through
-                //$('#' + domId + '-debug-alert').bind('close', function () {
-                //    // Blank out the mode so we're no longer doing the step-through
-                //    $('#' + domId + '-mode').val('');
-                //})
-
-                // Show the debug panel
-                $('#' + domId + '-debug').show();
-            } else {
-                // Hide the debug panel
-                $('#' + domId + '-debug').hide();
-            }
-
-            // Finally, we grab the geo location - commented out as we have this turned off by default
-            //if (navigator.geolocation){
-            //    // timeout at 60000 milliseconds (60 seconds)
-            //    var options = {timeout:1000};
-
-            //    // Tell the user we're trying to find their location                
-            //    showWait(domId, 'Finding your location...');
-
-            //    // Get the navigator current position
-            //    navigator.geolocation.getCurrentPosition(function (position) {
-            //                                                 // Hide the finding wait message
-            //                                                 hideWait(domId);
-
-            //                                                 // Grab the position data so we have the geo location of our user
-            //                                                 assignUserPosition(domId, position);
-                    
-            //                                                 // Run the requested flow
-            //                                                 runFlow(domId);
-
-            //                                                 // Kick off a thread to keep the location data up-to-date
-            //                                                 $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
-            //                                             }, 
-            //                                             function () {
-            //                                                 // Hide the finding wait message
-            //                                                 hideWait(domId);
-
-            //                                                 // Run the requested flow - we had an error grabbing geo location
-            //                                                 runFlow(domId);
-            //                                             },
-            //                                             options);
-            //} else {
-                // Run the requested flow - geo location is not supported just yet
-                runFlow(domId);
-            //}
+            // Run the flow using the internal method
+            doRun($(this).attr('id'), stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId);
         },
         navigate: function (navigationItemId) {
             var domId = $(this).attr('id');
@@ -1283,6 +1448,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false };
 
 })(jQuery);

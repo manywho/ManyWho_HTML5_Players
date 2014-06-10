@@ -1,5 +1,13 @@
 ﻿body {
-    background-color: #000000;
+    background-color: #F0F0F0;
+}
+
+#logo {
+    margin-bottom: 10px;
+}
+
+#refresh-flow {
+    margin-right: 10px !important;
 }
 
 .nav-pills {
@@ -55,37 +63,17 @@
     display:inline;
 }
 
-#macro-editor {
-    position: absolute;
-    top: 170px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-}
-
-#player-editor { 
-    position: absolute;
-    top: 170px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-}
-
 #rest-toolbar {
     margin-left: 10px;
 }
 
-#macro-toolbar {
-    margin-left: 10px;
-}
-
-#player-toolbar {
+#rest-editor-toolbar {
     margin-left: 10px;
 }
 
 #rest-editor { 
     position: absolute;
-    top: 170px;
+    top: 150px;
     left: 0px;
     right: 0px;
     bottom: 0px;
@@ -94,7 +82,7 @@
 
 #rest-response { 
     position: absolute;
-    top: 170px;
+    top: 150px;
     left: 50%;
     right: 0px;
     bottom: 0px;

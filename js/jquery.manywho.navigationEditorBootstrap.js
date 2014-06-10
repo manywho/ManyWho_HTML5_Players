@@ -320,9 +320,6 @@ permissions and limitations under the License.
                 startCollapsed: false
             });
 
-            // Apply the close events
-            applyCloseEvents(domId);
-
             // Add a button for adding new navigation items
             $('#' + domId + '-add-navigation-item').click(function (event) {
                 event.preventDefault();
@@ -440,6 +437,9 @@ permissions and limitations under the License.
                     // We have an existing navigation menu, so we assign that
                     $('#manywho-navigation-editor-sortable').html(html);
                 }
+
+                // Apply the close events
+                applyCloseEvents(domId);
             }
         }
     };

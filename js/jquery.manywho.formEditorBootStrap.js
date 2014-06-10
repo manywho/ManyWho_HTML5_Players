@@ -21,7 +21,7 @@ permissions and limitations under the License.
     var PAGE_CONTAINER_DIALOG_HEIGHT = 200;
     var PAGE_CONTAINER_DIALOG_WIDTH = 175;
     var PAGE_COMPONENT_DIALOG_HEIGHT = 450;
-    var PAGE_COMPONENT_DIALOG_WIDTH = 175;
+    var PAGE_COMPONENT_DIALOG_WIDTH = 250;
     var PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT = 250;
     var PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH = 175;
 
@@ -47,8 +47,18 @@ permissions and limitations under the License.
             $('#' + elementId).remove();
         } else {
             // Create the page component from the response
-            createPageComponent(domId, elementId, pageComponent[0]);
+            createPageComponent(domId, elementId, pageComponent[0], false);
         }
+    };
+
+    var getBufferValue = function () {
+        var buffer = 10;
+
+        if ($('body').height() > $(window).height()) {
+            buffer = 20;
+        }
+
+        return buffer;
     };
 
     var pageContainerOkCallback = function (domId, elementId, formElementId, doDelete, outputValues) {
@@ -64,20 +74,55 @@ permissions and limitations under the License.
         outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
 
         if (outcome.toLowerCase() == 'delete') {
+            var orientLayout = false;
+            var parentId = null;
+
+            // If the parent is a horizontal container, we need to re-orient the columns
+            if ($('#' + elementId).parent().hasClass('page-sortable-horizontal') == true) {
+                orientLayout = true;
+                parentId = $('#' + elementId).parent().attr('id');
+            }
+
             // The user is explicitly telling us to delete the page container
             $('#' + elementId).remove();
+
+            if (orientLayout == true) {
+                orientHorizontalLayout('#' + parentId, getBufferValue());
+            }
         } else if (outcome.toLowerCase() == 'cancel') {
             if (doDelete == true) {
+                var childId = null;
+                var orientLayout = false;
+                var parentId = null;
+
                 if (elementId != null &&
                     elementId.trim().length > 0) {
-                    $('#' + elementId).remove();
+                    childId = elementId;
                 } else {
-                    $('#' + pageContainerId).remove();
+                    childId = pageContainerId;
+                }
+
+                // If the parent is a horizontal container, we need to re-orient the columns
+                if ($('#' + childId).parent().hasClass('page-sortable-horizontal') == true) {
+                    orientLayout = true;
+                    parentId = $('#' + childId).parent().attr('id');
+                }
+
+                // Remove the element
+                $('#' + childId).remove();
+
+                if (orientLayout == true) {
+                    orientHorizontalLayout('#' + parentId, getBufferValue());
                 }
             }
         } else {
             // Create the page container from the response
-            createPageContainer(domId, elementId, null, pageContainer[0]);
+            createPageContainer(domId, elementId, null, pageContainer[0], false);
+
+            // If the parent is a horizontal container, we need to re-orient the columns
+            if ($('#' + pageContainer[0].externalId).parent().hasClass('page-sortable-horizontal') == true) {
+                orientHorizontalLayout('#' + $('#' + pageContainer[0].externalId).parent().attr('id'), getBufferValue());
+            }
         }
     };
 
@@ -100,7 +145,7 @@ permissions and limitations under the License.
         }
     };
 
-    var createPageContainer = function (domId, elementId, parentContainerId, pageContainer) {
+    var createPageContainer = function (domId, elementId, parentContainerId, pageContainer, isButtonMode) {
         var label = null;
         var id = null;
         var containerType = null;
@@ -157,51 +202,58 @@ permissions and limitations under the License.
                 $('#' + elementId).replaceWith(pageContainerHtml);
             }
 
-            // Add the events for this page container
-            $('#' + id).children('.manywho-page-container-controls').children('.manywho-edit-page-container').click(function (event) {
-                var inputs = null;
-                var pageContainers = null;
+            if (isButtonMode == false) {
+                // Add the events for this page container
+                $('#' + id).children('.manywho-page-container-controls').children('.manywho-edit-page-container').click(function (event) {
+                    var inputs = null;
+                    var pageContainers = null;
 
-                // Wrap the page containers in an array
-                pageContainers = [$('#' + domId + '-page-containers').data(id)];
+                    // Wrap the page containers in an array
+                    pageContainers = [$('#' + domId + '-page-containers').data(id)];
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
-                inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
-            });
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
+                });
 
-            $('#' + id).children('.manywho-page-container-controls').children('.manywho-delete-page-container').click(function (event) {
-                var inputs = null;
-                var pageContainers = null;
+                $('#' + id).children('.manywho-page-container-controls').children('.manywho-delete-page-container').click(function (event) {
+                    var inputs = null;
+                    var pageContainers = null;
 
-                if ($('#' + id).children('.page-sortable').children().length > 0) {
-                    alert('You can\'t delete a Layout Container if it contains child Layout Containers or Components. Delete the children of this Layout Container first!');
-                    return;
-                }
+                    if ($('#' + id).children('.page-sortable').children().length > 0) {
+                        alert('You can\'t delete a Layout Container if it contains child Layout Containers or Components. Delete the children of this Layout Container first!');
+                        return;
+                    }
 
-                // Wrap the page containers in an array
-                pageContainers = [$('#' + domId + '-page-containers').data(id)];
+                    // Wrap the page containers in an array
+                    pageContainers = [$('#' + domId + '-page-containers').data(id)];
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
-                inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainer', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageContainers, 'PageContainer');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'ContainerType', ManyWhoUtils.getObjectAPIPropertyValue(pageContainers, 'PageContainer', 'ContainerType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
-            });
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_CONTAINER_DIALOG_HEIGHT, PAGE_CONTAINER_DIALOG_WIDTH, 'PAGECONTAINER', domId, id, null, inputs, false, pageContainerOkCallback, true);
+                });
 
-            // Make the page container sortable
-            makeSortable(domId, 'page-sortable-' + currentCounter);
+                // Make the page container sortable
+                makeSortable(domId, 'page-sortable-' + currentCounter);
+            }
 
             // Now that we've printed the parent container, we can print any children of this container
-            createPageContainers(domId, id, childPageContainers);
+            createPageContainers(domId, id, childPageContainers, isButtonMode);
+
+            if (containerType == ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW) {
+                // Orient this page container to make sure the children are the correct widths
+                orientHorizontalLayout('#' + domId + '-page-sortable-' + currentCounter, 0);
+            }
         }
     };
 
-    var createPageContainers = function (domId, parentContainerId, pageContainers) {
+    var createPageContainers = function (domId, parentContainerId, pageContainers, isButtonMode) {
         // Check to see if we actually have any page containers
         if (pageContainers != null &&
             pageContainers.length > 0) {
@@ -225,7 +277,7 @@ permissions and limitations under the License.
                 var pageContainer = pageContainers[b];
 
                 // Create the page container
-                createPageContainer(domId, null, parentContainerId, pageContainer);
+                createPageContainer(domId, null, parentContainerId, pageContainer, isButtonMode);
             }
         }
     };
@@ -272,7 +324,7 @@ permissions and limitations under the License.
         return html;
     };
 
-    var createPageComponents = function (domId, pageComponents) {
+    var createPageComponents = function (domId, pageComponents, isButtonMode) {
         // Check to see if we actually have any page components in the array
         if (pageComponents != null &&
             pageComponents.length > 0) {
@@ -303,12 +355,12 @@ permissions and limitations under the License.
             // Now print each of the page components to the containers
             for (var b = 0; b < pageComponents.length; b++) {
                 // Write the page component to the doc
-                createPageComponent(domId, null, pageComponents[b]);
+                createPageComponent(domId, null, pageComponents[b], isButtonMode);
             }
         }
     };
 
-    var createPageComponent = function (domId, elementId, pageComponent) {
+    var createPageComponent = function (domId, elementId, pageComponent, isButtonMode) {
         // Check to see if we actually have any page components in the array
         if (pageComponent != null) {
             var label = null;
@@ -325,6 +377,7 @@ permissions and limitations under the License.
             var helpInfo = null;
             var pageContainerId = null;
             var pageComponentHtml = null;
+            var tableColumns = null;
             var currentCounter = 0;
 
             // Grab a counter for our element
@@ -374,6 +427,9 @@ permissions and limitations under the License.
                     } else if (pageComponent.properties[c].developerName.toLowerCase() == 'pagecontainerid') {
                         // Grab the page container id property
                         pageContainerId = pageComponent.properties[c].contentValue;
+                    } else if (pageComponent.properties[c].developerName.toLowerCase() == 'pagecomponentcolumns') {
+                        // Grab the columns for the table
+                        tableColumns = pageComponent.properties[c].objectData;
                     }
                 }
             }
@@ -382,7 +438,7 @@ permissions and limitations under the License.
             $('#' + domId + '-page-components').data(id, pageComponent);
 
             // Create the html for the page component
-            pageComponentHtml = createPageComponentHtml(domId, currentCounter, pageContainerId, id, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable);
+            pageComponentHtml = createPageComponentHtml(domId, currentCounter, pageContainerId, id, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable, tableColumns);
 
             // Check to see if we have an element id to replace
             if (elementId == null ||
@@ -394,40 +450,53 @@ permissions and limitations under the License.
                 $('#' + elementId).replaceWith(pageComponentHtml);
             }
 
-            // Add the events for this page container
-            $('#' + id).children('.manywho-page-component-controls').children('.manywho-edit-page-component').click(function (event) {
-                var inputs = null;
-                var pageComponents = null;
+            if (isButtonMode == false) {
+                // Add the events for this page container
+                $('#' + id).children('.manywho-page-component-controls').children('.manywho-edit-page-component').click(function (event) {
+                    var inputs = null;
+                    var pageComponents = null;
+                    var pageComponentType = null;
+                    var specificDialog = '';
 
-                // Wrap the page components in an array
-                pageComponents = [$('#' + domId + '-page-components').data(id)];
+                    // Wrap the page components in an array
+                    pageComponents = [$('#' + domId + '-page-components').data(id)];
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
-                inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    // Get the page component type
+                    pageComponentType = ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType');
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, id, null, inputs, false, pageComponentOkCallback, true);
-            });
+                    // If we have a table, we use a different configuration
+                    if (pageComponentType != null &&
+                        pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
+                        specificDialog = '_TABLE';
+                    }
 
-            $('#' + id).children('.manywho-page-component-controls').children('.manywho-delete-page-component').click(function (event) {
-                var inputs = null;
-                var pageComponents = null;
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', pageComponentType, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
-                // Wrap the page components in an array
-                pageComponents = [$('#' + domId + '-page-components').data(id)];
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT' + specificDialog, domId, id, null, inputs, false, pageComponentOkCallback, true);
+                });
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
-                inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                $('#' + id).children('.manywho-page-component-controls').children('.manywho-delete-page-component').click(function (event) {
+                    var inputs = null;
+                    var pageComponents = null;
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, id, null, inputs, false, pageComponentOkCallback, true);
-            });
+                    // Wrap the page components in an array
+                    pageComponents = [$('#' + domId + '-page-components').data(id)];
+
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'delete', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PageComponent', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, pageComponents, 'PageComponent');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'ComponentType', ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, id, null, inputs, false, pageComponentOkCallback, true);
+                });
+            }
         }
     };
 
-    var createPageComponentHtml = function (domId, currentCounter, pageContainerId, pageComponentId, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable) {
+    var createPageComponentHtml = function (domId, currentCounter, pageContainerId, pageComponentId, componentType, label, size, maxSize, height, width, content, hintValue, helpInfo, required, editable, tableColumns) {
         var html = '';
         var labelHtml = null;
         var editableHtml = '';
@@ -544,7 +613,78 @@ permissions and limitations under the License.
             html += '<select class="manywho-page-component-implementation"' + editableHtml + '></select>';
         } else if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
             html += '<div>';
-            html += '<table class="manywho-page-component-implementation table table-hover table-condensed table-bordered"></table>';
+
+            // Check to make sure we have table columns for this table
+            if (tableColumns != null &&
+                tableColumns.length > 0) {
+                // Check to see if we have an order property - if we do, order by that
+                var checkOrderObjectData = tableColumns[0];
+                var needsOrdering = false;
+
+                // Check to see if we have any properties to order!
+                if (checkOrderObjectData.properties != null &&
+                    checkOrderObjectData.properties.length > 0) {
+                    var needsOrdering = false;
+
+                    // Check to see if a property is in fact called order (which should always be true, but we test it anyway
+                    for (var a = 0; a < checkOrderObjectData.properties.length; a++) {
+                        if (checkOrderObjectData.properties[a].developerName.toLowerCase() == 'order') {
+                            needsOrdering = true;
+                            break;
+                        }
+                    }
+
+                    // Perform the sort algorithm based on the order property
+                    if (needsOrdering == true) {
+                        tableColumns.sort(function (objectDataEntryA, objectDataEntryB) {
+                            var orderA = ManyWhoUtils.grabOrderFromObjectDataEntry(objectDataEntryA);
+                            var orderB = ManyWhoUtils.grabOrderFromObjectDataEntry(objectDataEntryB);
+
+                            if (orderA > orderB) {
+                                return 1;
+                            } else if (orderA < orderB) {
+                                return -1;
+                            } else {
+                                return 0;
+                            }
+                        });
+                    }
+                }
+
+                var rowHtml = '';
+
+                html += '<table class="manywho-page-component-implementation table table-hover table-condensed table-bordered">';
+                html += '<thead class="header"><tr>';
+
+                // Now go through the sorted table columns and print them out
+                for (var b = 0; b < tableColumns.length; b++) {
+                    var tableColumn = tableColumns[b];
+
+                    // Now we need to find the label for this column
+                    if (tableColumn.properties != null &&
+                        tableColumn.properties.length > 0) {
+                        for (var c = 0; c < tableColumn.properties.length; c++) {
+                            var tableProperty = tableColumn.properties[c];
+
+                            // Check to see if this is the label property
+                            if (tableProperty.developerName.toLowerCase() == 'label') {
+                                html += '<th>' + tableProperty.contentValue + '</th>';
+
+                                // Add the dummy row
+                                rowHtml += '<td><span class="muted"><i>data</i></span></td>';
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                html += '</tr></thead>';
+                html += '<tbody><tr>';
+                html += rowHtml;
+                html += '</tr></tbody>';
+                html += '</table>';
+            }
+
             html += '</div>';
 
             // Print the label at the bottom as this field doesn't support wrapping labels
@@ -621,7 +761,7 @@ permissions and limitations under the License.
                     childCount = childCount - 1;
 
                     // Get the interval for the spans now the helper has left
-                    columnInterval = Math.floor(($(this).innerWidth() - 10 - (10 * childCount)) / childCount);
+                    columnInterval = Math.floor(($(this).innerWidth() - getBufferValue() - (10 * childCount)) / childCount);
 
                     // Go through all of the children and re-apply the old span
                     $(this).children('div').each(function (index, element) {
@@ -634,14 +774,13 @@ permissions and limitations under the License.
             },
             stop: function (event, ui) {
                 var currentCounter = 0;
-                var childCount = 0;
                 var childWidth = 0;
-                var parentWidth = 0;
                 var addingElement = true;
                 var componentHtml = '';
                 var componentType = null;
                 var containerType = null;
                 var inputs = null;
+                var specificDialog = '';
 
                 // Check the element to make sure this operation is possible
                 if (ui.item.hasClass('manywho-page-container') == true) {
@@ -695,9 +834,9 @@ permissions and limitations under the License.
                     });
                 }
 
-                // Count the children in the sortable and grab the parent width
-                childCount = $(this).children('div').length;
-                parentWidth = $(this).innerWidth() - (10 * childCount);
+                //// Count the children in the sortable and grab the parent width
+                //childCount = $(this).children('div').length;
+                //parentWidth = $(this).innerWidth() - (10 * childCount);
 
                 // Make sure the validation rules are OK and we're not mixing components and containers
                 // Also - make sure this component hasn't already been rendered (which will be the case for re-ordering)
@@ -758,26 +897,59 @@ permissions and limitations under the License.
                         // Grab the container id of the parent
                         inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainerId', $(this).parent().attr('id'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
+                        // If we have a table, we use a different configuration
+                        if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+                            specificDialog = '_TABLE';
+                        }
+
                         // Open the dialog for creating a new form field
-                        ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT', domId, domId + '-page-component-' + currentCounter, null, inputs, true, pageComponentOkCallback, true);
+                        ManyWhoSharedServices.showSubConfigDialog(PAGE_COMPONENT_DIALOG_HEIGHT, PAGE_COMPONENT_DIALOG_WIDTH, 'PAGECOMPONENT' + specificDialog, domId, domId + '-page-component-' + currentCounter, null, inputs, true, pageComponentOkCallback, true);
                     }
                 }
 
-                // If this is a horizontal sortable, we need to rejig the columns
+                // Only call this method if we're dealing with horizontal containers
                 if ($(this).hasClass('page-sortable-horizontal') == true) {
-                    // Get the width for each of the children based on the width of the parent
-                    childWidth = Math.floor((parentWidth - 10) / childCount);
-
-                    // Go through all of the children and apply the correct width
-                    $(this).children('div').each(function (index, element) {
-                        $(this).css('width', childWidth + 'px');
-                        if ($(this).css('display') != 'none') {
-                            $(this).css('display', 'inline-block');
-                        }
-                    });
+                    orientHorizontalLayout(this, 0);
                 }
+
+                //// If this is a horizontal sortable, we need to rejig the columns
+                //if ($(this).hasClass('page-sortable-horizontal') == true) {
+                //    // Get the width for each of the children based on the width of the parent
+                //    childWidth = Math.floor((parentWidth - 10) / childCount);
+
+                //    // Go through all of the children and apply the correct width
+                //    $(this).children('div').each(function (index, element) {
+                //        $(this).css('width', childWidth + 'px');
+                //        if ($(this).css('display') != 'none') {
+                //            $(this).css('display', 'inline-block');
+                //        }
+                //    });
+                //}
             }
         });
+    };
+
+    var orientHorizontalLayout = function (parent, buffer) {
+        var childCount = 0;
+        var parentWidth = 0;
+
+        // Count the children in the sortable and grab the parent width
+        childCount = $(parent).children('div').length;
+        parentWidth = $(parent).innerWidth() - buffer - (10 * childCount);
+
+        // If this is a horizontal sortable, we need to rejig the columns
+        //if ($(parent).hasClass('page-sortable-horizontal') == true) {
+            // Get the width for each of the children based on the width of the parent
+            childWidth = Math.floor((parentWidth - 10) / childCount);
+
+            // Go through all of the children and apply the correct width
+            $(parent).children('div').each(function (index, element) {
+                $(this).css('width', childWidth + 'px');
+                if ($(this).css('display') != 'none') {
+                    $(this).css('display', 'inline-block');
+                }
+            });
+        //}
     };
 
     var createProperty = function (domId, developerName, contentValue, objectData) {
@@ -865,38 +1037,64 @@ permissions and limitations under the License.
             html += '<div id="' + domId + '-page-components" style="display: none;"></div>';
             html += '<div id="' + domId + '-page-containers" style="display: none;"></div>';
             html += '<div id="' + domId + '-page-element" style="display: none;"></div>';
+            html += '<div id="' + domId + '-page-settings" style="display: none;"></div>';
 
             html += '    <div class="row-fluid">';
             html += '        <table width="100%"><tr><td id="' + domId + '-page-builder-toolbar" width="10%" valign="top">';
 
-            html += '        <div>';
-            html += '            <h5>Layouts</h5>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '"><i class="icon-folder-open"></i> Group</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '"><i class="icon-resize-vertical"></i> Vertical</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '"><i class="icon-resize-horizontal"></i> Horizontal</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '"><i class="icon-arrow-right"></i> Inline</div>';
-            html += '        </div>';
+            if (opts.isButtonMode == true) {
+                html += '        <div>';
+                html += '            <h5>Outcomes</h5>';
 
-            html += '        <p>&nbsp;</p>';
+                // Check to make sure we have some outcomes - if we do, we add them to the toolbar - but only if they have not been used
+                if (outcomes != null &&
+                    outcomes.length > 0) {
+                    for (var i = 0; i < outcomes.length; i++) {
+                        var outcome = outcomes[i];
 
-            html += '        <div>';
-            html += '            <h5>Components</h5>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '">Presentation</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '">Input</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '">Text</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '">Checkbox</div>';
-            html += '        </div>';
+                        // Check to see if the outcome is bound to something
+                        if (outcome.pageObjectBindingId != null &&
+                            outcome.pageObjectBindingId.trim().length > 0) {
+                            // Place the outcome on the page layout
+                            addOutcomeToPage(domId, outcome);
+                        } else {
+                            // Add the outcome to the page layout editor toolbar
+                            html += '            <div id="' + domId + '-outcome-draggable" class="btn manywho-page-outcome"><i class="icon-chevron-right"></i> ' + outcome.developerName + '</div>';
+                        }
+                    }
+                }
 
-            html += '        <p>&nbsp;</p>';
+                html += '        </div>';
+            } else {
+                html += '        <div>';
+                html += '            <h5>Layouts</h5>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '"><i class="icon-folder-open"></i> Group</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '"><i class="icon-resize-vertical"></i> Vertical</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '"><i class="icon-resize-horizontal"></i> Horizontal</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable" class="btn manywho-page-container ' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '"><i class="icon-arrow-right"></i> Inline</div>';
+                html += '        </div>';
 
-            html += '        <div>';
-            html += '            <h5>Coming soon!</h5>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
-            html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
-            html += '        </div>';
+                html += '        <p>&nbsp;</p>';
+
+                html += '        <div>';
+                html += '            <h5>Components</h5>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '">Presentation</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '">Input</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '">Text</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '">Checkbox</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
+                html += '        </div>';
+
+                html += '        <p>&nbsp;</p>';
+
+                html += '        <div>';
+                html += '            <h5>Coming soon!</h5>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
+                html += '        </div>';
+            }
 
             html += '        </td>';
             html += '        <td width="90%" valign="top">';
@@ -928,148 +1126,161 @@ permissions and limitations under the License.
             $('#' + domId + '-page-builder').css('min-height', pageEditorHeight + 'px');
             $('#' + domId + '-page-sortable-0').css('min-height', pageEditorHeight + 'px');
 
-            $('#' + domId + '-page-element-edit').click(function (event) {
-                var inputs = null;
-                var page = null;
+            if (opts.isButtonMode == true) {
+                $('#' + domId + '-outcome-draggable').draggable({
+                    connectToSortable: '.outcome-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
+            } else {
+                $('#' + domId + '-page-element-edit').click(function (event) {
+                    var inputs = null;
+                    var page = null;
 
-                // Wrap the page containers in an array
-                page = [$('#' + domId + '-page-element').data('page')];
+                    // Wrap the page containers in an array
+                    page = [$('#' + domId + '-page-element').data('page')];
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
-            });
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
+                });
 
-            // Make all of our test sortables sortable!
-            makeSortable(domId, 'page-sortable-0');
+                // Make all of our test sortables sortable!
+                makeSortable(domId, 'page-sortable-0');
 
-            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_VERTICAL_FLOW + '-container-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_HORIZONTAL_FLOW + '-container-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_INLINE_FLOW + '-container-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.CONTAINER_TYPE_GROUP + '-container-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_INPUTBOX + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TEXTBOX + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
-            //    connectToSortable: '.page-sortable',
-            //    helper: 'clone',
-            //    scroll: true, // Scroll the page if we hit the edge
-            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            //});
+                //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
+                //    connectToSortable: '.page-sortable',
+                //    helper: 'clone',
+                //    scroll: true, // Scroll the page if we hit the edge
+                //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                //});
 
-            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable').draggable({
-            //    connectToSortable: '.page-sortable',
-            //    helper: 'clone',
-            //    scroll: true, // Scroll the page if we hit the edge
-            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            //});
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable').draggable({
-                connectToSortable: '.page-sortable',
-                helper: 'clone',
-                scroll: true, // Scroll the page if we hit the edge
-                scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            });
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_PRESENTATION + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
-            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable').draggable({
-            //    connectToSortable: '.page-sortable',
-            //    helper: 'clone',
-            //    scroll: true, // Scroll the page if we hit the edge
-            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            //});
+                //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable').draggable({
+                //    connectToSortable: '.page-sortable',
+                //    helper: 'clone',
+                //    scroll: true, // Scroll the page if we hit the edge
+                //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                //});
 
-            //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable').draggable({
-            //    connectToSortable: '.page-sortable',
-            //    helper: 'clone',
-            //    scroll: true, // Scroll the page if we hit the edge
-            //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-            //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-            //});
+                //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable').draggable({
+                //    connectToSortable: '.page-sortable',
+                //    helper: 'clone',
+                //    scroll: true, // Scroll the page if we hit the edge
+                //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                //});
 
-            // Create an empty page object for new pages
-            page = new Object();
-            page.properties = new Array();
+                // Create an empty page object for new pages
+                page = new Object();
+                page.properties = new Array();
 
-            // Make sure we tell the service the type of element we're saving back
-            page.developerName = 'pageelement';
+                // Make sure we tell the service the type of element we're saving back
+                page.developerName = 'pageelement';
 
-            // Create the properties
-            page.properties[page.properties.length] = createProperty(domId, 'pageconditions', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'tags', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'stopconditionsonfirsttrue', 'false', null);
-            page.properties[page.properties.length] = createProperty(domId, 'id', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'label', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'elementtype', ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT, null);
-            page.properties[page.properties.length] = createProperty(domId, 'developername', 'My Form', null);
-            page.properties[page.properties.length] = createProperty(domId, 'developersummary', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'pagecontainers', null, null);
-            page.properties[page.properties.length] = createProperty(domId, 'pagecomponents', null, null);
+                // Create the properties
+                page.properties[page.properties.length] = createProperty(domId, 'pageconditions', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'tags', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'stopconditionsonfirsttrue', 'false', null);
+                page.properties[page.properties.length] = createProperty(domId, 'id', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'label', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'elementtype', ManyWhoConstants.UI_ELEMENT_TYPE_IMPLEMENTATION_PAGE_LAYOUT, null);
+                page.properties[page.properties.length] = createProperty(domId, 'developername', 'My Form', null);
+                page.properties[page.properties.length] = createProperty(domId, 'developersummary', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'pagecontainers', null, null);
+                page.properties[page.properties.length] = createProperty(domId, 'pagecomponents', null, null);
 
-            // Store the page in the dom
-            $('#' + domId + '-page-element').data('page', page);
+                // Store the page in the dom
+                $('#' + domId + '-page-element').data('page', page);
+            }
+
+            // Store the settings for the page
+            $('#' + domId + '-page-settings').data('isButtonMode', opts.isButtonMode);
 
             $('div').disableSelection();
         },
@@ -1088,9 +1299,21 @@ permissions and limitations under the License.
             var pageContainers = new Array();
             var pageComponentsProperty = null;
             var pageContainersProperty = null;
+            var isButtonMode = null;
 
             // Create the shell of the object
             pageElement = $('#' + domId + '-page-element').data('page');
+
+            // Get the button mode from the settings
+            isButtonMode = $('#' + domId + '-page-settings').data('isButtonMode');
+
+            // Make sure the button mode is a boolean
+            if (isButtonMode == true ||
+                isButtonMode == 'true') {
+                isButtonMode = true;
+            } else {
+                isButtonMode = false;
+            }
 
             // Get the page container and component properties out as we're going to overwrite their contents
             for (var a = 0; a < pageElement.properties.length; a++) {
@@ -1160,6 +1383,18 @@ permissions and limitations under the License.
             var currentCounter = 0;
             var parentContainerId = null;
             var inputs = null;
+            var isButtonMode = null;
+
+            // Get the button mode from the settings
+            isButtonMode = $('#' + domId + '-page-settings').data('isButtonMode');
+
+            // Make sure the button mode is a boolean
+            if (isButtonMode == true ||
+                isButtonMode == 'true') {
+                isButtonMode = true;
+            } else {
+                isButtonMode = false;
+            }
 
             // Check to see if the page object api is not null
             if (objectData != null &&
@@ -1197,27 +1432,29 @@ permissions and limitations under the License.
                     }
 
                     // Create the page containers for the page element
-                    createPageContainers(domId, parentContainerId, pageContainers);
+                    createPageContainers(domId, parentContainerId, pageContainers, isButtonMode);
 
                     // Create the page components - this method handles sorting and parent placement
-                    createPageComponents(domId, pageComponents);
+                    createPageComponents(domId, pageComponents, isButtonMode, isButtonMode);
                 }
 
                 // Store the page in the dom
                 $('#' + domId + '-page-element').data('page', page);
             }
 
-            if ($('#' + domId + '-page-element-label').html() == null ||
-                $('#' + domId + '-page-element-label').html().trim().length == 0) {
-                // We don't have an existing page element, so we should load the dialog immediately so the user is prompted to add the info
-                // Wrap the page in an array (there will be an empty one in the dom)
-                page = [$('#' + domId + '-page-element').data('page')];
+            if (isButtonMode == false) {
+                if ($('#' + domId + '-page-element-label').html() == null ||
+                    $('#' + domId + '-page-element-label').html().trim().length == 0) {
+                    // We don't have an existing page element, so we should load the dialog immediately so the user is prompted to add the info
+                    // Wrap the page in an array (there will be an empty one in the dom)
+                    page = [$('#' + domId + '-page-element').data('page')];
 
-                inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
-                inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                    inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
 
-                // Open the dialog for creating a new form field
-                ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
+                    // Open the dialog for creating a new form field
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
+                }
             }
         }
     };
@@ -1234,6 +1471,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoFormEditor.defaults = { isTypeTemplate: false }
+    $.fn.manywhoFormEditor.defaults = { isTypeTemplate: false, isButtonMode: false, outcomes: null }
 
 })(jQuery);

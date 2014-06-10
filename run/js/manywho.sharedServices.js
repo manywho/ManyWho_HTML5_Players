@@ -88,7 +88,7 @@ var ManyWhoSharedServices = {
 
         $('#manywho-model-runtime').attr('style', 'overflow: auto; height: ' + height + 'px;');
     },
-    showAuthenticationDialog: function (okCallback, loginUrl, manywhoTenantId, directoryName) {
+    showAuthenticationDialog: function (okCallback, loginUrl, manywhoTenantId, directoryName, stateId) {
         ManyWhoSharedServices.adjustDialog(200, 550, false);
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowAuthenticationDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
@@ -96,11 +96,20 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
+                                   var username = null;
                                    var inputs = null;
 
                                    inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', loginUrl, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
                                    inputs = ManyWhoSharedServices.createInput(inputs, 'ManyWhoTenantId', manywhoTenantId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
                                    inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', directoryName, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                                   inputs = ManyWhoSharedServices.createInput(inputs, 'StateId', stateId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+
+                                   username = ManyWhoUtils.getCookie('Username');
+
+                                   if (username != null &&
+                                       username.trim().length > 0) {
+                                       inputs = ManyWhoSharedServices.createInput(inputs, 'Username', username, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+                                   }
 
                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
                                                                                     null,
@@ -115,6 +124,9 @@ var ManyWhoSharedServices = {
 
                                                                                         // Get the values out of the outputs
                                                                                         authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
+
+                                                                                        // Get the username so we can keep that for future logins
+                                                                                        ManyWhoUtils.setCookie('Username', ManyWhoUtils.getOutcomeValue(outputValues, 'Username', null));
 
                                                                                         // Call the OK callback
                                                                                         okCallback.call(this, authenticationToken);
@@ -163,7 +175,7 @@ var ManyWhoSharedServices = {
     },
     setAuthenticationToken: function (authenticationToken) {
         // Put the token in the cookie also
-        ManyWhoUtils.setCookie('authenticationToken', authenticationToken);
+        //ManyWhoUtils.setCookie(ManyWhoSharedServices.getFlowId() + 'authenticationToken', authenticationToken, true);
 
         $('#manywho-shared-services-data').data('authenticationtoken', authenticationToken);
     },
@@ -173,7 +185,7 @@ var ManyWhoSharedServices = {
         //if (authenticationToken == null ||
         //    authenticationToken == 'null') {
         //    // Try to get the token from the cookie
-        //    authenticationToken = ManyWhoUtils.getCookie('authenticationToken');
+        //    authenticationToken = ManyWhoUtils.getCookie(ManyWhoSharedServices.getFlowId() + 'authenticationToken');
         //}
 
         if (authenticationToken == null ||
@@ -182,6 +194,28 @@ var ManyWhoSharedServices = {
         }
 
         return authenticationToken;
+    },
+    setCultureHeader: function (brand, country, language, variant) {
+        var culture = null;
+
+        culture = '';
+        culture += 'Brand=' + brand;
+        culture += '&Country=' + country;
+        culture += '&Language=' + language;
+        culture += '&Variant=' + variant;
+
+        $('#manywho-shared-services-data').data('culture', culture);
+    },
+    getCultureHeader: function () {
+        var culture = $('#manywho-shared-services-data').data('culture');
+
+        if (culture == null ||
+            culture == 'null' ||
+            culture.trim().length == 0) {
+            culture = null;
+        }
+
+        return culture;
     },
     setNetworkId: function (networkId) {
         $('#manywho-shared-services-data').data('networkid', networkId);
@@ -195,5 +229,52 @@ var ManyWhoSharedServices = {
         }
 
         return networkId;
+    },
+    setEditorFormats: function (formats) {
+        $('#manywho-shared-services-data').data('editor-formats', formats);
+    },
+    getEditorFormats: function () {
+        return $('#manywho-shared-services-data').data('editor-formats');
+    },
+    getDefaultEditorFormats: function () {
+        return [
+            {
+                title: 'Headers', items: [
+                   { title: 'Header 1', block: 'h1' },
+                   { title: 'Header 2', block: 'h2' },
+                   { title: 'Header 3', block: 'h3' },
+                   { title: 'Header 4', block: 'h4' },
+                   { title: 'Header 5', block: 'h5' },
+                   { title: 'Header 6', block: 'h6' }
+                ]
+            },
+            {
+                title: 'Inline', items: [
+                   { title: 'Bold', icon: "bold", inline: 'strong' },
+                   { title: 'Italic', icon: "italic", inline: 'em' },
+                   { title: 'Underline', icon: "underline", inline: 'span', styles: { 'text-decoration': 'underline' } },
+                   { title: 'Strikethrough', icon: "strikethrough", inline: 'span', styles: { 'text-decoration': 'line-through' } },
+                   { title: 'Superscript', icon: "superscript", inline: 'sup' },
+                   { title: 'Subscript', icon: "subscript", inline: 'sub' },
+                   { title: 'Code', icon: "code", inline: 'code' }
+                ]
+            },
+            {
+                title: 'Blocks', items: [
+                   { title: 'Paragraph', block: 'p' },
+                   { title: 'Blockquote', block: 'blockquote' },
+                   { title: 'Div', block: 'div' },
+                   { title: 'Pre', block: 'pre' }
+                ]
+            },
+            {
+                title: 'Alignment', items: [
+                   { title: 'Left', icon: "alignleft", block: 'div', styles: { 'text-align': 'left' } },
+                   { title: 'Center', icon: "aligncenter", block: 'div', styles: { 'text-align': 'center' } },
+                   { title: 'Right', icon: "alignright", block: 'div', styles: { 'text-align': 'right' } },
+                   { title: 'Justify', icon: "alignjustify", block: 'div', styles: { 'text-align': 'justify' } }
+                ]
+            }
+        ];
     }
 }

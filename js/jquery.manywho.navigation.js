@@ -147,29 +147,50 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
             
             // Build the base html we need to make the menu work
             html = '';
-            html += '<div id="' + domId + '-manywho-navigation-data" style="display:none;"></div>';
-            html += '<div id="' + domId + '-manywho-navigation" class="navbar navbar-inverse navbar-fixed-top"></div>';
+
+            html += '<div id="manywho-navigation" class="navbar';
+            
+            // Apply inverse as desired
+            if (opts.isInverse == true) {
+                html += ' navbar-inverse';
+            }
+
+            // Fixed to top if desired
+            if (opts.isFixedToTop == true) {
+                html += ' navbar-fixed-top';
+            }
+
+            html += '"></div>';
+
+            html += '<div id="manywho-navigation-data" style="display:none;"></div>';
 
             // Print to the dom
-            $(this).html(html);
+            $(this).replaceWith(html);
 
             // Add the data to the dom
-            $('#' + domId + '-manywho-navigation-data').data('tenantId', opts.tenantId);
-            $('#' + domId + '-manywho-navigation-data').data('stateId', opts.stateId);
-            $('#' + domId + '-manywho-navigation-data').data('stateToken', opts.stateToken);
-            $('#' + domId + '-manywho-navigation-data').data('navigationElementId', opts.navigationElementId);
-            $('#' + domId + '-manywho-navigation-data').data('navigateFunction', opts.navigateFunction);
+            $('#manywho-navigation-data').data('tenantId', opts.tenantId);
+            $('#manywho-navigation-data').data('stateId', opts.stateId);
+            $('#manywho-navigation-data').data('stateToken', opts.stateToken);
+            $('#manywho-navigation-data').data('navigationElementId', opts.navigationElementId);
+            $('#manywho-navigation-data').data('navigateFunction', opts.navigateFunction);
+
+            if (opts.isFullWidth == true) {
+                $('#manywho-navigation-data').data('containerCss', 'container-fluid');
+            } else {
+                $('#manywho-navigation-data').data('containerCss', 'container');
+            }
         },
         refresh: function () {
             // Grab the dom id so we can get our values
             var domId = $(this).attr('id');
 
             // Grab the values needed to refresh the navigation
-            var tenantId = $('#' + domId + '-manywho-navigation-data').data('tenantId');
-            var stateId = $('#' + domId + '-manywho-navigation-data').data('stateId');
-            var stateToken = $('#' + domId + '-manywho-navigation-data').data('stateToken');
-            var navigationElementId = $('#' + domId + '-manywho-navigation-data').data('navigationElementId');
-            var navigationFunction = $('#' + domId + '-manywho-navigation-data').data('navigateFunction');
+            var tenantId = $('#manywho-navigation-data').data('tenantId');
+            var stateId = $('#manywho-navigation-data').data('stateId');
+            var stateToken = $('#manywho-navigation-data').data('stateToken');
+            var navigationElementId = $('#manywho-navigation-data').data('navigationElementId');
+            var navigationFunction = $('#manywho-navigation-data').data('navigateFunction');
+            var containerCss = $('#manywho-navigation-data').data('containerCss');
 
             // Add the tenant to the header so we have it in the request
             var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
@@ -184,21 +205,21 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
                                         var html = '';
                                         
                                         html += '<div class="navbar-inner">';
-                                        html +=     '<div class="container-fluid">';
+                                        html +=     '<div class="' + containerCss + '">';
+
+                                        // The scaffolding to support a collapsing menu
+                                        html +=         '<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">';
+                                        html +=             '<span class="icon-bar"></span>';
+                                        html +=             '<span class="icon-bar"></span>';
+                                        html +=             '<span class="icon-bar"></span>';
+                                        html +=         '</button>';
 
                                         // Add the name of the menu
                                         if (data.label != null &&
                                             data.label.trim().length > 0) {
-                                            html +=     '<a class="brand" href="#">' + data.label + '</a>';
+                                            html += '<a class="brand" href="#">' + data.label + '</a>';
                                         }
 
-                                        // The scaffolding to support a collapsing menu
-                                        html +=         '<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">';
-                                        html +=             '<span class="icon-bar"></span>';
-                                        html +=             '<span class="icon-bar"></span>';
-                                        html +=             '<span class="icon-bar"></span>';
-                                        html +=         '</a>';
- 
                                         // We put everything into the collapse section
                                         html +=         '<div class="nav-collapse collapse">';
 
@@ -212,7 +233,7 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
                                         html += '</div>';
                                                                                             
                                         // Print the html to the document
-                                        $('#' + domId + '-manywho-navigation').html(html);
+                                        $('#manywho-navigation').html(html);
 
                                         // Add a click event to all navigation links
                                         $('.manywho-navigation-menu').find('a').not('.dropdown-toggle').click(function (event) {
@@ -246,6 +267,6 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
         }
     };
 
-    $.fn.manywhoNavigation.defaults = { tenantId: null, stateId: null, stateToken: null, navigationElementId: null, navigateFunction: null }
+    $.fn.manywhoNavigation.defaults = { tenantId: null, stateId: null, stateToken: null, navigationElementId: null, navigateFunction: null, isInverse: true, isFixedToTop: true, isFullWidth: true }
 
 })(jQuery);

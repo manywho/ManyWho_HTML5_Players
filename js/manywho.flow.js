@@ -36,8 +36,50 @@ var ManyWhoFlow = {
             ManyWhoLogging.consoleLog(callingFunctionName + ' -> ManyWhoFlow.Load: Nothing to load with blank flow id.');
         }
     },
+    loadAllFromTranslate: function (callingFunctionName,
+                                    search,
+                                    tenantId,
+                                    loadBeforeSend,
+                                    loadSuccessCallback,
+                                    loadErrorCallback) {
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow?filter=';
+        var requestType = 'GET';
+        var requestData = '';
+
+        // If the user has provided a search parameter, we add that to the request
+        if (search != null &&
+            search.trim().length > 0) {
+            requestUrl += 'substringof(developerName,\'' + search + '\')';
+        }
+
+        // Create a header for the tenant id
+        var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
+    },
+    loadFromTranslate: function (callingFunctionName,
+                                 tenantId,
+                                 flowId,
+                                 loadBeforeSend,
+                                 loadSuccessCallback,
+                                 loadErrorCallback) {
+        if (flowId != null &&
+            flowId.trim().length > 0) {
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/translate/1/flow/' + flowId;
+            var requestType = 'GET';
+            var requestData = '';
+
+            // Create a header for the tenant id
+            var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
+
+            ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
+        } else {
+            ManyWhoLogging.consoleLog(callingFunctionName + ' -> ManyWhoFlow.Load: Nothing to load with blank flow id.');
+        }
+    },
     loginBySession: function (callingFunctionName,
                               tenantId,
+                              stateId,
                               loginUrl,
                               sessionId,
                               sessionUrl,
@@ -52,10 +94,10 @@ var ManyWhoFlow = {
         authenticationCredentials.password = null;
         authenticationCredentials.token = null;
         authenticationCredentials.sessionToken = sessionId;
-        authenticationCredentials.sessionUrl = sessionUrl
+        authenticationCredentials.sessionUrl = sessionUrl;
         authenticationCredentials.loginUrl = loginUrl;
 
-        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/run/1/authentication';
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/run/1/authentication/' + stateId;
         var requestType = 'POST';
         var requestData = JSON.stringify(authenticationCredentials);
 

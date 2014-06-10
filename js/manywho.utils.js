@@ -72,9 +72,14 @@ var ManyWhoUtils = {
     getCookie: function (key) {
         return $.cookie(key);
     },
-    setCookie: function (key, value) {
-        // Make the cookie expire in 1/25 of a day (just under the session on the service)
-        $.cookie(key, value, { expires: 0.04, path: '/' });
+    setCookie: function (key, value, doesExpire) {
+        // If the user provided an expiry, use it
+        if (doesExpire == true) {
+            // Expire in 1 hour - 1/24
+            $.cookie(key, value, { expires: 0.04, path: '/' });
+        } else {
+            $.cookie(key, value, { path: '/' });
+        }
     },
     getOutcomeValue: function (outputValues, developerName, typeElementEntryDeveloperName) {
         var returnValue = null;
@@ -206,5 +211,16 @@ var ManyWhoUtils = {
         }
 
         return pageContainerId;
+    },
+    getBooleanValue: function (stringBoolean) {
+        var boolean = false;
+
+        // This method is a utility function for converting strings to boolean values
+        if (stringBoolean != null &&
+            stringBoolean.toLowerCase() == 'true') {
+            boolean = true;
+        }
+
+        return boolean;
     }
 }

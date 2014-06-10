@@ -30,7 +30,7 @@ permissions and limitations under the License.
         configureSidebarMapElement.call(this, graph, 'logic', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase(), 'Message', 'icon-time', 'flow-button', developerMode);
         configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase(), 'Load', 'icon-circle-arrow-up', 'flow-button', developerMode);
         configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_SAVE.toLowerCase(), 'Save', 'icon-circle-arrow-down', 'flow-button', developerMode);
-        configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase(), 'Delete', 'icon-remove-sign', 'flow-button', developerMode);
+        //configureSidebarMapElement.call(this, graph, 'data', ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase(), 'Delete', 'icon-remove-sign', 'flow-button', developerMode);
     }
 
     // This method contains all of the stuff that's particular to the group element implementations
@@ -48,10 +48,10 @@ permissions and limitations under the License.
         // We don't yet have the flows for these map element types so need to show the developer tooling
         if (ManyWhoSharedServices.getDeveloperMode() == true ||
             /*elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
+            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase() ||*/
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase() ||
-            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
-            elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
             elementType.toLowerCase() == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
             // Load the developer editor for the element
             ManyWhoSharedServices.showGraphElementDeveloperDialog(elementType,
@@ -369,7 +369,7 @@ permissions and limitations under the License.
                 var cleanCell = cleanCells[i];
                 var groupElementId = null;
 
-                parent = graph.getModel().getParent(cell);
+                parent = graph.getModel().getParent(cleanCell);
 
                 // We have a group cell
                 if (parent != null &&
@@ -911,6 +911,7 @@ permissions and limitations under the License.
             cell = model.getCell(graphId);
             cell.getValue().setAttribute('label', developerName);
             cell.getValue().setAttribute('outcomeId', outcomeId);
+            cell.getValue().setAttribute('nodeType', 'outcome');
 
             // We store the whole object in the graph for edit and delete events (so we can manage the list manipulation in the flow)
             cell.getValue().setAttribute('outcome', JSON.stringify(outcome));
@@ -1219,7 +1220,7 @@ permissions and limitations under the License.
         // Align the label vertically to the middle so it lines up with the icon
         style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
         // Add a custom style for the port hover image when the user wants to create an edge
-        style['portimage'] = '/extensions/glyphicons/outcomeport.png';
+        style['portimage'] = 'https://cdn.manywho.com/extensions/glyphicons/outcomeport.png';
         // Set the label font and size information
         style[mxConstants.STYLE_FONTFAMILY] = 'Helvetica Neue, Helvetica, Arial, sans-serif';
         style[mxConstants.STYLE_FONTSIZE] = '12';
@@ -1253,7 +1254,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '24';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '16';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_242_google_maps_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_242_google_maps_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#0099CC';
         style[mxConstants.STYLE_STROKECOLOR] = '#0099CC';
 
@@ -1263,7 +1264,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '22';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '22';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_156_show_thumbnails_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_156_show_thumbnails_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#33B5E5';
         style[mxConstants.STYLE_STROKECOLOR] = '#33B5E5';
 
@@ -1273,7 +1274,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '22';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '22';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_371_global_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_371_global_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#50C0E9';
         style[mxConstants.STYLE_STROKECOLOR] = '#50C0E9';
 
@@ -1283,7 +1284,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '26';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '26';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_198_ok_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_198_ok_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#9933CC';
         style[mxConstants.STYLE_STROKECOLOR] = '#9933CC';
 
@@ -1293,7 +1294,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '24';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '24';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_054_clock_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_054_clock_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#C58BE2';
         style[mxConstants.STYLE_STROKECOLOR] = '#C58BE2';
 
@@ -1303,7 +1304,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '24';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '24';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_136_cogwheel_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_136_cogwheel_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#AC59D6';
         style[mxConstants.STYLE_STROKECOLOR] = '#AC59D6';
 
@@ -1313,7 +1314,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '24';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '24';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_201_upload_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_201_upload_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#CC0000';
         style[mxConstants.STYLE_STROKECOLOR] = '#CC0000';
 
@@ -1323,7 +1324,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '26';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '26';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_200_download_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_200_download_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#E92727';
         style[mxConstants.STYLE_STROKECOLOR] = '#E92727';
 
@@ -1333,7 +1334,7 @@ permissions and limitations under the License.
         style = createBaseGraphStyle(graph);
         style[mxConstants.STYLE_IMAGE_WIDTH] = '26';
         style[mxConstants.STYLE_IMAGE_HEIGHT] = '26';
-        style[mxConstants.STYLE_IMAGE] = '/extensions/glyphicons/glyphicons_197_remove_white.png';
+        style[mxConstants.STYLE_IMAGE] = 'https://cdn.manywho.com/extensions/glyphicons/glyphicons_197_remove_white.png';
         style[mxConstants.STYLE_FILLCOLOR] = '#FF4444';
         style[mxConstants.STYLE_STROKECOLOR] = '#FF4444';
 
@@ -1699,6 +1700,8 @@ permissions and limitations under the License.
             var graph = editor.graph;
             var model = graph.getModel();
 
+            var layout = new mxParallelEdgeLayout(graph);
+
             // Create a new key handler for the editor
             var keyHandler = new mxDefaultKeyHandler(editor);
             keyHandler.bindAction(46, 'delete');
@@ -1847,6 +1850,21 @@ permissions and limitations under the License.
                     updateGraph.call(this, null, mapElements, groupElements);
                 }
             });
+
+            //// Add a cell connection listener to stop edges from overlapping
+            //graph.addListener(mxEvent.CELL_CONNECTED, function(sender, evt) {
+            //    var model = graph.getModel();
+            //    var edge = evt.getProperty('edge');
+            //    var src = model.getTerminal(edge, true);
+            //    var trg = model.getTerminal(edge, false);
+
+            //    layout.isEdgeIgnored = function(edge2) {
+            //        var src2 = model.getTerminal(edge2, true);
+            //        var trg2 = model.getTerminal(edge2, false);
+
+            //        return !(model.isEdge(edge2) && ((src == src2 && trg == trg2) || (src == trg2 && trg == src2)));
+            //    };
+            //});
 
             // Add a connection event to the graph
             graph.connectionHandler.addListener(mxEvent.CONNECT, function (sender, evt) {

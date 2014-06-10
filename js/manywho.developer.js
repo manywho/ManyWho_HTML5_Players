@@ -137,194 +137,204 @@ var ManyWhoDeveloper = {
             elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
             elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
             requestContent += '{\n';
-            requestContent += '  "id":null,\n';
-            requestContent += '  "x":' + x + ',\n';
-            requestContent += '  "y":' + y + ',\n';
-            requestContent += '  "elementType":"' + elementType.toUpperCase() + '",\n';
+            requestContent += '    "id":null,\n';
+            requestContent += '    "x":' + x + ',\n';
+            requestContent += '    "y":' + y + ',\n';
+            requestContent += '    "elementType":"' + elementType.toUpperCase() + '",\n';
 
             if (groupElementId != null &&
                 groupElementId.trim().length > 0) {
-                requestContent += '  "groupElementId":"' + groupElementId + '",\n';
+                requestContent += '    "groupElementId":"' + groupElementId + '",\n';
             } else {
-                requestContent += '  "groupElementId":null,\n';
+                requestContent += '    "groupElementId":null,\n';
             }
 
-            requestContent += '  "pageElementId":null,\n';
-            requestContent += '  "developerName":null,\n';
-            requestContent += '  "developerSummary":null,\n';
-            requestContent += '  "postUpdateToStream":false,\n';
-            requestContent += '  "postUpdateWhenType":"ON_LOAD",\n';
-            requestContent += '  "userContent":null,\n';
-            requestContent += '  "statusMessage":null,\n';
-            requestContent += '  "postUpdateMessage":null,\n';
-            requestContent += '  "notAuthorizedMessage":null,\n';
+            requestContent += '    "pageElementId":null,\n';
+            requestContent += '    "developerName":null,\n';
+            requestContent += '    "developerSummary":null,\n';
+            requestContent += '    "postUpdateToStream":false,\n';
+            requestContent += '    "postUpdateWhenType":"ON_LOAD",\n';
+            requestContent += '    "userContent":null,\n';
+            requestContent += '    "statusMessage":null,\n';
+            requestContent += '    "postUpdateMessage":null,\n';
+            requestContent += '    "notAuthorizedMessage":null,\n';
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_OPERATOR.toLowerCase()) {
-                requestContent += '  "operations":[\n';
-                requestContent += '    {\n';
-                requestContent += '      "id":null,\n';
-                requestContent += '      "order":0,\n';
-                requestContent += '      "valueElementToApplyId":{\n';
-                requestContent += '        "id":null,\n';
-                requestContent += '        "command":null,\n';
-                requestContent += '        "typeElementPropertyId":null\n';
-                requestContent += '      },\n';
-                requestContent += '      "valueElementToReferenceId":{\n';
-                requestContent += '        "id":null,\n';
-                requestContent += '        "command":null,\n';
-                requestContent += '        "typeElementPropertyId":null\n';
-                requestContent += '      }\n';
-                requestContent += '    }\n';
-                requestContent += '  ],\n';
+                requestContent += '    "operations":[\n';
+                requestContent += '        {\n';
+                requestContent += '            "id":null,\n';
+                requestContent += '            "order":0,\n';
+                requestContent += '            "valueElementToApplyId":{\n';
+                requestContent += '                "id":null,\n';
+                requestContent += '                "command":null,\n';
+                requestContent += '                "typeElementPropertyId":null\n';
+                requestContent += '            },\n';
+                requestContent += '            "valueElementToReferenceId":{\n';
+                requestContent += '                "id":null,\n';
+                requestContent += '                "command":null,\n';
+                requestContent += '                "typeElementPropertyId":null\n';
+                requestContent += '            }\n';
+                requestContent += '        }\n';
+                requestContent += '    ],\n';
             }
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
-                requestContent += '  "viewMessageAction":{\n';
-                requestContent += '    "id":null,\n';
-                requestContent += '    "developerName":null,\n';
-                requestContent += '    "serviceElementId":null,\n';
-                requestContent += '    "uriPart":null,\n';
-                requestContent += '    "inputs":[\n';
-                requestContent += '      {\n';
-                requestContent += '        "id":"",\n';
-                requestContent += '        "developerName":null,\n';
-                requestContent += '        "contentValue":null,\n';
-                requestContent += '        "valueElementToReferenceId":{\n';
-                requestContent += '          "id":null,\n';
-                requestContent += '          "command":null,\n';
-                requestContent += '          "typeElementPropertyId":null\n';
-                requestContent += '        }\n';
-                requestContent += '      }\n';
-                requestContent += '    ],\n';
-                requestContent += '    "outputs":[\n';
-                requestContent += '      {\n';
+                requestContent += '    "viewMessageAction":{\n';
                 requestContent += '        "id":null,\n';
                 requestContent += '        "developerName":null,\n';
-                requestContent += '        "valueElementToApplyId":{\n';
-                requestContent += '          "id":null,\n';
-                requestContent += '          "command":null,\n';
-                requestContent += '          "typeElementPropertyId":null\n';
-                requestContent += '        }\n';
-                requestContent += '      }\n';
-                requestContent += '    ]\n';
-                requestContent += '  },\n';
+                requestContent += '        "serviceElementId":null,\n';
+                requestContent += '        "uriPart":null,\n';
+                requestContent += '        "inputs":[\n';
+                requestContent += '            {\n';
+                requestContent += '                "id":"",\n';
+                requestContent += '                "developerName":null,\n';
+                requestContent += '                "contentValue":null,\n';
+                requestContent += '                "valueElementToReferenceId":{\n';
+                requestContent += '                    "id":null,\n';
+                requestContent += '                    "command":null,\n';
+                requestContent += '                    "typeElementPropertyId":null\n';
+                requestContent += '                }\n';
+                requestContent += '            }\n';
+                requestContent += '        ],\n';
+                requestContent += '        "outputs":[\n';
+                requestContent += '            {\n';
+                requestContent += '                "id":null,\n';
+                requestContent += '                "developerName":null,\n';
+                requestContent += '                "valueElementToApplyId":{\n';
+                requestContent += '                    "id":null,\n';
+                requestContent += '                    "command":null,\n';
+                requestContent += '                    "typeElementPropertyId":null\n';
+                requestContent += '                }\n';
+                requestContent += '            }\n';
+                requestContent += '        ]\n';
+                requestContent += '    },\n';
             }
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
-                requestContent += '  "messageActions":[],\n';
+                requestContent += '    "messageActions":[],\n';
             }
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_LOAD.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_SAVE.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DATABASE_DELETE.toLowerCase()) {
-                requestContent += '  "dataActions":[],\n';
+                requestContent += '    "dataActions":[],\n';
             }
 
-            requestContent += '  "outcomes":[\n';
-            requestContent += '    {\n';
-            requestContent += '      "id":null,\n';
-            requestContent += '      "developerName":"go",\n';
-            requestContent += '      "developerSummary":"Go to the next step",\n';
+            requestContent += '    "outcomes":[\n';
+            requestContent += '        {\n';
+            requestContent += '            "id":null,\n';
+            requestContent += '            "developerName":"go",\n';
+            requestContent += '            "developerSummary":"Go to the next step",\n';
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
-                requestContent += '      "label":"Go!",\n';
+                requestContent += '            "label":"Go!",\n';
             }
 
-            requestContent += '      "nextMapElementId":null,\n';
-            requestContent += '      "pageActionBindingType":"SAVE",\n';
+            requestContent += '            "nextMapElementId":null,\n';
+            requestContent += '            "pageActionBindingType":"SAVE",\n';
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_STEP ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase()) {
-                requestContent += '      "pageObjectBindingId":"",\n';
+                requestContent += '            "pageObjectBindingId":"",\n';
             }
             
-            requestContent += '      "order":0,\n';
+            requestContent += '            "order":0,\n';
 
             if (elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_MESSAGE.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_INPUT.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_PAGE.toLowerCase() ||
                 elementType == ManyWhoConstants.MAP_ELEMENT_TYPE_IMPLEMENTATION_DECISION.toLowerCase()) {
-                requestContent += '      "comparison":{\n';
-                requestContent += '        "id":null,\n';
-                requestContent += '        "comparisonType":"AND",\n';
-                requestContent += '        "rules":[\n';
-                requestContent += '          {\n';
-                requestContent += '            "id":null,\n';
-                requestContent += '            "leftValueElementToReferenceId":{\n';
-                requestContent += '              "id":null,\n';
-                requestContent += '              "command":null,\n';
-                requestContent += '              "typeElementPropertyId":null\n';
-                requestContent += '            },\n';
-                requestContent += '            "criteriaType":"EQUAL",\n';
-                requestContent += '            "rightValueElementToReferenceId":{\n';
-                requestContent += '              "id":null,\n';
-                requestContent += '              "command":null,\n';
-                requestContent += '              "typeElementPropertyId":null\n';
+                requestContent += '            "comparison":{\n';
+                requestContent += '                "id":null,\n';
+                requestContent += '                "comparisonType":"AND",\n';
+                requestContent += '                "rules":[\n';
+                requestContent += '                    {\n';
+                requestContent += '                        "id":null,\n';
+                requestContent += '                        "leftValueElementToReferenceId":{\n';
+                requestContent += '                            "id":null,\n';
+                requestContent += '                            "command":null,\n';
+                requestContent += '                            "typeElementPropertyId":null\n';
+                requestContent += '                        },\n';
+                requestContent += '                        "criteriaType":"EQUAL",\n';
+                requestContent += '                        "rightValueElementToReferenceId":{\n';
+                requestContent += '                            "id":null,\n';
+                requestContent += '                            "command":null,\n';
+                requestContent += '                            "typeElementPropertyId":null\n';
+                requestContent += '                        }\n';
+                requestContent += '                    }\n';
+                requestContent += '                ],\n';
+                requestContent += '                "comparisons":[],\n';
+                requestContent += '                "order":0\n';
                 requestContent += '            }\n';
-                requestContent += '          }\n';
-                requestContent += '        ],\n';
-                requestContent += '        "comparisons":[],\n';
-                requestContent += '        "order":0\n';
-                requestContent += '      }\n';
             }
 
-            requestContent += '    }\n';
-            requestContent += '  ]\n';
+            requestContent += '        }\n';
+            requestContent += '    ]\n';
             requestContent += '}';
         } else if (elementType == ManyWhoConstants.GROUP_ELEMENT_TYPE_IMPLEMENTATION_SWIMLANE.toLowerCase()) {
             requestContent += '{\n';
-            requestContent += '  "id":null,\n';
-            requestContent += '  "x":0,\n';
-            requestContent += '  "y":0,\n';
-            requestContent += '  "height":0,\n';
-            requestContent += '  "width":0,\n';
-            requestContent += '  "groupElementId":null,\n';
-            requestContent += '  "authorization":{\n';
-            requestContent += '    "serviceElementId":null,\n';
-            requestContent += '    "globalAuthenticationType":"ALL_USERS",\n';
-            requestContent += '    "streamBehaviourType":"USE_EXISTING",\n';
-            requestContent += '    "groups":[\n';
-            requestContent += '      {\n';
-            requestContent += '        "authenticationId":null,\n';
-            requestContent += '        "attribute":null\n';
-            requestContent += '      }\n';
-            requestContent += '    ],\n';
-            requestContent += '    "users":[\n';
-            requestContent += '      {\n';
-            requestContent += '        "authenticationId":null,\n';
-            requestContent += '        "attribute":null,\n';
-            requestContent += '        "runningUser":false\n';
-            requestContent += '      }\n';
-            requestContent += '    ],\n';
-            requestContent += '    "locations":null\n';
-            requestContent += '  }\n';
+            requestContent += '    "id":null,\n';
+            requestContent += '    "x":0,\n';
+            requestContent += '    "y":0,\n';
+            requestContent += '    "height":0,\n';
+            requestContent += '    "width":0,\n';
+            requestContent += '    "groupElementId":null,\n';
+            requestContent += '    "authorization":{\n';
+            requestContent += '        "serviceElementId":null,\n';
+            requestContent += '        "globalAuthenticationType":"ALL_USERS",\n';
+            requestContent += '        "streamBehaviourType":"USE_EXISTING",\n';
+            requestContent += '        "groups":[\n';
+            requestContent += '            {\n';
+            requestContent += '                "authenticationId":null,\n';
+            requestContent += '                "attribute":null\n';
+            requestContent += '            }\n';
+            requestContent += '        ],\n';
+            requestContent += '        "users":[\n';
+            requestContent += '            {\n';
+            requestContent += '                "authenticationId":null,\n';
+            requestContent += '                "attribute":null,\n';
+            requestContent += '                "runningUser":false\n';
+            requestContent += '            }\n';
+            requestContent += '        ],\n';
+            requestContent += '        "locations":null\n';
+            requestContent += '    }\n';
             requestContent += '}';
         } else if (elementType == 'NAVIGATION'.toLowerCase()) {
             requestContent += '{\n';
-            requestContent += '  "id":null,\n';
-            requestContent += '  "elementType":"NAVIGATION",\n';
-            requestContent += '  "developerName":null,\n';
-            requestContent += '  "developerSummary":null,\n';
-            requestContent += '  "label":null,\n';
-            requestContent += '  "navigationItems":[\n';
-            requestContent += '    {\n';
-            requestContent += '      "id":null,\n';
-            requestContent += '      "locationMapElementId":null,\n';
-            requestContent += '      "developerName":null,\n';
-            requestContent += '      "developerSummary":null,\n';
-            requestContent += '      "label":null,\n';
-            requestContent += '      "navigationItems":null,\n';
-            requestContent += '      "order":null,\n';
-            requestContent += '      "tags":null\n';
-            requestContent += '    }\n';
-            requestContent += '  ],\n';
-            requestContent += '  "tags":null,\n';
-            requestContent += '  "updateByName":false\n';
+            requestContent += '    "id":null,\n';
+            requestContent += '    "elementType":"NAVIGATION",\n';
+            requestContent += '    "developerName":null,\n';
+            requestContent += '    "developerSummary":null,\n';
+            requestContent += '    "label":null,\n';
+            requestContent += '    "navigationItems":[\n';
+            requestContent += '        {\n';
+            requestContent += '            "id":null,\n';
+            requestContent += '            "locationMapElementId":null,\n';
+            requestContent += '            "developerName":null,\n';
+            requestContent += '            "developerSummary":null,\n';
+            requestContent += '            "label":null,\n';
+            requestContent += '            "navigationItems":null,\n';
+            requestContent += '            "order":null,\n';
+            requestContent += '            "tags":null\n';
+            requestContent += '        }\n';
+            requestContent += '    ],\n';
+            requestContent += '    "tags":null,\n';
+            requestContent += '    "updateByName":false\n';
+            requestContent += '}\n';
+        } else if (elementType == 'culture') {
+            requestContent += '{\n';
+            requestContent += '    "id":null,\n';
+            requestContent += '    "developerName": null,\n';
+            requestContent += '    "developerSummary": null,\n';
+            requestContent += '    "brand":null,\n';
+            requestContent += '    "country": null,\n';
+            requestContent += '    "language": null,\n';
+            requestContent += '    "variant": null\n';
             requestContent += '}\n';
         }
 

@@ -10,9 +10,25 @@ h3 {
     overflow: hidden !important;
 }
 
+.manywho-reduced-table-entry-text-column {
+    padding-left: 5px;
+}
+
+li .icon-chevron-right {
+    opacity: .25;
+}
+
+.input-append {
+    margin-bottom: 0px !important;
+}
+
 .nav-pills {
     margin-top: 0px !important;
     margin-bottom: 0px !important;
+}
+
+.thumbnails > li {
+    margin-bottom: 5px !important;
 }
 
 .avatar {
