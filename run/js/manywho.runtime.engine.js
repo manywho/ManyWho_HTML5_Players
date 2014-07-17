@@ -236,15 +236,7 @@ permissions and limitations under the License.
             $('#' + domId + '-state-id').val(data.stateId);
 
             // Store the parent state id as we may have one of those
-            if (data.parentStateId != null &&
-                data.parentStateId.trim().length > 0) {
-                $('#' + domId + '-parent-state-id').val(data.parentStateId);
-
-                // Show the parent control buttons
-                $('#' + domId + '-parent-state-buttons').show();
-            } else {
-                $('#' + domId + '-parent-state-id').val('');
-            }
+            applyParentLink(domId, data);
 
             // Store the current element information
             $('#' + domId + '-element-id').val(data.currentMapElementId);
@@ -258,6 +250,23 @@ permissions and limitations under the License.
             // Execute the first request on the engine
             execute(domId, null, null, null);
         };
+    };
+
+    var applyParentLink = function (domId, data) {
+        // Store the parent state id as we may have one of those
+        if (data != null &&
+            data.parentStateId != null &&
+            data.parentStateId.trim().length > 0) {
+            $('#' + domId + '-parent-state-id').val(data.parentStateId);
+
+            // Show the parent control buttons
+            $('#' + domId + '-parent-state-buttons').show();
+        } else {
+            $('#' + domId + '-parent-state-id').val('');
+
+            // Hide the parent control buttons
+            $('#' + domId + '-parent-state-buttons').hide();
+        }
     };
 
     var startStream = function (domId, currentStreamId) {
@@ -471,16 +480,7 @@ permissions and limitations under the License.
             }
 
             // Apply the parent state identifier if it exists
-            if (data.parentStateId != null &&
-                data.parentStateId.trim().length > 0) {
-                $('#' + domId + '-parent-state-id').val(data.parentStateId);
-
-                // Show the parent control buttons
-                $('#' + domId + '-parent-state-buttons').show();
-            } else {
-                // Hide the parent control buttons
-                $('#' + domId + '-parent-state-buttons').hide();
-            }
+            applyParentLink(domId, data);
 
             if (data.invokeType != 'STATUS' &&
                 data.invokeType != 'SYNC') {
@@ -520,9 +520,30 @@ permissions and limitations under the License.
                 // We don't want to clear the form if we're simply doing a status update
                 if (data.invokeType != 'STATUS' &&
                     data.invokeType != 'SYNC') {
+                    // Check our register for any components to pass through to the form
+                    var registry = $('#' + domId + '-registry-database').data('registry');
+
+                    // Check to make sure the registry is in fact an array
+                    if (registry == null ||
+                        registry instanceof Array == false) {
+                        // The registry is holding blank content, so we null it out
+                        registry = null;
+                    }
+
                     // Generate a new form
-                    // TODO: need to change the register to this isn't being used for all apps
-                    $('#' + domId + '-screen-content').manywhoFormBootStrap({ id: 'form', label: null, addRealtime: getAddRealtime(domId), stateId: $('#' + domId + '-state-id').val(), tenantId: $('#' + domId + '-tenant-id').val(), sectionFormat: 'tabs', columnFormat: 'none', tableResultSetSize: parseInt($('#' + domId + '-table-size').val()), selectResultSetSize: parseInt($('#' + domId + '-select-size').val()), optimizeForMobile: ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val()), register: [{ tag: 'Form Editor', component: ManyWhoTagFormEditor }, { tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor }] });
+                    $('#' + domId + '-screen-content').manywhoFormBootStrap({
+                        id: 'form',
+                        label: null,
+                        addRealtime: getAddRealtime(domId),
+                        stateId: $('#' + domId + '-state-id').val(),
+                        tenantId: $('#' + domId + '-tenant-id').val(),
+                        sectionFormat: 'tabs',
+                        columnFormat: 'none',
+                        tableResultSetSize: parseInt($('#' + domId + '-table-size').val()),
+                        selectResultSetSize: parseInt($('#' + domId + '-select-size').val()),
+                        optimizeForMobile: ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val()),
+                        register: registry
+                    });
                 }
 
                 if (data.invokeType == 'SYNC') {
@@ -763,6 +784,12 @@ permissions and limitations under the License.
                 } else {
                     showWaitContent(domId, data.notAuthorizedMessage);
                 }
+
+                // Store the parent state id as we may have one of those
+                applyParentLink(domId, data);
+
+                // Finally, hide the wait
+                hideWait(domId);
             }
         };
     };
@@ -914,9 +941,9 @@ permissions and limitations under the License.
     var trackUserPosition = function (domId) {
         navigator.geolocation.getCurrentPosition(function (position) {
             assignUserPosition(domId, position);
-        }, 
+        },
                                                  null,
-                                                 {timeout:60000});
+                                                 { timeout: 60000 });
     };
 
     var runFlow = function (domId) {
@@ -1069,7 +1096,7 @@ permissions and limitations under the License.
         if (sessionId != null &&
             sessionId.trim().length > 0) {
             // Grab the session id and sessionurl here and do an automated login from the player
-            ManyWhoFlow.loginBySession("Engine.RequestAuthentication", 
+            ManyWhoFlow.loginBySession("Engine.RequestAuthentication",
                                        $('#' + domId + '-tenant-id').val(),
                                        stateId,
                                        loginUrl,
@@ -1114,7 +1141,7 @@ permissions and limitations under the License.
             for (var i = 0; i < engineValues.length; i++) {
                 entry = new Object();
                 entry.data = engineValues[i].developerName + ' (' + engineValues[i].contentType + ')';
-                
+
                 if (engineValues[i].contentType == ManyWhoConstants.CONTENT_TYPE_OBJECT ||
                     engineValues[i].contentType == ManyWhoConstants.CONTENT_TYPE_LIST) {
                     if (engineValues[i].objectData != null &&
@@ -1216,7 +1243,7 @@ permissions and limitations under the License.
             if (opts.isFullWidth == false) {
                 containerCss = 'container';
             }
-            
+
             // Initialize the shared services
             ManyWhoSharedServices.initialize('shared-services');
 
@@ -1230,6 +1257,9 @@ permissions and limitations under the License.
             if (opts.culture != null) {
                 ManyWhoSharedServices.setCultureHeader(opts.culture.brand, opts.culture.country, opts.culture.language, opts.culture.variant);
             }
+
+            // Assign the tenant identifier to shared services so we have it as needed
+            ManyWhoSharedServices.setTenantId(opts.tenantId);
 
             // Dialog for sharing the flow with other users
             html += '<div id="' + domId + '-share-flow-dialog" class="modal hide fade">';
@@ -1299,6 +1329,7 @@ permissions and limitations under the License.
 
             html += '<div style="display:none;" id="' + domId + '-inputs-database"></div>';
             html += '<div style="display:none;" id="' + domId + '-viewstate-database"></div>';
+            html += '<div style="display:none;" id="' + domId + '-registry-database"></div>';
 
             html += '<input type="hidden" id="' + domId + '-engine-url" value="" />';
             html += '<input type="hidden" id="' + domId + '-flow-id" value="" />';
@@ -1407,6 +1438,13 @@ permissions and limitations under the License.
                 event.preventDefault();
                 $('#' + domId + '-share-flow-dialog').modal('hide');
             });
+
+            // Check to see if any components are being registered
+            if (opts.register != null &&
+                opts.register.length > 0) {
+                // Add the components to the registry
+                $('#' + domId + '-registry-database').data('registry', opts.register);
+            }
         },
         run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
             // Run the flow using the internal method
@@ -1448,6 +1486,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, register: null };
 
 })(jQuery);

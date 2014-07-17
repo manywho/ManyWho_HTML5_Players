@@ -298,9 +298,39 @@ var ManyWhoSharedServices = {
                 window.open(ManyWhoSharedServices.constructRunUrl() + '&mode=' + $(this).attr('data-mode'));
             });
 
-            $('#manywho-model-runtime').manywhoRuntimeEngine({ enableAuthentication: false, rewriteUrl: false, tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID, selectResultSetSize: 500 });
-            $('#manywho-model-runtime-sub').manywhoRuntimeEngine({ enableAuthentication: false, rewriteUrl: false, tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID, selectResultSetSize: 500 });
-            $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine({ enableAuthentication: false, rewriteUrl: false, tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID, selectResultSetSize: 500 });
+            // The registry of extension component widgets for the engine
+            var registry = [
+                {
+                    tag: 'Form Editor', component: ManyWhoTagFormEditor
+                },
+                {
+                    tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor
+                }
+            ];
+
+            $('#manywho-model-runtime').manywhoRuntimeEngine({
+                enableAuthentication: false,
+                rewriteUrl: false,
+                tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                selectResultSetSize: 500,
+                register: registry
+            });
+
+            $('#manywho-model-runtime-sub').manywhoRuntimeEngine({
+                enableAuthentication: false,
+                rewriteUrl: false,
+                tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                selectResultSetSize: 500,
+                register: registry
+            });
+
+            $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine({
+                enableAuthentication: false,
+                rewriteUrl: false,
+                tenantId: ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                selectResultSetSize: 500,
+                register: registry
+            });
 
             // Manually add the event for the full screen dialog as it's not a proper dialog
             $('#manywho-dialog-close-button-fullscreen').click(function (event) {

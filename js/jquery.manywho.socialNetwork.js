@@ -569,7 +569,7 @@ permissions and limitations under the License.
                             data.attachments[i].type !== "ymodule") {
                             html += '      <li class="well well-small">';
                             html += '        <div class="media">';
-                            html += '          <img class="pull-left" src=' + data.attachments[i].iconUrl + '" />';
+                            html += '          <img class="pull-left" src="' + data.attachments[i].iconUrl + '" />';
                             html += '          <div class="media-body">';
                             //html += '            File Size: ' + data.attachments[i].size + '<br />';
                             html += '            <a class="downloadUri" href="' + data.attachments[i].downloadUrl + '" target="_blank">' + data.attachments[i].name + '</a>';
@@ -1020,14 +1020,16 @@ permissions and limitations under the License.
             html += '              <div class="tab-pane" id="' + currentOptions.domId + '-file-tab">';
             html += '                <div class="row-fluid">';
             html += '                  <form id="' + currentOptions.domId + '-fileupload" method="POST" enctype="multipart/form-data">';
-            html += '                    <div class="span12 fileupload-buttonbar">';
-            html += '                      <span class="btn btn-success fileinput-button">';
-            html += '                        <i class="icon-plus icon-white"></i> <span>Add files...</span>';
-            html += '                        <input type="file" id="files[]" name="files[]">';
-            html += '                      </span>';
+            html += '                    <div class="row-fluid">';
+            html += '                      <div class="span12 fileupload-buttonbar">';
+            html += '                        <span class="btn btn-success fileinput-button">';
+            html += '                          <i class="icon-plus icon-white"></i> <span>Add files...</span>';
+            html += '                          <input type="file" id="files[]" name="files[]">';
+            html += '                        </span>';
+            html += '                      </div>';
             html += '                    </div>';
-            html += '                    <div class="fileupload-loading"></div>';
-            html += '                    <div role="presentation" class="span12 table table-striped">';
+            html += '                    <div class="row-fluid fileupload-loading"></div>';
+            html += '                    <div class="row-fluid">';
             html += '                      <div class="files" id="manywho-social-uploadedfiles" data-toggle="modal-gallery" data-target="#modal-gallery"></div>';
             html += '                    </div>';
             html += '                  </form>';
@@ -1357,11 +1359,6 @@ permissions and limitations under the License.
 
                     // Remove the deleted file from our stored array
                     fileDeleted(deletedFileId);
-                });
-
-                $(this).bind('fileuploadsubmit', function (e, destroyData) {
-                    // Do nothing currently
-                    alert('fileuploadsubmit');
                 });
             });
 

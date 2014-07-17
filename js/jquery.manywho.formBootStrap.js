@@ -370,6 +370,308 @@ permissions and limitations under the License.
         return html;
     };
 
+    var generateFilesDataHtml = function (domId, field, objectData, formMetaData, outcomeResponses, onClickFunction, isOffset, hasMoreResults) {
+        var html = '';
+        var columns = field.columns;
+        var actionLinks = '';
+        var actionLinkCount = 0;
+        var hasActionLinks = false;
+        var records = 0;
+        var acceptedOutcomeResponses = null;
+
+        // Create the action links for any outcomes
+        // Check to see if this table has any bound outcomes
+        if (outcomeResponses != null &&
+            outcomeResponses.length > 0) {
+            // We keep a sub list of accepted outcome responses that should be used inline
+            acceptedOutcomeResponses = new Array();
+
+            for (var a = 0; a < outcomeResponses.length; a++) {
+                // The outcome is bound to this table and it's not a bulk action (i.e. it should be inline)
+                if (outcomeResponses[a].pageObjectBindingId == field.id &&
+                    outcomeResponses[a].isBulkAction == false &&
+                    isInlinePageActionType(outcomeResponses[a].pageActionType) == true) {
+                    // Construct the temp link which may need some additional formatting
+                    var tempActionLink = '<li><a href="#" id="' + outcomeResponses[a].id + '" class="manywho-table-outcome-action" data-isout="' + outcomeResponses[a].isOut + '" data-outcomeid="' + outcomeResponses[a].id + '">' + outcomeResponses[a].label + '</a></li>';
+
+                    // We add a bar to act as a link separator
+                    if (actionLinkCount == 0) {
+                        actionLinks += '<ul class="nav nav-pills">' + tempActionLink;
+                    } else {
+                        actionLinks += tempActionLink;
+                    }
+
+                    // Tell the algorithm we have action links
+                    hasActionLinks = true;
+
+                    // Add this outcome response to our list of inline accepted responses
+                    acceptedOutcomeResponses[acceptedOutcomeResponses.length] = outcomeResponses[a];
+
+                    // Increment the counter so we know to put in the bar
+                    actionLinkCount++;
+                }
+            }
+        }
+
+        // Get some information about the number of records!
+        if (objectData != null &&
+            objectData.length > 0) {
+            // Assign the number of records so we have it
+            records - objectData.length;
+        }
+
+        // Before doing anything, we need to know the width of the screen, we'll change the table depending on the width - using the standard
+        // bootstrap convention of shifting UI behaviour below 980px
+        if ($(window).width() < 980) {
+            // List the table as thumbnails
+            //html += '<ul class="thumbnails">';
+            //TEST
+            html += '<ul class="nav nav-tabs nav-stacked">';
+
+            // Go through the object data and print the entries as provided
+            if (objectData != null &&
+                objectData.length > 0) {
+                // Go through each of the object data records
+                for (var i = 0; i < objectData.length; i++) {
+                    var objectEntry = objectData[i];
+                    var firstColumnIsImage = false;
+                    var firstColumnImage = null;
+                    var isFirstColumn = true;
+                    var rowHtml = '';
+
+                    // If we only have one outcome response apply it to the entry - we don't need buttons
+                    if (acceptedOutcomeResponses != null &&
+                        acceptedOutcomeResponses.length == 1) {
+                        html += '<li id="' + objectEntry.externalId + '" class="manywho-reduced-table-entry-embedded-outcome">';
+                        html += '<a href="#" class="manywho-table-outcome-action" id="' + acceptedOutcomeResponses[0].id + '" data-isout="' + acceptedOutcomeResponses[0].isOut + '" data-outcomeid="' + acceptedOutcomeResponses[0].id + '">';
+                    } else {
+                        // We add the id to the row so we can identify it for selections
+                        html += '<li id="' + objectEntry.externalId + '" class="manywho-reduced-table-entry-outcome-buttons">';
+
+                        // If we have more than one action button, we use the tiles provided by thumbnail
+                        html += '<div class="thumbnail span12">';
+                    }
+
+                    // Go through each of the columns and find the matching property.  We do this to ensure the columns
+                    // are always rendered in the correct order for the headings
+                    for (var k = 0; k < columns.length; k++) {
+                        var column = columns[k];
+
+                        // Check to make sure it's a display column
+                        if (column.isDisplayValue == true) {
+                            // Now go through the properties to find the one that matches
+                            for (var j = 0; j < objectEntry.properties.length; j++) {
+                                var property = objectEntry.properties[j];
+
+                                if (column.typeElementPropertyId == property.typeElementPropertyId) {
+                                    var fieldValue = '';
+
+                                    if (property.contentValue != null) {
+                                        fieldValue = property.contentValue;
+                                    }
+
+                                    // Check to see if this is the icon column
+                                    if (property.developerName.toLowerCase() == ManyWhoConstants.MANYWHO_FILE_PROPERTY_ICON_URI.toLowerCase()) {
+                                        firstColumnIsImage = true;
+
+                                        // We need to adjust the image to be a image link
+                                        firstColumnImage = '<img src="' + fieldValue + '" />';
+
+                                        // We skip this entry as it's not needed as part of the main table
+                                        continue;
+                                    } else if (property.developerName.toLowerCase() == ManyWhoConstants.MANYWHO_FILE_PROPERTY_DOWNLOAD_URI.toLowerCase()) {
+                                        // We adjust the fild value slightly as it should be a download link
+                                        fieldValue = '<a href="' + fieldValue + '" target="_blank" class="manywho-files-download-link">Download</a>';
+                                    }
+
+                                    rowHtml += '<div>';
+
+                                    if (column.label != null &&
+                                        column.label.trim().length > 0) {
+                                        rowHtml += '<strong>' + column.label + ':</strong> ';
+                                    }
+
+                                    rowHtml += fieldValue;
+                                    rowHtml += '</div>';
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Tell the player that this is not the first column
+                        firstColumn = false;
+                    }
+
+                    // If we have action links, we add them at the end of the list of entries
+                    if (hasActionLinks == true &&
+                        (acceptedOutcomeResponses == null ||
+                         acceptedOutcomeResponses.length == 0 ||
+                         acceptedOutcomeResponses.length > 1)) {
+                        rowHtml += '<div class="manywho-runtime-table-actions-entry">' + actionLinks + '</div>';
+                    }
+
+                    // If the first column is an image, then we wrap the response slightly differently
+                    if (firstColumnIsImage == true) {
+                        if (hasActionLinks == true) {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="15%" class="manywho-reduced-table-entry-image-column">' + firstColumnImage + '</td>';
+                            html += '<td width="84%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '<td width="1%" class="manywho-reduced-table-entry-chevron-column"><i class="icon-chevron-right"></i></td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        } else {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="15%" class="manywho-reduced-table-entry-image-column">' + firstColumnImage + '</td>';
+                            html += '<td width="85%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        }
+                    } else {
+                        // Simply print the row html
+                        if (hasActionLinks == true) {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="99%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '<td width="1%" class="manywho-reduced-table-entry-chevron-column"><i class="icon-chevron-right"></i></td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        } else {
+                            html += '<table>';
+                            html += '<tr>';
+                            html += '<td width="100%" class="manywho-reduced-table-entry-text-column">' + rowHtml + '</td>';
+                            html += '</tr>';
+                            html += '</table>';
+                        }
+                    }
+
+                    // Finish off the link
+                    if (acceptedOutcomeResponses != null &&
+                        acceptedOutcomeResponses.length == 1) {
+                        html += '</a>';
+                    } else {
+                        html += '</div>';
+                    }
+
+                    html += '</li>';
+                }
+
+                // Finish up the thumbnails listing
+                html += '</ul>';
+            }
+        } else {
+            // Job number 1 is to create the headings for the table - so the user knows what each column is for
+            if (columns != null &&
+                columns.length > 0) {
+
+                html += '<thead class="header"><tr>';
+
+                // Check the window width before printing out the table
+                // If we have action links, we add a column for those
+                if (hasActionLinks == true) {
+                    // Add the closing UL to the action links
+                    actionLinks += '</ul>';
+
+                    // Add the column to the table
+                    html += '<th class="manywho-runtime-table-actions-header">Action</th>';
+                }
+
+                // Go through the list of columns provided and print the header information
+                for (var i = 0; i < columns.length; i++) {
+                    var column = columns[i];
+
+                    if (column.isDisplayValue == true) {
+                        html += '<th>' + column.label + '</th>';
+                    }
+                }
+
+                html += '</tr></thead>';
+            }
+
+            // Now we have the header, we can print the individual rows for the table - if we have any data
+            if (objectData != null &&
+                objectData.length > 0) {
+                html += '<tbody>';
+
+                // Go through each of the object data records
+                for (var i = 0; i < objectData.length; i++) {
+                    var objectEntry = objectData[i];
+
+                    // We add the id to the row so we can identify it for selections
+                    html += '<tr id="' + objectEntry.externalId + '">';
+
+                    // If we have action links, we add them first here
+                    if (hasActionLinks == true) {
+                        html += '<td class="manywho-runtime-table-actions-entry">' + actionLinks + '</td>';
+                    }
+
+                    // Go through each of the columns and find the matching property.  We do this to ensure the columns
+                    // are always rendered in the correct order for the headings
+                    for (var k = 0; k < columns.length; k++) {
+                        var column = columns[k];
+
+                        // Check to make sure it's a display column
+                        if (column.isDisplayValue == true) {
+                            // Now go through the properties to find the one that matches
+                            for (var j = 0; j < objectEntry.properties.length; j++) {
+                                var property = objectEntry.properties[j];
+
+                                if (column.typeElementPropertyId == property.typeElementPropertyId) {
+                                    var fieldValue = '';
+
+                                    if (property.contentValue != null) {
+                                        fieldValue = property.contentValue;
+                                    }
+
+                                    // Check to see if this is the icon column
+                                    if (property.developerName.toLowerCase() == ManyWhoConstants.MANYWHO_FILE_PROPERTY_ICON_URI.toLowerCase()) {
+                                        // We need to adjust the image to be a image link
+                                        fieldValue = '<img src="' + fieldValue + '" />';
+                                    } else if (property.developerName.toLowerCase() == ManyWhoConstants.MANYWHO_FILE_PROPERTY_DOWNLOAD_URI.toLowerCase()) {
+                                        // We adjust the fild value slightly as it should be a download link
+                                        fieldValue = '<a href="' + fieldValue + '" target="_blank" class="manywho-files-download-link">Download</a>';
+                                    }
+
+                                    html += '<td>' + fieldValue + '</td>';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    html += '</tr>';
+                }
+
+                html += '</tbody>';
+            }
+        }
+
+        // If we have the same number of records or more than the limit, we enable the 'next' button
+        if (hasMoreResults == true ||
+            isOffset == true) {
+            // Show the pagination controls
+            $('#' + domId + '-' + field.id + '-field-pagination').show();
+            $('#' + domId + '-' + field.id + '-field-pagination-next-entry').removeClass('disabled');
+
+            if (hasMoreResults == false) {
+                $('#' + domId + '-' + field.id + '-field-pagination-next-entry').addClass('disabled');
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+            }
+
+            // We need to show the previous if we're offset
+            if (isOffset == true) {
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+            }
+        } else {
+            // Hide the pagination controls
+            $('#' + domId + '-' + field.id + '-field-pagination').hide();
+        }
+
+        return html;
+    };
+
     // This method generates the select options html based on the object data and selected object data.  This method relies
     // on the fact that the options are generated from object data and not simple array lists.
     //
@@ -582,6 +884,78 @@ permissions and limitations under the License.
         $('#' + domId + '-' + field.id + '-database').data(field.id, storageObject);
     };
 
+    // This is a multi-purpose method that not only generates the table entries from file data, but also applies any
+    // object data changes without re-rendering the entire list.
+    //
+    var createUIForFileData = function (domId, field, formMetaData, objectData, outcomeResponses, onClickFunction, isOffset, hasMoreResults) {
+        var html = null;
+        var storageObject = null;
+
+        // Update the storage object with the object data
+        storageObject = $('#' + domId + '-' + field.id + '-database').data(field.id);
+
+        // If this is the result of an object data request, then we will have a non-null object data request
+        // object and the object data parameter will contain the list of values to display (based on the request
+        // having been executed.  The form meta data object data then representing the selected options.
+        if (formMetaData.fileDataRequest != null) {
+            html = generateFilesDataHtml(domId, field, objectData, formMetaData, outcomeResponses, onClickFunction, isOffset, hasMoreResults);
+
+            // Store the object data coming from the async callback
+            storageObject.objectData = objectData;
+
+            // Tell the event manager to ignore events from this field as we do the population
+            $('#' + domId + '-manywho-runtime-form-event-data').data(field.id + '-process-events', 'false');
+
+            // Populate the combobox with the options
+            $('#' + domId + '-' + field.id + '-field').html(html);
+
+            // Tell the event manager to start managing events again
+            $('#' + domId + '-manywho-runtime-form-event-data').data(field.id + '-process-events', 'true');
+        }
+
+        // We need to add the events for the table here
+        // Add individual row selection support
+        $('#' + domId + '-' + field.id + '-field').find('tr, li').click(function (e) {
+            if ($(this).hasClass('success')) {
+                // Remove the selection from the already selected row
+                $(this).removeClass('success');
+            }
+            else {
+                // Remove any selections that exist on the table
+                $('#' + domId + '-' + field.id + '-field').find('tr, li').removeClass('success');
+
+                // Make the current row selected
+                $(this).addClass('success');
+            }
+        });
+
+        // Add action link support for any actions in the table
+        $('#' + domId + '-' + field.id + '-field').find('.manywho-table-outcome-action').click(function (event) {
+            // Prevent the default event
+            event.preventDefault();
+
+            // Remove any selections that exist on the table
+            $('#' + domId + '-' + field.id + '-field').find('tr, li').removeClass('success');
+
+            // Make the current row selected - this is needed so we have the value of the row
+            $(this).parents('tr, li').addClass('success');
+
+            // Disable all of the outcome buttons on the form
+            $('#' + domId).find('.manywho-outcome-button').attr('disabled', 'disabled');
+
+            // Check to make sure all of the fields are valid - and prompt the user if they're not
+            var isValid = validateFieldValues(domId);
+
+            if (isValid == true) {
+                // If the form validates OK, we proceed with the onClick function
+                onClickFunction.call(this, $(this).attr('data-outcomeid'));
+            }
+        });
+
+        // Write the storage object back to the db
+        $('#' + domId + '-' + field.id + '-database').data(field.id, storageObject);
+    };
+
     // This function adds sharedjs to the field so we get the realtime capabilities
     //
     var addFieldCollaboration = function (domId, field) {
@@ -661,6 +1035,7 @@ permissions and limitations under the License.
 
         if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE ||
             field.componentType == ManyWhoConstants.COMPONENT_TYPE_TAG ||
+            field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES ||
             (field.componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION &&
              (span == null ||
               span.trim().length == 0))) {
@@ -674,6 +1049,26 @@ permissions and limitations under the License.
 
         html += '<div id="' + domId + '-' + field.id + '-properties" class="manywho-form-field-reference" data-fieldid="' + field.id + '" data-required="' + formMetaData.isRequired + '" data-fieldtype="' + field.componentType + '">';
         html += '<div id="' + domId + '-' + field.id + '-database" style="display:none;"></div>';
+
+        // If we have a files component, we add in the file uploader widget
+        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES /* &&
+            formMetaData.isEditable == true*/) {
+            html += '<div id="' + domId + '-' + field.id + '-tools" class="manwho-form-field-tools">';
+            html += '<span class="btn btn-success fileinput-button">';
+            html += '<i class="icon-plus icon-white"></i> ';
+            html += '<span>Add files...</span>';
+            html += '<input id="' + domId + '-' + field.id + '-uploader" type="file" name="files[]" data-url="' + ManyWhoConstants.BASE_PATH_URL + '/api/service/1/file/content" multiple>';
+            html += '</span>';
+            html += '<br>';
+            html += '<br>';
+            html += '<div id="progress" class="progress">';
+            html += '<div class="progress-bar progress-bar-success"></div>';
+            html += '</div>';
+            html += '<div id="files" class="files"></div>';
+
+            html += '</div>';
+        }
+
         html += '<div id="' + domId + '-' + field.id + '-actions" class="manwho-form-field-actions">';
 
         if (field.isSearchable == true) {
@@ -721,7 +1116,8 @@ permissions and limitations under the License.
         }
 
         // Add the loading indicator div so we have that for async fields - we use a different indicator for tables
-        if (field.componentType != ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+        if (field.componentType != ManyWhoConstants.COMPONENT_TYPE_TABLE &&
+            field.componentType != ManyWhoConstants.COMPONENT_TYPE_FILES) {
             html += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-loading-indicator"></div>';
         }
 
@@ -755,8 +1151,13 @@ permissions and limitations under the License.
                     // Reset the paging
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                    // Dispatch the data population as the user has hit enter
-                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                        // Dispatch the file population as the user has hit enter
+                        dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    } else {
+                        // Dispatch the data population as the user has hit enter
+                        dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    }
                 }
             });
 
@@ -764,12 +1165,53 @@ permissions and limitations under the License.
                 // Reset the paging
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                // Dispatch the search as the user has clicked the button
-                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    // Dispatch the file population as the user has hit enter
+                    dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                } else {
+                    // Dispatch the search as the user has clicked the button
+                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                }
             });
         }
 
-        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+        if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE ||
+            field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+            // Add a bit more if we're dealing with files - we need to enable the file uploader for editable files
+            if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                $('#' + domId + '-' + field.id + '-uploader').fileupload({
+                    url: ManyWhoConstants.BASE_PATH_URL + '/api/service/1/file/content',
+                    dataType: 'json',
+                    beforeSend: function (xhr, data) {
+                        // Add the user authorization header to the request so the service knows who they are
+                        xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
+                        xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+                    },
+                    add: function (e, data) {
+                        data.context = $('<p/>').text('Uploading...').appendTo(document.body);
+                        data.submit();
+                    },
+                    done: function (e, data) {
+                        $.each(data.result.files, function (index, file) {
+                            $('<p/>').text(file.name).appendTo('#files');
+                        });
+                    },
+                    progressall: function (e, data) {
+                        var progress = parseInt(data.loaded / data.total * 100, 10);
+                        $('#progress .progress-bar').css(
+                            'width',
+                            progress + '%'
+                        );
+                    }
+                });
+
+                // Add the file data request to the form submit so the service knows what's in the request
+                $('#' + domId + '-' + field.id + '-uploader').bind('fileuploadsubmit', function (e, data) {
+                    // Add the file data request object
+                    data.formData = { FileDataRequest: JSON.stringify(generateFileDataRequestObject(domId, field, formMetaData)) };
+                });
+            }
+
             $('#' + domId + '-' + field.id + '-field-pagination-next').click(function (event) {
                 var page = $('#' + domId + '-' + field.id + '-field').attr('data-page');
                 page = parseInt(page);
@@ -784,8 +1226,13 @@ permissions and limitations under the License.
                 // Apply the change
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                // Requiry the system
-                dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    // Dispatch the file population as the user has hit enter
+                    dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                } else {
+                    // Requiry the system
+                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                }
             });
 
             $('#' + domId + '-' + field.id + '-field-pagination-prev').click(function (event) {
@@ -800,8 +1247,13 @@ permissions and limitations under the License.
                     // Apply the change
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                    // Requiry the system
-                    dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                        // Dispatch the file population as the user has hit enter
+                        dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    } else {
+                        // Requiry the system
+                        dispatchAsyncDataPopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    }
                 }
             });
         }
@@ -993,6 +1445,24 @@ permissions and limitations under the License.
 
             if ($(window).width() < 980) {
                 fieldHtml += '<div id="' + domId + '-' + field.id + '-field" class="manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></div>';
+            } else {
+                fieldHtml += '<table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></table>';
+            }
+
+            fieldHtml += '<div id="' + domId + '-' + field.id + '-field-pagination" class="pagination">';
+            fieldHtml += '<ul>';
+            fieldHtml += '<li id="' + domId + '-' + field.id + '-field-pagination-prev-entry"><a href="#" id="' + domId + '-' + field.id + '-field-pagination-prev">Prev</a></li>';
+            fieldHtml += '<li id="' + domId + '-' + field.id + '-field-pagination-next-entry"><a href="#" id="' + domId + '-' + field.id + '-field-pagination-next">Next</a></li>';
+            fieldHtml += '</ul>';
+            fieldHtml += '</div>';
+            fieldHtml += '</div>';
+        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES.toUpperCase()) {
+            fieldHtml = '';
+            fieldHtml += '<div class="manywho-runtime-files-field-container">';
+            fieldHtml += '<div id="' + domId + '-' + field.id + '-loading-indicator" class="manywho-form-field-files-loading-indicator"></div>';
+
+            if ($(window).width() < 980) {
+                fieldHtml += '<div id="' + domId + '-' + field.id + '-field" class="manywho-runtime-files-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></div>';
             } else {
                 fieldHtml += '<table id="' + domId + '-' + field.id + '-field" class="table table-hover table-condensed table-bordered manywho-runtime-table-field" data-mode="select" data-page="0" data-orderby="" data-orderbydirection="ASC"></table>';
             }
@@ -1376,6 +1846,32 @@ permissions and limitations under the License.
                 }
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
+            // Grab the storage object for this field id - this will contain the object data that was used to populate the ui element
+            // and any data that may have been added
+            var value = new Array();
+            var storageObject = $('#' + domId + '-' + fieldId + '-database').data(fieldId);
+
+            // Find the selected rows and grab the id from the tr
+            $.each($('#' + domId + '-' + fieldId + '-field').find('tr.success, li.success'), function (index) {
+                var mode = null;
+                var entryId = $(this).attr('id');
+
+                // Now grab the full object from our storage object and add that to our value array
+                if (storageObject != null &&
+                    storageObject.objectData != null &&
+                    storageObject.objectData.length > 0) {
+                    for (var i = 0; i < storageObject.objectData.length; i++) {
+                        var objectData = storageObject.objectData[i];
+
+                        // Check to see if the id of this object matches the selected value
+                        if (objectData.externalId == entryId) {
+                            // We have the selected value - though we may have more, so we don't break
+                            value[value.length] = objectData;
+                        }
+                    }
+                }
+            });
+        } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
             // Grab the storage object for this field id - this will contain the object data that was used to populate the ui element
             // and any data that may have been added
             var value = new Array();
@@ -1937,6 +2433,14 @@ permissions and limitations under the License.
                                                 formMetaDataEntry,
                                                 outcomeResponses, 
                                                 onClickFunction);
+                } else if (formMetaDataEntry.fileDataRequest != null &&
+                           storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_TAG) {
+                    // Now we grab the file data in realtime from the file data provider
+                    dispatchAsyncFilePopulation(domId,
+                                                storageObject.field,
+                                                formMetaDataEntry,
+                                                outcomeResponses,
+                                                onClickFunction);
                 } else {
                     if (storageObject.field.componentType == ManyWhoConstants.COMPONENT_TYPE_PRESENTATION) {
                         // We don't have a content value - we only have content
@@ -2042,6 +2546,104 @@ permissions and limitations under the License.
                                     assignObjectDataRequestResponseError(domId, field, formMetaDataEntry));
     }
 
+    // This is the method that should be used for all file data requests for asynchronous data as it handles limits and paging
+    //
+    var dispatchAsyncFilePopulation = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction) {
+        var isOffset = false;
+
+        // Generate / apply the file data request information
+        generateFileDataRequestObject(domId, field, formMetaDataEntry);
+
+        // Check to see if the filter is offset
+        if (formMetaDataEntry.fileDataRequest.listFilter.offset > 0) {
+            isOffset = true;
+        }
+
+        // Show the loading indicator so the user knows something is happening
+        $('#' + domId + '-' + field.id + '-loading-indicator').show();
+
+        // Now we grab the file data in realtime from the data provider
+        ManyWhoFileDataProxy.load('ManyWhoFormBootStrap.DispatchAsyncFilePopulation',
+                                  $('#' + domId + '-tenant-id').val(),
+                                  formMetaDataEntry.fileDataRequest,
+                                  null,
+                                  assignFileDataRequestResponse(domId, field, formMetaDataEntry, outcomeResponses, onClickFunction, isOffset),
+                                  assignFileDataRequestResponseError(domId, field, formMetaDataEntry));
+    }
+
+    // Generate a file data request object based on the information in the component
+    //
+    var generateFileDataRequestObject = function (domId, field, formMetaDataEntry) {
+        var fileDataRequest = null;
+
+        if (formMetaDataEntry.fileDataRequest == null) {
+            alert('Hmmm... no request object to get the files. Contact your administrator.');
+        }
+
+        // If we don't have a list filter object, we need to create one
+        if (formMetaDataEntry.fileDataRequest.listFilter == null) {
+            formMetaDataEntry.fileDataRequest.listFilter = new Object();
+        }
+
+        // Set the resultset limit appropriately
+        formMetaDataEntry.fileDataRequest.listFilter.limit = TABLE_RESULT_LIMIT;
+
+        // Check to see if we're going to add a search on top of our query
+        if (field.isSearchable == true) {
+            // Grab the search value from the input box
+            var search = $('#' + domId + '-' + field.id + '-field-search').val();
+
+            // Only send it if the search is not blank
+            if (search != null &&
+                search.trim().length > 0) {
+                // Add the search
+                formMetaDataEntry.fileDataRequest.listFilter.search = search;
+            } else {
+                formMetaDataEntry.fileDataRequest.listFilter.search = null;
+            }
+        }
+
+        // Check to see if the order by stuff has been defined
+        if ($('#' + domId + '-' + field.id + '-field').attr('data-orderby') != null) {
+            // Get the order by information
+            var orderBy = $('#' + domId + '-' + field.id + '-field').attr('data-orderby');
+            var orderByDirection = $('#' + domId + '-' + field.id + '-field').attr('data-orderbydirection');
+
+            // If the order by stuff is empty, we don't want to use it
+            if (orderBy != null &&
+                orderBy.trim().length > 0) {
+                // Assign the values to the file data request
+                formMetaDataEntry.fileDataRequest.listFilter.orderBy = orderBy;
+                formMetaDataEntry.fileDataRequest.listFilter.orderByDirection = orderByDirection;
+            }
+        }
+
+        // Check the paging - it should be zero to start
+        if ($('#' + domId + '-' + field.id + '-field').attr('data-page') != null) {
+            var page = parseInt($('#' + domId + '-' + field.id + '-field').attr('data-page'));
+            var offset = 0;
+            var resultSetLimit = TABLE_RESULT_LIMIT;
+
+            // We need to calculate the offset
+            if (page > 0) {
+                // The offset is equivalent to the page number multiplied by the limit
+                offset = page * resultSetLimit;
+            }
+
+            // If the offset is 0, we don't have a previous
+            if (offset == 0) {
+                // Remove the class just in case - so we don't add it twice
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').removeClass('disabled');
+                $('#' + domId + '-' + field.id + '-field-pagination-prev-entry').addClass('disabled');
+            }
+
+            // Assign the offset
+            formMetaDataEntry.fileDataRequest.listFilter.offset = offset;
+        }
+
+        return formMetaDataEntry.fileDataRequest;
+    }
+
     // The response function for handling the asynchronous data object request stuff
     //
     var assignObjectDataRequestResponse = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction, isOffset) {
@@ -2057,6 +2659,27 @@ permissions and limitations under the License.
     // The response function for handling errors in the asynchronous data object request stuff
     //
     var assignObjectDataRequestResponseError = function (domId, field, formMetaDataEntry) {
+        return function (data, status, xhr) {
+            // Hide the loading indicator as we've finished loading
+            $('#' + domId + '-' + field.id + '-loading-indicator').hide();
+        }
+    };
+
+    // The response function for handling the asynchronous file data request stuff
+    //
+    var assignFileDataRequestResponse = function (domId, field, formMetaDataEntry, outcomeResponses, onClickFunction, isOffset) {
+        return function (data, status, xhr) {
+            // Hide the loading indicator as we've finished loading
+            $('#' + domId + '-' + field.id + '-loading-indicator').hide();
+
+            // Assign the options to the selection menu
+            createUIForFileData(domId, field, formMetaDataEntry, data.objectData, outcomeResponses, onClickFunction, isOffset, data.hasMoreResults);
+        }
+    };
+
+    // The response function for handling errors in the asynchronous file data request stuff
+    //
+    var assignFileDataRequestResponseError = function (domId, field, formMetaDataEntry) {
         return function (data, status, xhr) {
             // Hide the loading indicator as we've finished loading
             $('#' + domId + '-' + field.id + '-loading-indicator').hide();
