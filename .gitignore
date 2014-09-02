@@ -1,7 +1,8 @@
 # Ignore the files we do not have distribution rights over #
 ############################################################
-extensions/
 .idea/
+extensions/glyohicons/*.ai
+extensions/glyohicons/*.svg
 
 # OS generated files #
 ######################
