@@ -1151,7 +1151,7 @@ permissions and limitations under the License.
                     // Reset the paging
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                         // Dispatch the file population as the user has hit enter
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     } else {
@@ -1165,7 +1165,7 @@ permissions and limitations under the License.
                 // Reset the paging
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                     // Dispatch the file population as the user has hit enter
                     dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 } else {
@@ -1195,6 +1195,8 @@ permissions and limitations under the License.
                         $.each(data.result.files, function (index, file) {
                             $('<p/>').text(file.name).appendTo('#files');
                         });
+
+                        dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     },
                     progressall: function (e, data) {
                         var progress = parseInt(data.loaded / data.total * 100, 10);
@@ -1226,7 +1228,7 @@ permissions and limitations under the License.
                 // Apply the change
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                     // Dispatch the file population as the user has hit enter
                     dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 } else {
@@ -1247,7 +1249,7 @@ permissions and limitations under the License.
                     // Apply the change
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                         // Dispatch the file population as the user has hit enter
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     } else {
@@ -3074,22 +3076,25 @@ permissions and limitations under the License.
                     width: parseInt(widthAttr),
                     selector: 'textarea#' + $(this).attr('id'),
                     plugins: [
+																								"importcss",
                         "advlist autolink lists link image charmap anchor",
                         "searchreplace visualblocks code",
                         "media table contextmenu paste fullscreen",
-                        "manywho_elements"
+                        "manywho_elements",
                     ],
                     external_plugins: {
-                        "moxiemanager": "https://flow.manywho.com/extensions/moxiemanager/plugin.js",
+                        "moxiemanager": "/extensions/moxiemanager/plugin.js",
                         "nanospell": "https://flow.manywho.com/extensions/nanospell/plugin.js",
                     },
-                    content_css: "https://cdn.manywho.com/css/tinymce.css",
+                    content_css: ["https://cdn.manywho.com/css/tinymce.css", "/css/tenant/" + ManyWhoSharedServices.getTenantId() + "/customstyles"],
                     nanospell_server: "asp.net",
                     style_formats: editorFormats,
                     moxiemanager_title: 'Flow Assets',
                     moxiemanager_fullscreen: false,
                     menubar: "edit insert view format table tools",
-                    toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | manywho_elements"
+                    toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | manywho_elements",
+                    importcss_append: true,
+                    importcss_file_filter: "/css/tenant/" + ManyWhoSharedServices.getTenantId() + "/customstyles",
                 });
             });
         }

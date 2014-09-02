@@ -988,7 +988,12 @@ permissions and limitations under the License.
             // Create the chassis for the social plugin
             html += '<input type="hidden" id="' + currentOptions.domId + '-post-id" value="loading" />';
 
-            html += '<div class="container-fluid">';
+            // Set the full width status of the feed
+            if (currentOptions.isFullWidth == false) {
+                html += '<div class="container">';
+            } else {
+                html += '<div class="container-fluid">';
+            }
 
             html += '  <div class="row-fluid">';
 
@@ -1388,6 +1393,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoSocialNetwork.defaults = { stateId: '', token: '', streamId: '', networkName: '', messagesOnPageCount: 10, dateTimeFormat: 'MMMM Do YYYY, h:mm:ss a' };
+    $.fn.manywhoSocialNetwork.defaults = { stateId: '', token: '', streamId: '', networkName: '', messagesOnPageCount: 10, dateTimeFormat: 'MMMM Do YYYY, h:mm:ss a', isFullWidth: false };
 
 })(jQuery);

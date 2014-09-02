@@ -455,34 +455,36 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var authenticationToken = null;
-                                                                                        var manywhoTenantId = null;
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           var authenticationToken = null;
+                                           var manywhoTenantId = null;
 
-                                                                                        // Get the values out of the outputs
-                                                                                        authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
-                                                                                        manywhoTenantId = ManyWhoUtils.getOutcomeValue(outputValues, 'ManyWhoTenantId', null);
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
 
-                                                                                        // Get the username so we can keep that for future logins
-                                                                                        ManyWhoUtils.setCookie('AuthorUsername', ManyWhoUtils.getOutcomeValue(outputValues, 'Username', null));
+                                           // Get the values out of the outputs
+                                           authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
+                                           manywhoTenantId = ManyWhoUtils.getOutcomeValue(outputValues, 'ManyWhoTenantId', null);
 
-                                                                                        // Call the OK callback
-                                                                                        okCallback.call(this, authenticationToken, manywhoTenantId);
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                           // Get the username so we can keep that for future logins
+                                           ManyWhoUtils.setCookie('AuthorUsername', ManyWhoUtils.getOutcomeValue(outputValues, 'Username', null));
+
+                                           // Call the OK callback
+                                           okCallback.call(this, authenticationToken, manywhoTenantId);
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    // Hide the loading dialog if it's open
                                    ManyWhoSharedServices.showLoadingDialog(false);
@@ -511,21 +513,28 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
+
+                                           // Call the ok callback if one has been provided
+                                           if (okCallback != null) {
+                                               okCallback.call(this, outputValues);
+                                           }
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    // Hide the loading dialog if it's open
                                    ManyWhoSharedServices.showLoadingDialog(false);
@@ -552,22 +561,24 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime-sub').manywhoRuntimeEngine('run',
-                                                                                        null,
-                                                                                        data.id.id,
-                                                                                        data.id.versionId,
-                                                                                        inputs,
-                                                                                        function (outputValues) {
-                                                                                            okCallback.call(this, domId, elementId, formElementId, doDelete, outputValues);
 
-                                                                                            $('#manywho-dialog-sub').modal('hide');
-                                                                                            $('#manywho-model-runtime-sub').manywhoRuntimeEngine('clear');
-                                                                                            $('#manywho-dialog-title-sub').html('Loading...');
-                                                                                        },
-                                                                                        'manywho-model-outcomes-sub',
-                                                                                        'manywho-dialog-title-sub',
-                                                                                        null,
-                                                                                        ManyWhoSharedServices.getEditorModeId());
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes-sub',
+                                       formLabelPanel: 'manywho-dialog-title-sub',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           okCallback.call(this, domId, elementId, formElementId, doDelete, outputValues);
+
+                                           $('#manywho-dialog-sub').modal('hide');
+                                           $('#manywho-model-runtime-sub').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title-sub').html('Loading...');
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime-sub').manywhoRuntimeEngine('execute', options);
 
                                    $('#manywho-dialog-sub').modal({ backdrop: 'static', show: true });
                                },
@@ -649,26 +660,29 @@ var ManyWhoSharedServices = {
                                         null);
     },
     showPageElementConfigDialog: function (elementType, elementId, okCallback, errorFunction) {
+
         ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowPageElementConfigDialog',
                                ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
                                'MANYWHO__' + elementType.toUpperCase() + '__DEFAULT__FLOW',
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('run',
-                                                                                               null,
-                                                                                               data.id.id,
-                                                                                               data.id.versionId,
-                                                                                               ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, elementType),
-                                                                                               function (outputValues) {
-                                                                                                   $('#manywho-dialog-fullscreen').fadeOut('slow');
-                                                                                                   $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('clear');
-                                                                                                   $('#manywho-dialog-title-fullscreen').html('Loading...');
-                                                                                               },
-                                                                                               'manywho-model-outcomes-fullscreen',
-                                                                                               'manywho-dialog-title-fullscreen',
-                                                                                               null,
-                                                                                               ManyWhoSharedServices.getEditorModeId());
+
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, elementType),
+                                       outcomePanel: 'manywho-model-outcomes-fullscreen',
+                                       formLabelPanel: 'manywho-dialog-title-fullscreen',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           $('#manywho-dialog-fullscreen').fadeOut('slow');
+                                           $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title-fullscreen').html('Loading...');
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('execute', options);
 
                                    // Get the window height
                                    var windowHeight = $(window).height();
@@ -701,20 +715,22 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, elementType),
-                                                                                    function (outputValues) {
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, elementType),
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
@@ -735,26 +751,28 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, elementType),
-                                                                                    function (outputValues) {
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
 
-                                                                                        // Check to see if we have a callback function
-                                                                                        if (okCallback != null) {
-                                                                                            // Call the callback
-                                                                                            okCallback.call(this);
-                                                                                        }
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, null, elementType),
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
+
+                                           // Check to see if we have a callback function
+                                           if (okCallback != null) {
+                                               // Call the callback
+                                               okCallback.call(this);
+                                           }
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
@@ -794,39 +812,42 @@ var ManyWhoSharedServices = {
                                 null,
                                 null,
                                 function (data, status, xhr) {
-                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var flowOutcome = null;
-                                                                                        var elementId = null;
-                                                                                        var elementDeveloperName = null;
 
-                                                                                        // Get the values out of the outputs
-                                                                                        elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'Id');
-                                                                                        elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'DeveloperName');
-                                                                                        flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+                                    var options = {
+                                        flowId: data.id.id,
+                                        flowVersionId: data.id.versionId,
+                                        inputs: inputs,
+                                        outcomePanel: 'manywho-model-outcomes',
+                                        formLabelPanel: 'manywho-dialog-title',
+                                        annotations: ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
+                                        mode: ManyWhoSharedServices.getEditorModeId(),
+                                        doneCallbackFunction: function (outputValues) {
+                                            var flowOutcome = null;
+                                            var elementId = null;
+                                            var elementDeveloperName = null;
 
-                                                                                        // Check the flow outcome and and respond appropriately
-                                                                                        if (flowOutcome == null ||
-                                                                                            flowOutcome.toLowerCase() != 'cancel') {
-                                                                                            $('#manywho-dialog').attr('data-keep', 'true');
-                                                                                            okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
-                                                                                        } else {
-                                                                                            cancelCallback.call(this, graphId, doDelete);
-                                                                                        }
+                                            // Get the values out of the outputs
+                                            elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'Id');
+                                            elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'DeveloperName');
+                                            flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                            // Check the flow outcome and and respond appropriately
+                                            if (flowOutcome == null ||
+                                                flowOutcome.toLowerCase() != 'cancel') {
+                                                $('#manywho-dialog').attr('data-keep', 'true');
+                                                okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
+                                            } else {
+                                                cancelCallback.call(this, graphId, doDelete);
+                                            }
+
+                                            // Hide the dialog
+                                            $('#manywho-dialog').modal('hide');
+                                            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                            $('#manywho-dialog-title').html('Loading...');
+                                        }
+                                    }
+
+                                    $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                     $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                 },
@@ -862,71 +883,74 @@ var ManyWhoSharedServices = {
                                 null,
                                 null,
                                 function (data, status, xhr) {
-                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var flowOutcome = null;
-                                                                                        var outcomeId = null;
-                                                                                        var outcomeDeveloperName = null;
-                                                                                        var outcome = null;
 
-                                                                                        // Get the values out of the outputs
-                                                                                        flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
-                                                                                        outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'Outcome ContentObject', null);
-                                                                                        outcomeDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'Outcome ContentObject', 'DeveloperName');
-                                                                                        outcomes = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'outcomes');
+                                    var options = {
+                                        flowId: data.id.id,
+                                        flowVersionId: data.id.versionId,
+                                        inputs: inputs,
+                                        outcomePanel: 'manywho-model-outcomes',
+                                        formLabelPanel: 'manywho-dialog-title',
+                                        annotations: ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
+                                        mode: ManyWhoSharedServices.getEditorModeId(),
+                                        doneCallbackFunction: function (outputValues) {
+                                            var flowOutcome = null;
+                                            var outcomeId = null;
+                                            var outcomeDeveloperName = null;
+                                            var outcome = null;
 
-                                                                                        // We need to look at the outcomes and find the one that matches the developer name as the outcome object will not
-                                                                                        // have the identifier assigned to it
-                                                                                        // If this is a delete, we don't bother with this logic as the outcome will actually be correct
-                                                                                        if (outcomes != null &&
-                                                                                            outcomes.length > 0) {
-                                                                                            for (var a = 0; a < outcomes.length; a++) {
-                                                                                                var outcomeEntry = outcomes[a];
+                                            // Get the values out of the outputs
+                                            flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+                                            outcome = ManyWhoUtils.getOutcomeValue(outputValues, 'Outcome ContentObject', null);
+                                            outcomeDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'Outcome ContentObject', 'DeveloperName');
+                                            outcomes = ManyWhoUtils.getOutcomeValue(outputValues, 'MAP_ELEMENT', 'outcomes');
 
-                                                                                                // We need to find the outcome for the developer name so we scan for that property
-                                                                                                if (outcomeEntry.properties != null &&
-                                                                                                    outcomeEntry.properties.length > 0) {
-                                                                                                    for (var b = 0; b < outcomeEntry.properties.length; b++) {
-                                                                                                        if (outcomeEntry.properties[b].developerName != null &&
-                                                                                                            outcomeEntry.properties[b].developerName.toLowerCase() == 'developername' &&
-                                                                                                            outcomeEntry.properties[b].contentValue.toLowerCase() == outcomeDeveloperName.toLowerCase()) {
-                                                                                                            // Grab the outcome and outcome identifier from the list by matching on developer name
-                                                                                                            outcomeId = outcomeEntry.externalId;
-                                                                                                            outcome = outcomeEntry;
-                                                                                                            break;
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
+                                            // We need to look at the outcomes and find the one that matches the developer name as the outcome object will not
+                                            // have the identifier assigned to it
+                                            // If this is a delete, we don't bother with this logic as the outcome will actually be correct
+                                            if (outcomes != null &&
+                                                outcomes.length > 0) {
+                                                for (var a = 0; a < outcomes.length; a++) {
+                                                    var outcomeEntry = outcomes[a];
 
-                                                                                                if (outcomeId != null &&
-                                                                                                    outcomeId.trim().length > 0) {
-                                                                                                    break;
-                                                                                                }
-                                                                                            }
-                                                                                        }
+                                                    // We need to find the outcome for the developer name so we scan for that property
+                                                    if (outcomeEntry.properties != null &&
+                                                        outcomeEntry.properties.length > 0) {
+                                                        for (var b = 0; b < outcomeEntry.properties.length; b++) {
+                                                            if (outcomeEntry.properties[b].developerName != null &&
+                                                                outcomeEntry.properties[b].developerName.toLowerCase() == 'developername' &&
+                                                                outcomeEntry.properties[b].contentValue.toLowerCase() == outcomeDeveloperName.toLowerCase()) {
+                                                                // Grab the outcome and outcome identifier from the list by matching on developer name
+                                                                outcomeId = outcomeEntry.externalId;
+                                                                outcome = outcomeEntry;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
 
-                                                                                        // Check the flow outcome and and respond appropriately
-                                                                                        if (flowOutcome == null ||
-                                                                                            flowOutcome.toLowerCase() != 'cancel') {
-                                                                                            $('#manywho-dialog').attr('data-keep', 'true');
-                                                                                            okCallback.call(this, elementId, graphId, outcomeId, outcomeDeveloperName, outcome, flowOutcome);
-                                                                                        } else {
-                                                                                            cancelCallback.call(this, graphId, doDelete);
-                                                                                        }
+                                                    if (outcomeId != null &&
+                                                        outcomeId.trim().length > 0) {
+                                                        break;
+                                                    }
+                                                }
+                                            }
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                            // Check the flow outcome and and respond appropriately
+                                            if (flowOutcome == null ||
+                                                flowOutcome.toLowerCase() != 'cancel') {
+                                                $('#manywho-dialog').attr('data-keep', 'true');
+                                                okCallback.call(this, elementId, graphId, outcomeId, outcomeDeveloperName, outcome, flowOutcome);
+                                            } else {
+                                                cancelCallback.call(this, graphId, doDelete);
+                                            }
+
+                                            // Hide the dialog
+                                            $('#manywho-dialog').modal('hide');
+                                            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                            $('#manywho-dialog-title').html('Loading...');
+                                        }
+                                    }
+
+                                    $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                     $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                 },
@@ -961,37 +985,40 @@ var ManyWhoSharedServices = {
                                 null,
                                 null,
                                 function (data, status, xhr) {
-                                    $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var flowOutcome = null;
-                                                                                        var elementId = null;
-                                                                                        var elementDeveloperName = null;
 
-                                                                                        elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'Id');
-                                                                                        elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'DeveloperName');
-                                                                                        flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+                                    var options = {
+                                        flowId: data.id.id,
+                                        flowVersionId: data.id.versionId,
+                                        inputs: inputs,
+                                        outcomePanel: 'manywho-model-outcomes',
+                                        formLabelPanel: 'manywho-dialog-title',
+                                        annotations: ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
+                                        mode: ManyWhoSharedServices.getEditorModeId(),
+                                        doneCallbackFunction: function (outputValues) {
+                                            var flowOutcome = null;
+                                            var elementId = null;
+                                            var elementDeveloperName = null;
 
-                                                                                        if (flowOutcome == null ||
-                                                                                            flowOutcome.toLowerCase() != 'cancel') {
-                                                                                            $('#manywho-dialog').attr('data-keep', 'true');
-                                                                                            okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
-                                                                                        } else {
-                                                                                            cancelCallback.call(this, graphId, doDelete);
-                                                                                        }
+                                            elementId = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'Id');
+                                            elementDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'GROUP_ELEMENT', 'DeveloperName');
+                                            flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    ManyWhoSharedServices.getGeneralFlowAnnotations(graphId),
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                            if (flowOutcome == null ||
+                                                flowOutcome.toLowerCase() != 'cancel') {
+                                                $('#manywho-dialog').attr('data-keep', 'true');
+                                                okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
+                                            } else {
+                                                cancelCallback.call(this, graphId, doDelete);
+                                            }
+
+                                            // Hide the dialog
+                                            $('#manywho-dialog').modal('hide');
+                                            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                            $('#manywho-dialog-title').html('Loading...');
+                                        }
+                                    }
+
+                                    $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                     $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                 },
@@ -1012,45 +1039,48 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, null, null, null, null, null, null, true),
-                                                                                    function (outputValues) {
-                                                                                        var flowOutcome = null;
-                                                                                        var flowEditingToken = null;
-                                                                                        var flowId = null;
-                                                                                        var flowDeveloperName = null;
-                                                                                        var flowDeveloperSummary = null;
-                                                                                        var flowStartMapElementId = null;
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: ManyWhoSharedServices.getGeneralFlowInputs(false, elementId, null, null, null, null, null, null, null, true),
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       annotations: null,
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           var flowOutcome = null;
+                                           var flowEditingToken = null;
+                                           var flowId = null;
+                                           var flowDeveloperName = null;
+                                           var flowDeveloperSummary = null;
+                                           var flowStartMapElementId = null;
 
-                                                                                        // Get the values out of the outputs
-                                                                                        flowId = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'Id');
-                                                                                        flowDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'DeveloperName');
-                                                                                        flowDeveloperSummary = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'DeveloperSummary');
-                                                                                        flowEditingToken = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'EditingToken');
-                                                                                        flowStartMapElementId = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'StartMapElementId');
-                                                                                        flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
 
-                                                                                        if (flowOutcome == null ||
-                                                                                            flowOutcome.toLowerCase() != 'cancel') {
-                                                                                            okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
-                                                                                        } else {
-                                                                                            if (cancelCallback != null) {
-                                                                                                cancelCallback.call(this);
-                                                                                            }
-                                                                                        }
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    ManyWhoSharedServices.getEditorModeId());
+                                           // Get the values out of the outputs
+                                           flowId = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'Id');
+                                           flowDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'DeveloperName');
+                                           flowDeveloperSummary = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'DeveloperSummary');
+                                           flowEditingToken = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'EditingToken');
+                                           flowStartMapElementId = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'StartMapElementId');
+                                           flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+
+                                           if (flowOutcome == null ||
+                                               flowOutcome.toLowerCase() != 'cancel') {
+                                               okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
+                                           } else {
+                                               if (cancelCallback != null) {
+                                                   cancelCallback.call(this);
+                                               }
+                                           }
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },
