@@ -1,6 +1,7 @@
 # Ignore the files we do not have distribution rights over #
 ############################################################
 .idea/
+extensions/mxgraph/
 extensions/glyphicons/*.ai
 extensions/glyphicons/*.svg
 

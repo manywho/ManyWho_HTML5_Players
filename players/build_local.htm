@@ -3,46 +3,46 @@
 <head>
     <title>ManyWho Developer Tools</title>
 
-    <link type="text/css" href="../css/build.css" rel="stylesheet" />
+    <link type="text/css" href="/localcdn/css/build.css" rel="stylesheet" />
 
-    <link type="text/css" href="../extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
-    <link type="text/css" href="../extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
 
-    <link type="text/css" href="../extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
 
-    <link type="text/css" href="../extensions/bootstrap/css/darkstrap-v0.9.0.css" rel="stylesheet" media="screen" />
+    <link type="text/css" href="/localcdn/extensions/bootstrap/css/darkstrap-v0.9.0.css" rel="stylesheet" media="screen" />
     
-    <script type="text/javascript" src="../extensions/ace/ace.js" charset="utf-8"></script>
-    <script type="text/javascript" src="../extensions/ace/mode-json.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/localcdn/extensions/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/localcdn/extensions/ace/mode-json.js" charset="utf-8"></script>
 
-    <script type="text/javascript" src="../extensions/jquery/js/jquery-1.8.3.js"></script>
-    <script type="text/javascript" src="../extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
 
-    <script type="text/javascript" src="../extensions/json2/json2.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/json2/json2.js"></script>
 
-    <script type="text/javascript" src="../extensions/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap/js/bootstrap.min.js"></script>
 
-    <script type="text/javascript" src="../extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
-    <script type="text/javascript" src="../extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
 
-    <script type="text/javascript" src="../extensions/cookie/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/cookie/jquery.cookie.js"></script>
 
-    <script type="text/javascript" src="../build/js/manywho.sharedServices.js"></script>
+    <script type="text/javascript" src="/localcdn/build/js/manywho.sharedServices.js"></script>
 
     <script type="text/javascript" src="/js/constants"></script>
 
-    <script type="text/javascript" src="../js/manywho.logging.js"></script>
-    <script type="text/javascript" src="../js/manywho.ajax.js"></script>
-    <script type="text/javascript" src="../js/manywho.utils.js"></script>
-    <script type="text/javascript" src="../js/manywho.flow.js"></script>
-    <script type="text/javascript" src="../js/manywho.developer.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.logging.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.ajax.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.utils.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.flow.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.developer.js"></script>
 
-    <script type="text/javascript" src="../js/tag/manywho.tag.formEditor.js"></script>
-    <script type="text/javascript" src="../js/tag/manywho.tag.navigationEditor.js"></script>
+    <script type="text/javascript" src="/localcdn/js/tag/manywho.tag.formEditor.js"></script>
+    <script type="text/javascript" src="/localcdn/js/tag/manywho.tag.navigationEditor.js"></script>
 
-    <script type="text/javascript" src="../js/jquery.manywho.formBootStrap.js"></script>
+    <script type="text/javascript" src="/localcdn/js/jquery.manywho.formBootStrap.js"></script>
 
-    <script type="text/javascript" src="../run/js/manywho.runtime.engine.js"></script>
+    <script type="text/javascript" src="/localcdn/run/js/manywho.runtime.engine.js"></script>
 
     <script>
 
@@ -376,6 +376,9 @@
             var source = null;
 
             source = [
+                    'api/admin/1/directory/{directoryId}/users/password',
+                    'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=',
+                    'api/admin/1/tenant',
                     'api/run/1/authentication',
                     'api/run/1/flow/name/{flowName}',
                     'api/run/1/flow/' + getFlowId(),
@@ -424,6 +427,7 @@
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/{groupElementId}',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group',
+																				'api/draw/1/flow/revert/' + getFlowId() + '/{flowVersionId}',
                     'api/translate/1/culture/{cultureId}',
                     'api/translate/1/culture?filter=',
                     'api/translate/1/culture',
@@ -458,6 +462,15 @@
                 requestContent += '  "password":null,\n';
                 requestContent += '  "token":null\n';
                 requestContent += '}';
+            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+                // action = "ResetPassword"
+                requestContent = '';
+            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+                // action = "ChangePassword"
+                requestContent = '';
+            } else if (requestUrl == 'api/admin/1/tenant') {
+                // action = "LoadTenant or SaveTenant"
+                requestContent = '';
             } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
                 // action = "LoadFlowByName"
                 requestContent = '';
@@ -792,6 +805,19 @@
                     // POST only
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+                    // action = "ResetPassword"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+                    // action = "ChangePassword"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/tenant') {
+                    // action = "LoadTenant or SaveTenant"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="POST">POST</option>');
                 } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
                     // action = "LoadFlowByName"
                     // GET only
@@ -1075,7 +1101,7 @@
 </head>
 <body>
     <div id="logo">
-        <img src="../images/developer_tools_logo.png" height="60" width="233" alt="ManyWho Developer Tools" />
+        <img src="/localcdn/images/developer_tools_logo.png" height="60" width="233" alt="ManyWho Developer Tools" />
         <div class="pull-right" style="color: #ffffff;">
             Tenant Id: <strong><span id="manywho-tenant-id">Unknown</span></strong>
         </div>

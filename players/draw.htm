@@ -43,6 +43,8 @@
 	    mxBasePath = 'https://cdn.manywho.com/extensions/mxgraph/src';
 
 	</script>
+				<script type="text/javascript" src="/extensions/moxiemanager/js/moxman.loader.min.js"></script>
+
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/mxgraph/src/js/mxClient.js"></script>
 
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/cookie/jquery.cookie.js"></script>
@@ -73,6 +75,7 @@
     <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.objectDataProxy.js"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.developer.js"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.player.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.tenant.js"></script>
 
     <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.formEditor.js"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/js/tag/manywho.tag.navigationEditor.js"></script>
@@ -128,15 +131,19 @@
                     <li><a href="#" id="manage-values"><i class="icon-inbox icon-white"></i> Values</a></li>
                     <li><a href="#" id="manage-types"><i class="icon-asterisk icon-white"></i> Types</a></li>
                     <li><a href="#" id="manage-services"><i class="icon-gift icon-white"></i> Services</a></li>
+																				<li><a href="#" id="manage-assets"><i class="icon-file icon-white"></i> Assets</a></li>
                     <li class="divider-vertical"></li>
                     <li class="dropdown menu-item"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-bookmark icon-white"></i> Options<b class="caret"></b></a>
                         <ul class="dropdown-menu">
+                            <li class="nav-header" id="manywho-tenant-name"></li>
+                            <li class="divider"></li>
                             <li><a href="http://manywho.com/wp-content/content/docs/gettingstarted.html" target="_blank"><i class="icon-book"></i> Docs</a></li>
                             <li class="divider"></li>
                             <li class="menu-item"><a href="#" id="open-developer-tools"><i class="icon-wrench"></i> Build</a></li>
                             <li class="menu-item"><a href="#" id="open-translate-tools"><i class="icon-edit"></i> Translate</a></li>
                             <li class="divider"></li>
                             <li class="menu-item"><a href="#" id="create-sub-tenant"><i class="icon-plus"></i> Create Sub-Tenant</a></li>
+                            <li class="dropdown-submenu" id="manywho-sub-tenants-list"></li>
                             <li class="divider"></li>
                             <li><a href="#" id="sign-out"><i class="icon-user"></i> Sign Out</a></li>
                         </ul>
