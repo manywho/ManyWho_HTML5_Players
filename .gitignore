@@ -6,6 +6,8 @@ extensions/moxiemanager/
 extensions/glyphicons/*.ai
 extensions/glyphicons/*.svg
 
+dist/
+
 # OS generated files #
 ######################
 .DS_Store
