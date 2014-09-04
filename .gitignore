@@ -2,6 +2,7 @@
 ############################################################
 .idea/
 extensions/mxgraph/
+extensions/moxiemanager/
 extensions/glyphicons/*.ai
 extensions/glyphicons/*.svg
 
