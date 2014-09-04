@@ -1,0 +1,6 @@
+{
+  "name": "manywho",
+  "devDependencies": {
+    "gulp": "^3.8.7"
+  }
+}
