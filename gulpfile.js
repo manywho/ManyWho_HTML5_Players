@@ -32,7 +32,7 @@ gulp.task('default', function () {
     gulp.src('manywho.fileDataProxy.js')
         .pipe(gulp.dest('dist'));
 
-    gulp.src('players')
+    gulp.src('players/*.htm')
         .pipe(gulp.dest('dist_players'));
 
 });
