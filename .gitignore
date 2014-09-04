@@ -7,6 +7,7 @@ extensions/glyphicons/*.ai
 extensions/glyphicons/*.svg
 
 dist/
+dist_players/
 node_modules/
 
 # OS generated files #
