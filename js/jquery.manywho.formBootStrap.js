@@ -1924,7 +1924,7 @@ permissions and limitations under the License.
 
     // This method is used to set the actual field for the field type.
     //
-    var setFieldValue = function (domId, fieldId, fieldType, value, objectData) {
+    var setFieldValue = function (domId, fieldId, fieldType, value, objectData, tags) {
         var valueType = null;
 
         fieldType = $('#' + domId + '-' + fieldId + '-properties').attr('data-fieldtype');
@@ -1970,7 +1970,7 @@ permissions and limitations under the License.
             $('#' + domId + '-' + fieldId + '-field').html(value);
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
             // Defer the value setting to the tag component implementation
-            $('#' + domId + '-' + fieldId + '-field').manywhoTagComponent('setValue', value, objectData);
+            $('#' + domId + '-' + fieldId + '-field').manywhoTagComponent('setValue', value, objectData, tags);
         }
     };
 
@@ -2449,7 +2449,7 @@ permissions and limitations under the License.
                         setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.content);
                     } else {
                         // We have a content value to apply
-                        setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.contentValue, formMetaDataEntry.objectData);
+                        setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.contentValue, formMetaDataEntry.objectData, formMetaDataEntry.tags);
                     }
                 }
             }

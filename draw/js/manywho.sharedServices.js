@@ -305,6 +305,9 @@ var ManyWhoSharedServices = {
                 },
                 {
                     tag: 'Navigation Editor', component: ManyWhoTagNavigationEditor
+                },
+                {
+                    tag: 'Table Editor', component: ManyWhoTagTableEditor
                 }
             ];
 

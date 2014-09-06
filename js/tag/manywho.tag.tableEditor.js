@@ -19,8 +19,8 @@ var ManyWhoTagTableEditor = {
         $('#' + domId).append('<div id="' + domId + '-table-editor"></div>');
         $('#' + domId + '-table-editor').manywhoTableEditor();
     },
-    setValue: function (domId, value, objectData) {
-        $('#' + domId + '-table-editor').manywhoTableEditor('setValue', value);
+    setValue: function (domId, value, objectData, tags) {
+        $('#' + domId + '-table-editor').manywhoTableEditor('setValue', value, tags);
     },
     getValue: function (domId) {
         return $('#' + domId + '-table-editor').manywhoTableEditor('getValue');
