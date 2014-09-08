@@ -550,6 +550,7 @@ permissions and limitations under the License.
                         tableResultSetSize: parseInt($('#' + domId + '-table-size').val()),
                         selectResultSetSize: parseInt($('#' + domId + '-select-size').val()),
                         optimizeForMobile: ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val()),
+                        outcomeLabelOutsideButton: ManyWhoUtils.getBooleanValue($('#' + domId + '-outcome-label-outside-button').val()),
                         register: registry
                     });
                 }
@@ -1376,6 +1377,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-table-size" value="10" />';
             html += '<input type="hidden" id="' + domId + '-select-size" value="10" />';
             html += '<input type="hidden" id="' + domId + '-optimize-for-mobile" value="false" />';
+            html += '<input type="hidden" id="' + domId + '-outcome-label-outside-button" value="false" />';
 
             html += '<div id="' + domId + '-debug" class="' + containerCss + ' manywho-debug-info">';
             html += '</div>';
@@ -1442,6 +1444,7 @@ permissions and limitations under the License.
             $('#' + domId + '-table-size').val(opts.tableResultSetSize);
             $('#' + domId + '-select-size').val(opts.selectResultSetSize);
             $('#' + domId + '-optimize-for-mobile').val(opts.optimizeForMobile);
+            $('#' + domId + '-outcome-label-outside-button').val(opts.outcomeLabelOutsideButton);
             $('#' + domId + '-is-full-width').val(opts.isFullWidth);
 
             // If the user clicks the cancel button, we hide the sharing modal dialog
@@ -1519,7 +1522,7 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, register: null };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false, register: null };
 
     $.fn.manywhoRuntimeEngine.runDefaults = {
         domId: null, 

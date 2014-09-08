@@ -1493,6 +1493,7 @@ permissions and limitations under the License.
         var outcomeDomId = null;
         var buttonClass = 'btn';
         var optimizeForMobile = false;
+        var outcomeLabelOutsideButton = false;
 
         // Check to see if the user wants the outcomes to be printed somewhere else
         if (formElementBindingId != null &&
@@ -1507,6 +1508,9 @@ permissions and limitations under the License.
 
         // Get the mobile optimization status
         optimizeForMobile = ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val());
+
+        // Determine if the outcome content should be inside the button or not
+        outcomeLabelOutsideButton = ManyWhoUtils.getBooleanValue($('#' + domId + '-outcome-label-outside-button').val());
 
         if (formActionBinding == ManyWhoConstants.ACTION_BINDING_SAVE ||
             (formElementBindingId != null &&
@@ -1530,15 +1534,21 @@ permissions and limitations under the License.
             }
 
             if (formActionType != 'LINK') {
-                // Print the outcome button
-                $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</button>');
+                if (outcomeLabelOutsideButton == true) {
+                    // Print the outcome button with the content beside it rather than inside the button
+                    $('#' + outcomeDomId).append('<div class="row-fluid"><div class="span12"><button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">&nbsp;</button> ' + label + '</div></div>');
+                } else {
+                    // Print the outcome button
+                    $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</button>');
+                }
             } else {
                 // Print the outcome link
                 $('#' + outcomeDomId).append('<p class="manywho-outcome-link" align="center"><a href="#" class="manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</a></p>');
             }
 
             // If we're not optimizing for mobile, we add a space to the end
-            if (optimizeForMobile == false) {
+            if (optimizeForMobile == false &&
+                outcomeLabelOutsideButton == false) {
                 $('#' + outcomeDomId).append('&nbsp;');
             }
 
@@ -2705,6 +2715,7 @@ permissions and limitations under the License.
             $(this).append('<input type="hidden" id="' + domId + '-state-id" value="' + opts.stateId + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-add-social" value="' + opts.addRealtime + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-optimize-for-mobile" value="' + opts.optimizeForMobile + '" />');
+            $(this).append('<input type="hidden" id="' + domId + '-outcome-label-outside-button" value="' + opts.outcomeLabelOutsideButton + '" />');
 
             $(this).append('<div id="' + domId + '-registry" style="display:none;"></div>');
             $(this).append('<div id="' + domId + '-manywho-runtime-form-event-data" style="display:none;"></div>');
@@ -3112,6 +3123,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false };
+    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false };
 
 })(jQuery);
