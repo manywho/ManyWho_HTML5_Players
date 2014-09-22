@@ -361,7 +361,7 @@ permissions and limitations under the License.
 
     // This method is used to make a call to the engine to execute.
     //
-    var execute = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
+    var  execute = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId) {
         // Stop automatic synchronization
         checkStateChanges(domId, false);
 
@@ -377,7 +377,7 @@ permissions and limitations under the License.
 
         var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val();
         var requestType = 'POST';
-        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, navigationItemId);
+        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId);
 
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
@@ -807,13 +807,14 @@ permissions and limitations under the License.
     // is sort of recursive as we need to call it every time the engine returns a response and we want
     // to make another request.
     //
-    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
+    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId) {
         var executeRequestData = '';
 
         executeRequestData += '{';
         executeRequestData += '"stateId":"' + $('#' + domId + '-state-id').val() + '",';
         executeRequestData += '"stateToken":"' + $('#' + domId + '-state-token').val() + '",';
         executeRequestData += '"currentMapElementId":"' + $('#' + domId + '-element-id').val() + '",';
+        executeRequestData += '"selectedMapElementId":"' + $('#' + domId + '-selected-map-element').val() + '",';
         executeRequestData += '"navigationElementId":"' + $('#' + domId + '-navigation-element-id').val() + '",';
         executeRequestData += '"geoLocation":{';
         executeRequestData += '"latitude":' + $('#' + domId + '-position-latitude').val() + ',';
@@ -831,6 +832,13 @@ permissions and limitations under the License.
             executeRequestData += '"selectedNavigationItemId":"' + navigationItemId + '",';
         } else {
             executeRequestData += '"selectedNavigationItemId":null,';
+        }
+
+        if (selectedMapElementId != null &&
+            selectedMapElementId.trim().length > 0) {
+            executeRequestData += '"selectedMapElementId":"' + selectedMapElementId + '",';
+        } else {
+            executeRequestData += '"selectedMapElementId":null,';
         }
 
         executeRequestData += '"mapElementInvokeRequest":{';
@@ -1481,8 +1489,8 @@ permissions and limitations under the License.
                 sessionUrl: sessionUrl,
                 updateCallbackFunction: updateCallbackFunction,
                 syncTiming: syncTiming,
-                navigationElementId: navigationElementId,
-            }
+                navigationElementId: navigationElementId
+            };
             // Run the flow using the internal method
             doRun(options);
         },
@@ -1496,7 +1504,21 @@ permissions and limitations under the License.
             }
 
             // Execute the engine based on the selected
-            execute(domId, 'NAVIGATE', null, createFormRequest(domId), navigationItemId);
+            execute(domId, 'NAVIGATE', null, createFormRequest(domId), navigationItemId, null);
+        },
+        link: function (selectedMapElementId) {
+            var domId = $(this).attr('id');
+
+            $(domId + '-selected-map-element').val(selectedMapElementId);
+
+            if (selectedMapElementId == null ||
+                selectedMapElementId.trim().length == 0) {
+                alert('The location cannot be set to nothing.');
+                return;
+            }
+
+            // Execute the engine based on the selected
+            execute(domId, 'NAVIGATE', null, createFormRequest(domId), null, selectedMapElementId);
         },
         clear: function () {
             var domId = $(this).attr('id');
