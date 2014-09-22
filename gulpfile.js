@@ -1,4 +1,6 @@
 var gulp = require('gulp');
+var replace = require('gulp-replace');
+var argv = require('yargs').argv;
 
 gulp.task('default', function () {
    
@@ -34,5 +36,19 @@ gulp.task('default', function () {
 
     gulp.src('players/*.htm')
         .pipe(gulp.dest('dist_players'));
+
+    if (argv.env == "staging") {
+
+        console.log("Setting CDN to staging");
+
+        gulp.src(['dist/**/*.css', 'dist/**/*.js', 'dist/**/*.html'])
+            .pipe(replace('cdn.manywho.com', 'cdn.staging.manywho.com'))
+            .pipe(gulp.dest('dist'));
+
+        gulp.src('dist_players/*.htm')
+            .pipe(replace('cdn.manywho.com', 'cdn.staging.manywho.com'))
+            .pipe(gulp.dest('dist_players'));
+
+    }
 
 });
