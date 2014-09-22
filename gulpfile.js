@@ -34,9 +34,6 @@ gulp.task('default', function () {
     gulp.src('manywho.fileDataProxy.js')
         .pipe(gulp.dest('dist'));
 
-    gulp.src('players/*.htm')
-        .pipe(gulp.dest('dist_players'));
-
     if (argv.env == "staging") {
 
         console.log("Setting CDN to staging");
@@ -45,10 +42,16 @@ gulp.task('default', function () {
             .pipe(replace('cdn.manywho.com', 'cdn.staging.manywho.com'))
             .pipe(gulp.dest('dist'));
 
-        gulp.src('dist_players/*.htm')
+        gulp.src('players/*.htm')
             .pipe(replace('cdn.manywho.com', 'cdn.staging.manywho.com'))
             .pipe(gulp.dest('dist_players'));
 
     }
+	else {
+	
+	    gulp.src('players/*.htm')
+        .pipe(gulp.dest('dist_players'));
+	
+	}
 
 });
