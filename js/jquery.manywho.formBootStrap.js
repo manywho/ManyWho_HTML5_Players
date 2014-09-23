@@ -3094,7 +3094,7 @@ permissions and limitations under the License.
                         "manywho_elements",
                     ],
                     external_plugins: {
-                        "moxiemanager": "https://cdn.manywho.com/extensions/moxiemanager/plugin.js",
+                        "moxiemanager": "https://flow.manywho.com/extensions/moxiemanager/plugin.js",
                         "nanospell": "https://flow.manywho.com/extensions/nanospell/plugin.js",
                     },
                     content_css: ["https://cdn.manywho.com/css/tinymce.css", "/css/tenant/" + ManyWhoSharedServices.getTenantId() + "/customstyles"],
