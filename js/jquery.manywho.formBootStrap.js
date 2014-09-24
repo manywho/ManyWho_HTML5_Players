@@ -1188,7 +1188,6 @@ permissions and limitations under the License.
                         xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
                     },
                     add: function (e, data) {
-                        data.context = $('<p/>').text('Uploading...').appendTo(document.body);
                         data.submit();
                     },
                     done: function (e, data) {
@@ -2432,6 +2431,7 @@ permissions and limitations under the License.
                 if (formMetaDataEntry.objectData != null &&
                     formMetaDataEntry.objectData.length > 0 &&
                     formMetaDataEntry.objectDataRequest == null &&
+                    storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_FILES &&
                     storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_TAG) {
                     var found = false;
 
