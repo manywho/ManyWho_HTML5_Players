@@ -280,7 +280,7 @@ permissions and limitations under the License.
             // Print out the basic UI
             html += '<div id="' + domId + '-map-elements" style="display: none;"></div>';
             html += '<div class="row-fluid">';
-            html += '    <div class="span1"><img src="/extensions/glyphicons/navigation_element_small.png" height="48" width="48" alt="Navigation" style="padding-bottom: 10px;"></div>';
+            html += '    <div class="span1"><img src="https://cdn.manywho.com/extensions/glyphicons/navigation_element_small.png" height="48" width="48" alt="Navigation" style="padding-bottom: 10px;"></div>';
             html += '    <div class="span11">Use the editor below to build your Navigation. Simply click the Add Navigation Item button to build out your navigation, then drag the entries to the right to make them \'child\' navigation items.</div>';
             html += '</div>';
             html += '<div class="row-fluid"><div class="span12">';

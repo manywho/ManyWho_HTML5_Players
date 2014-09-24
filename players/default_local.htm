@@ -32,14 +32,15 @@
     <link type="text/css" href="/localcdn/extensions/jsoneditor/jsoneditor-min.css" rel="stylesheet" />
 
         
-    <link href="/localcdn/extensions/social/jquery-ui-1.8.22.custom.css" rel="stylesheet" type="text/css" />
+    <link href="/localcdn/extensions/jquery/css/jquery-ui-1.10.min.css" rel="stylesheet" type="text/css" />
     <link href="/localcdn/extensions/social/jquery.fileupload-ui.css" rel="stylesheet" type="text/css" />    
     <link href="/localcdn/extensions/social/ui.jqgrid.css" rel="stylesheet" type="text/css"/>
     <link href="/localcdn/extensions/social/shCore.css" rel="stylesheet" type="text/css" />
     <link href="/localcdn/extensions/social/shThemeDefault.css" rel="stylesheet" type="text/css" />
 
 
-    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/localcdn/extensions/jquery/js/jquery-ui-1.10.min.js"></script>
 
     <script type="text/javascript" src="/localcdn/extensions/json2/json2.js"></script>
 
@@ -72,6 +73,7 @@
     <script type="text/javascript" src="/localcdn/js/manywho.utils.js"></script>
     <script type="text/javascript" src="/localcdn/js/manywho.flow.js"></script>
     <script type="text/javascript" src="/localcdn/js/manywho.objectDataProxy.js"></script>
+    <script type="text/javascript" src="/localcdn/js/manywho.fileDataProxy.js"></script>
     <script type="text/javascript" src="/localcdn/js/manywho.social.js"></script>
 
     <script type="text/javascript" src="/localcdn/run/js/manywho.runtime.engine.js"></script>
@@ -144,6 +146,7 @@
             var sessionId = ManyWhoUtils.getQueryStringParam('session-token');
             var sessionUrl = ManyWhoUtils.getQueryStringParam('session-url');
             var providedNavigationElementId = ManyWhoUtils.getQueryStringParam('navigation-element-id');
+            var reportingModeSetting = ManyWhoUtils.getQueryStringParam('reporting-mode');
 
             // Get the authorization if it has been provided as part of a join request
             var authorizationToken = ManyWhoUtils.getQueryStringParam('authorization');
@@ -164,42 +167,40 @@
             // We set this flag so we only build the navigation once
             var firstLoad = true;
 
-            $('#manywho-engine').manywhoRuntimeEngine({ tenantId: providedTenantId, rewriteUrl: moveToJoin, authorization: authorizationToken });
-            $('#manywho-engine').manywhoRuntimeEngine('run',
-                                                      stateId,
-                                                      flowId,
-                                                      flowVersionId,
-                                                      null,
-                                                      null,
-                                                      null,
-                                                      null,
-                                                      null,
-                                                      mode,
-                                                      sessionId,
-                                                      sessionUrl,
-                                                      function (data, previousData, previousSelectedOutcomeId) {
-                                                          // Check to see if we need to build the navigation
-                                                          if (providedNavigationElementId != null &&
-                                                              providedNavigationElementId.trim().length > 0) {
-                                                              if (firstLoad == true) {
-                                                                  $('#manywho-navigation').manywhoNavigation({
-                                                                      stateId: data.stateId,
-                                                                      stateToken: data.stateToken,
-                                                                      tenantId: providedTenantId,
-                                                                      navigationElementId: providedNavigationElementId,
-                                                                      navigateFunction: function (navigationItemId) {
-                                                                          $('#manywho-engine').manywhoRuntimeEngine('navigate', navigationItemId);
-                                                                      }
-                                                                  });
-                                                              }
-                                                              $('#manywho-navigation').manywhoNavigation('refresh');
-                                                          }
+            $('#manywho-engine').manywhoRuntimeEngine({ tenantId: providedTenantId, rewriteUrl: moveToJoin, authorization: authorizationToken, reportingMode: reportingModeSetting });
 
-                                                          // Set the flag to false so we don't build the menu again
-                                                          firstLoad = false;
-                                                      },
-                                                      null,
-                                                      providedNavigationElementId);
+            var options = {
+                stateId: stateId,
+                flowId: flowId,
+                flowVersionId: flowVersionId,
+                mode: mode,
+                sessionId: sessionId,
+                sessionUrl: sessionUrl,
+                navigationElementId: providedNavigationElementId,
+                updateCallbackFunction: function (data, previousData, previousSelectedOutcomeId) {
+                    // Check to see if we need to build the navigation
+                    if (providedNavigationElementId != null &&
+                        providedNavigationElementId.trim().length > 0) {
+                        if (firstLoad == true) {
+                            $('#manywho-navigation').manywhoNavigation({
+                                stateId: data.stateId,
+                                stateToken: data.stateToken,
+                                tenantId: providedTenantId,
+                                navigationElementId: providedNavigationElementId,
+                                navigateFunction: function (navigationItemId) {
+                                    $('#manywho-engine').manywhoRuntimeEngine('navigate', navigationItemId);
+                                }
+                            });
+                        }
+                        $('#manywho-navigation').manywhoNavigation('refresh');
+                    }
+
+                    // Set the flag to false so we don't build the menu again
+                    firstLoad = false;
+                }
+            }
+
+            $('#manywho-engine').manywhoRuntimeEngine('execute', options);
         });
 
     </script>

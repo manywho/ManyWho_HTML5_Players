@@ -80,31 +80,32 @@ var ManyWhoSharedServices = {
                                null,
                                null,
                                function (data, status, xhr) {
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var authenticationToken = null;
-                                                                                        var manywhoTenantId = null;
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
-                                                                                        $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-                                                                                        $('#manywho-dialog-title').html('Loading...');
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       doneCallbackFunction: function (outputValues) {
+                                           var authenticationToken = null;
+                                           var manywhoTenantId = null;
 
-                                                                                        // Get the values out of the outputs
-                                                                                        authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
-                                                                                        manywhoTenantId = ManyWhoUtils.getOutcomeValue(outputValues, 'ManyWhoTenantId', null);
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
 
-                                                                                        // Call the OK callback
-                                                                                        okCallback.call(this, authenticationToken, manywhoTenantId);
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    null);
+                                           // Get the values out of the outputs
+                                           authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
+                                           manywhoTenantId = ManyWhoUtils.getOutcomeValue(outputValues, 'ManyWhoTenantId', null);
+
+                                           // Call the OK callback
+                                           okCallback.call(this, authenticationToken, manywhoTenantId);
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    // Show the authentication dialog
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });

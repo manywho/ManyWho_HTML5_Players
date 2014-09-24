@@ -19,7 +19,7 @@ var ManyWhoTagNavigationEditor = {
         $('#' + domId).append('<div id="' + domId + '-navigation-editor"></div>');
         $('#' + domId + '-navigation-editor').manywhoNavigationEditor();
     },
-    setValue: function (domId, value, objectData) {
+    setValue: function (domId, value, objectData, tags) {
         $('#' + domId + '-navigation-editor').manywhoNavigationEditor('setValue', objectData);
     },
     getValue: function (domId) {

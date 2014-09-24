@@ -1,7 +1,14 @@
 # Ignore the files we do not have distribution rights over #
 ############################################################
-extensions/
 .idea/
+extensions/mxgraph/
+extensions/moxiemanager/
+extensions/glyphicons/*.ai
+extensions/glyphicons/*.svg
+
+dist/
+dist_players/
+node_modules/
 
 # OS generated files #
 ######################

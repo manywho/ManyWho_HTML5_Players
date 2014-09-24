@@ -274,11 +274,19 @@ permissions and limitations under the License.
         if (currentStreamId != null &&
             currentStreamId.trim().length > 0 &&
             $('#' + domId + '-social-feed').html().length == 0) {
+            var fullWidth = false;
+
+            if ($('#' + domId + '-is-full-width').val() != null &&
+                $('#' + domId + '-is-full-width').val().trim().toLowerCase() == 'true') {
+                fullWidth = true;
+            }
+
             var options = {
                 domId: domId,
                 stateId: $('#' + domId + '-state-id').val(),
                 networkName: 'Chatter',
-                streamId: currentStreamId
+                streamId: currentStreamId,
+                isFullWidth: fullWidth
             };
 
             // Show the feed controls
@@ -353,7 +361,7 @@ permissions and limitations under the License.
 
     // This method is used to make a call to the engine to execute.
     //
-    var execute = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
+    var  execute = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId) {
         // Stop automatic synchronization
         checkStateChanges(domId, false);
 
@@ -369,7 +377,7 @@ permissions and limitations under the License.
 
         var requestUrl = $('#' + domId + '-engine-url').val() + '/state/' + $('#' + domId + '-state-id').val();
         var requestType = 'POST';
-        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, navigationItemId);
+        var requestData = createRequestData(domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId);
 
         // Create a header for the tenant id
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
@@ -542,6 +550,7 @@ permissions and limitations under the License.
                         tableResultSetSize: parseInt($('#' + domId + '-table-size').val()),
                         selectResultSetSize: parseInt($('#' + domId + '-select-size').val()),
                         optimizeForMobile: ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val()),
+                        outcomeLabelOutsideButton: ManyWhoUtils.getBooleanValue($('#' + domId + '-outcome-label-outside-button').val()),
                         register: registry
                     });
                 }
@@ -798,13 +807,14 @@ permissions and limitations under the License.
     // is sort of recursive as we need to call it every time the engine returns a response and we want
     // to make another request.
     //
-    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId) {
+    var createRequestData = function (domId, invokeType, selectedOutcomeId, formRequest, navigationItemId, selectedMapElementId) {
         var executeRequestData = '';
 
         executeRequestData += '{';
         executeRequestData += '"stateId":"' + $('#' + domId + '-state-id').val() + '",';
         executeRequestData += '"stateToken":"' + $('#' + domId + '-state-token').val() + '",';
         executeRequestData += '"currentMapElementId":"' + $('#' + domId + '-element-id').val() + '",';
+        executeRequestData += '"selectedMapElementId":"' + $('#' + domId + '-selected-map-element').val() + '",';
         executeRequestData += '"navigationElementId":"' + $('#' + domId + '-navigation-element-id').val() + '",';
         executeRequestData += '"geoLocation":{';
         executeRequestData += '"latitude":' + $('#' + domId + '-position-latitude').val() + ',';
@@ -822,6 +832,13 @@ permissions and limitations under the License.
             executeRequestData += '"selectedNavigationItemId":"' + navigationItemId + '",';
         } else {
             executeRequestData += '"selectedNavigationItemId":null,';
+        }
+
+        if (selectedMapElementId != null &&
+            selectedMapElementId.trim().length > 0) {
+            executeRequestData += '"selectedMapElementId":"' + selectedMapElementId + '",';
+        } else {
+            executeRequestData += '"selectedMapElementId":null,';
         }
 
         executeRequestData += '"mapElementInvokeRequest":{';
@@ -965,76 +982,79 @@ permissions and limitations under the License.
         }
     };
 
-    var doRun = function (domId, stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
+    var doRun = function (opts) {
+
+        var options = $.extend({}, $.fn.manywhoRuntimeEngine.runDefaults, opts);
+
         // Make the outcome panel blank if it's null
-        if (outcomePanel == null) {
-            outcomePanel = '';
+        if (options.outcomePanel == null) {
+            options.outcomePanel = '';
         }
 
-        if (formLabelPanel == null) {
-            formLabelPanel = '';
+        if (options.formLabelPanel == null) {
+            options.formLabelPanel = '';
         }
 
-        if (mode == null) {
-            mode = '';
+        if (options.mode == null) {
+            options.mode = '';
         }
 
-        if (flowVersionId == null) {
-            flowVersionId = '';
+        if (options.flowVersionId == null) {
+            options.flowVersionId = '';
         }
 
         // Set the done callback function to the provided value
         //doneCallback = doneCallbackFunction;
 
         // Clear the values so we don't get bleeding if the browser caches anything
-        $('#' + domId + '-flow-id').val('');
-        $('#' + domId + '-flow-version-id').val('');
-        $('#' + domId + '-state-id').val('');
-        $('#' + domId + '-parent-state-id').val('');
-        $('#' + domId + '-state-token').val('');
-        $('#' + domId + '-element-id').val('');
-        $('#' + domId + '-recording-settings-id').val('');
-        $('#' + domId + '-recording-settings-mode').val('');
-        $('#' + domId + '-recording-name').val('');
-        $('#' + domId + '-outcome-panel').val('');
-        $('#' + domId + '-form-label-panel').val('');
-        $('#' + domId + '-mode').val('');
+        $('#' + options.domId + '-flow-id').val('');
+        $('#' + options.domId + '-flow-version-id').val('');
+        $('#' + options.domId + '-state-id').val('');
+        $('#' + options.domId + '-parent-state-id').val('');
+        $('#' + options.domId + '-state-token').val('');
+        $('#' + options.domId + '-element-id').val('');
+        $('#' + options.domId + '-recording-settings-id').val('');
+        $('#' + options.domId + '-recording-settings-mode').val('');
+        $('#' + options.domId + '-recording-name').val('');
+        $('#' + options.domId + '-outcome-panel').val('');
+        $('#' + options.domId + '-form-label-panel').val('');
+        $('#' + options.domId + '-mode').val('');
 
         // Store the values in the dom
-        $('#' + domId + '-state-id').val(stateId);
-        $('#' + domId + '-flow-id').val(flowId);
-        $('#' + domId + '-flow-version-id').val(flowVersionId);
-        $('#' + domId + '-outcome-panel').val(outcomePanel);
-        $('#' + domId + '-form-label-panel').val(formLabelPanel);
-        $('#' + domId + '-mode').val(mode);
-        $('#' + domId + '-session-id').val(sessionId);
-        $('#' + domId + '-session-url').val(sessionUrl);
+        $('#' + options.domId + '-state-id').val(options.stateId);
+        $('#' + options.domId + '-flow-id').val(options.flowId);
+        $('#' + options.domId + '-flow-version-id').val(options.flowVersionId);
+        $('#' + options.domId + '-outcome-panel').val(options.outcomePanel);
+        $('#' + options.domId + '-form-label-panel').val(options.formLabelPanel);
+        $('#' + options.domId + '-mode').val(options.mode);
+        $('#' + options.domId + '-session-id').val(options.sessionId);
+        $('#' + options.domId + '-session-url').val(options.sessionUrl);
 
         // Apply the sync timing if a value has been provided
-        if (syncTiming != null) {
-            $('#' + domId + '-sync-timing').val(syncTiming);
+        if (options.syncTiming != null) {
+            $('#' + options.domId + '-sync-timing').val(options.syncTiming);
         }
 
         // Apply the navigation if a value has been provided
-        if (navigationElementId != null) {
-            $('#' + domId + '-navigation-element-id').val(navigationElementId);
+        if (options.navigationElementId != null) {
+            $('#' + options.domId + '-navigation-element-id').val(options.navigationElementId);
         }
 
-        if (inputs == null) {
+        if (options.inputs == null) {
             // Try getting the inputs from the query string input parameters
-            inputs = ManyWhoUtils.getInputQueryStringParams();
+            options.inputs = ManyWhoUtils.getInputQueryStringParams();
         }
 
         // Store the inputs in the page database
-        $('#' + domId + '-inputs-database').data('inputs', inputs);
-        $('#' + domId + '-inputs-database').data('annotations', annotations);
-        $('#' + domId + '-inputs-database').data('doneCallback', doneCallbackFunction);
-        $('#' + domId + '-inputs-database').data('updateCallback', updateCallbackFunction);
-        $('#' + domId + '-inputs-database').data('updateCallbackPrevious', null);
-        $('#' + domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', null);
+        $('#' + options.domId + '-inputs-database').data('inputs', options.inputs);
+        $('#' + options.domId + '-inputs-database').data('annotations', options.annotations);
+        $('#' + options.domId + '-inputs-database').data('doneCallback', options.doneCallbackFunction);
+        $('#' + options.domId + '-inputs-database').data('updateCallback', options.updateCallbackFunction);
+        $('#' + options.domId + '-inputs-database').data('updateCallbackPrevious', null);
+        $('#' + options.domId + '-inputs-database').data('updateCallbackPreviousSelectedOutcomeId', null);
 
-        if (mode == ManyWhoConstants.MODE_DEBUG ||
-            mode == ManyWhoConstants.MODE_DEBUG_STEPTHROUGH) {
+        if (options.mode == ManyWhoConstants.MODE_DEBUG ||
+            options.mode == ManyWhoConstants.MODE_DEBUG_STEPTHROUGH) {
             // Create the alert html just in case it has been deleted
             //$('#' + domId + '-debug').html(createAlert(domId));
 
@@ -1045,10 +1065,10 @@ permissions and limitations under the License.
             //})
 
             // Show the debug panel
-            $('#' + domId + '-debug').show();
+            $('#' + options.domId + '-debug').show();
         } else {
             // Hide the debug panel
-            $('#' + domId + '-debug').hide();
+            $('#' + options.domId + '-debug').hide();
         }
 
         // Finally, we grab the geo location - commented out as we have this turned off by default
@@ -1083,7 +1103,7 @@ permissions and limitations under the License.
         //                                             options);
         //} else {
         // Run the requested flow - geo location is not supported just yet
-        runFlow(domId);
+        runFlow(options.domId);
         //}
     };
 
@@ -1331,6 +1351,7 @@ permissions and limitations under the License.
             html += '<div style="display:none;" id="' + domId + '-viewstate-database"></div>';
             html += '<div style="display:none;" id="' + domId + '-registry-database"></div>';
 
+            html += '<input type="hidden" id="' + domId + '-is-full-width" value="" />';
             html += '<input type="hidden" id="' + domId + '-engine-url" value="" />';
             html += '<input type="hidden" id="' + domId + '-flow-id" value="" />';
             html += '<input type="hidden" id="' + domId + '-flow-version-id" value="" />';
@@ -1364,6 +1385,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-table-size" value="10" />';
             html += '<input type="hidden" id="' + domId + '-select-size" value="10" />';
             html += '<input type="hidden" id="' + domId + '-optimize-for-mobile" value="false" />';
+            html += '<input type="hidden" id="' + domId + '-outcome-label-outside-button" value="false" />';
 
             html += '<div id="' + domId + '-debug" class="' + containerCss + ' manywho-debug-info">';
             html += '</div>';
@@ -1382,23 +1404,21 @@ permissions and limitations under the License.
             // Add the click event for returning to the parent
             $('#' + domId + '-return-to-parent').click(function (event) {
                 event.preventDefault();
+                var localDomId = domId;
+
+                var options = {
+                    domId: localDomId,
+                    stateId: $('#' + domId + '-parent-state-id').val(),
+                    doneCallbackFunction: $('#' + domId + '-inputs-database').data('doneCallback'),
+                    outcomePanel: $('#' + domId + '-outcome-panel').val(),
+                    formLabelPanel: $('#' + domId + '-form-label-panel').val(),
+                    mode: $('#' + domId + '-mode').val(),
+                    updateCallbackFunction: $('#' + domId + '-inputs-database').data('updateCallback'),
+                    syncTiming: $('#' + domId + '-sync-timing').val()
+                };
 
                 // Run the flow based on the parent - joining the parent
-                doRun(domId,
-                      $('#' + domId + '-parent-state-id').val(),
-                      null,
-                      null,
-                      null,
-                      $('#' + domId + '-inputs-database').data('doneCallback'),
-                      $('#' + domId + '-outcome-panel').val(),
-                      $('#' + domId + '-form-label-panel').val(),
-                      null,
-                      $('#' + domId + '-mode').val(),
-                      null,
-                      null,
-                      $('#' + domId + '-inputs-database').data('updateCallback'),
-                      $('#' + domId + '-sync-timing').val(),
-                      null);
+                doRun(options);
             });
 
             // Create the alert html
@@ -1432,6 +1452,8 @@ permissions and limitations under the License.
             $('#' + domId + '-table-size').val(opts.tableResultSetSize);
             $('#' + domId + '-select-size').val(opts.selectResultSetSize);
             $('#' + domId + '-optimize-for-mobile').val(opts.optimizeForMobile);
+            $('#' + domId + '-outcome-label-outside-button').val(opts.outcomeLabelOutsideButton);
+            $('#' + domId + '-is-full-width').val(opts.isFullWidth);
 
             // If the user clicks the cancel button, we hide the sharing modal dialog
             $('#' + domId + '-cancel-post-button').click(function (event) {
@@ -1446,9 +1468,31 @@ permissions and limitations under the License.
                 $('#' + domId + '-registry-database').data('registry', opts.register);
             }
         },
-        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
+        execute: function(options) {
+            options.domId = $(this).attr('id');
             // Run the flow using the internal method
-            doRun($(this).attr('id'), stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId);
+            doRun(options);
+        },
+        run: function (stateId, flowId, flowVersionId, inputs, doneCallbackFunction, outcomePanel, formLabelPanel, annotations, mode, sessionId, sessionUrl, updateCallbackFunction, syncTiming, navigationElementId) {
+            var options = {
+                domId: $(this).attr('id'),
+                stateId: stateId,
+                flowId: flowId,
+                flowVersionId: flowVersionId,
+                inputs: inputs,
+                doneCallbackFunction: doneCallbackFunction,
+                outcomePanel: outcomePanel,
+                formLabelPanel: formLabelPanel,
+                annotations: annotations,
+                mode: mode,
+                sessionId: sessionId,
+                sessionUrl: sessionUrl,
+                updateCallbackFunction: updateCallbackFunction,
+                syncTiming: syncTiming,
+                navigationElementId: navigationElementId
+            };
+            // Run the flow using the internal method
+            doRun(options);
         },
         navigate: function (navigationItemId) {
             var domId = $(this).attr('id');
@@ -1460,7 +1504,21 @@ permissions and limitations under the License.
             }
 
             // Execute the engine based on the selected
-            execute(domId, 'NAVIGATE', null, createFormRequest(domId), navigationItemId);
+            execute(domId, 'NAVIGATE', null, createFormRequest(domId), navigationItemId, null);
+        },
+        link: function (selectedMapElementId) {
+            var domId = $(this).attr('id');
+
+            $(domId + '-selected-map-element').val(selectedMapElementId);
+
+            if (selectedMapElementId == null ||
+                selectedMapElementId.trim().length == 0) {
+                alert('The location cannot be set to nothing.');
+                return;
+            }
+
+            // Execute the engine based on the selected
+            execute(domId, 'NAVIGATE', null, createFormRequest(domId), null, selectedMapElementId);
         },
         clear: function () {
             var domId = $(this).attr('id');
@@ -1486,6 +1544,24 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, register: null };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false, register: null };
+
+    $.fn.manywhoRuntimeEngine.runDefaults = {
+        domId: null, 
+        stateId: null,
+        flowId: null,
+        flowVersionId: null,
+        inputs: null, 
+        doneCallbackFunction: null,
+        outcomePanel: null, 
+        formLabelPanel: null,
+        annotations: null,
+        mode: null,
+        sessionId: null,
+        sessionUrl: null,
+        updateCallbackFunction: null,
+        syncTiming: null,
+        navigationElementId: null
+    }
 
 })(jQuery);

@@ -148,6 +148,9 @@ function configurePage(options) {
                 // Set the cookie for moxie manager
                 ManyWhoUtils.setCookie('ManyWhoTenant', manywhoTenantId);
 
+                // Update the tenancy information
+                populateTenancyInformation();
+
                 // Update the tools menu
                 updateTools.call(this);
             });
@@ -195,6 +198,60 @@ function configurePage(options) {
             // Update the tools once the sync is complete
             updateTools.call(this);
         });
+    };
+
+    var populateTenancyInformation = function () {
+        ManyWhoTenant.load('ManyWhoBuilder.PopulateTenancyInformation',
+                           true,
+                           null,
+                           function (data, status, xhr) {
+                               // Check to see if we have any data coming back for the tenant
+                               if (data != null) {
+                                   var subtenantInfo = '';
+                                   var replaceEnd = null;
+
+                                   // Clear the list of players
+                                   $('#manywho-tenant-name').html(data.developerName);
+
+                                   // We remove the +whatever.com at the end to make the sub-tenants a little neater
+                                   replaceEnd = '+' + data.developerName.substring(1);
+
+                                   // Add the beginning piece
+                                   subtenantInfo += '<a tabindex="-1" href="#"><i class="icon-chevron-right"></i> Sub-Tenants</a><ul class="dropdown-menu">';
+
+                                   // Check to see if we have any sub tenants for this main tenant
+                                   if (data.subTenants != null &&
+                                       data.subTenants.length > 0) {
+                                       for (var i = 0; i < data.subTenants.length; i++) {
+                                           subtenantInfo += '<li><a tabindex="-1" href="#" class="manywho-sub-tenants-drop-down-item" data-subtenant="' + data.subTenants[i].developerName + '">' + data.subTenants[i].developerName.replace(replaceEnd, '') + '</a></li>';
+                                       }
+                                   } else {
+                                       subtenantInfo += '<li><a tabindex="-1" href="#" data-subtenant="None">None</a></li>';
+                                   }
+
+                                   // Finish up the menu
+                                   subtenantInfo += '</ul>';
+
+                                   // Create the sub-tenants listing as required
+                                   $('#manywho-sub-tenants-list').html(subtenantInfo);
+
+                                   $('.manywho-sub-tenants-drop-down-item').on('click', function (event) {
+                                       var subTenantUsername = null;
+
+                                       event.preventDefault();
+
+                                       // Change the username to the tenant username
+                                       subTenantUsername = ManyWhoUtils.getCookie('AuthorUsername').replace($('#manywho-tenant-name').html(), $(this).attr('data-subtenant'));
+
+                                       // Update the cooking with the new username
+                                       ManyWhoUtils.setCookie('AuthorUsername', subTenantUsername);
+
+                                       // Get the user to login again
+                                       reLogin(this);
+                                   });
+                               }
+                           },
+                           createErrorAlert);
     };
 
     var populatePlayers = function () {
@@ -320,6 +377,14 @@ function configurePage(options) {
         ManyWhoSharedServices.showSharedElementConfigDialog(ManyWhoConstants.SERVICE_ELEMENT_TYPE_IMPLEMENTATION_SERVICE, null, null, createErrorAlert);
     });
 
+    $("#manage-assets").click(function (event) {
+    				event.preventDefault();
+    				moxman.browse({
+    								title: "Assets",
+												leftpanel: false
+    				});
+    });
+
     // Set up the flow graph
     $('#flow-graph').manywhoMxGraph({ developerMode: ManyWhoSharedServices.getDeveloperMode() });
 
@@ -423,11 +488,11 @@ function configurePage(options) {
     $('#create-sub-tenant').click(function (event) {
         event.preventDefault();
 
-        var manywhoTenantId = ManyWhoSharedServices.getTenantId();
-        var authenticationToken = ManyWhoSharedServices.getAuthorAuthenticationToken();
-
         // Open the sub-tenant flow dialog
-        ManyWhoSharedServices.showSubTenantDialog(function (authenticationToken, manywhoTenantId) {});
+        ManyWhoSharedServices.showSubTenantDialog(function (outputValues) {
+            // Populate the sub-tenants again
+            populateTenancyInformation();
+        });
     });
 
     $('#close-flow').click(function (event) {

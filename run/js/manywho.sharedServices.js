@@ -111,31 +111,32 @@ var ManyWhoSharedServices = {
                                        inputs = ManyWhoSharedServices.createInput(inputs, 'Username', username, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
                                    }
 
-                                   $('#manywho-model-runtime').manywhoRuntimeEngine('run',
-                                                                                    null,
-                                                                                    data.id.id,
-                                                                                    data.id.versionId,
-                                                                                    inputs,
-                                                                                    function (outputValues) {
-                                                                                        var authenticationToken = null;
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       // TODO: this seems off, but it matches the current function signature
+                                       sessionId: true,
+                                       doneCallbackFunction: function (outputValues) {
+                                           var authenticationToken = null;
 
-                                                                                        // Hide the dialog
-                                                                                        $('#manywho-dialog').modal('hide');
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
 
-                                                                                        // Get the values out of the outputs
-                                                                                        authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
+                                           // Get the values out of the outputs
+                                           authenticationToken = ManyWhoUtils.getOutcomeValue(outputValues, 'AuthenticationToken', null);
 
-                                                                                        // Get the username so we can keep that for future logins
-                                                                                        ManyWhoUtils.setCookie('Username', ManyWhoUtils.getOutcomeValue(outputValues, 'Username', null));
+                                           // Get the username so we can keep that for future logins
+                                           ManyWhoUtils.setCookie('Username', ManyWhoUtils.getOutcomeValue(outputValues, 'Username', null));
 
-                                                                                        // Call the OK callback
-                                                                                        okCallback.call(this, authenticationToken);
-                                                                                    },
-                                                                                    'manywho-model-outcomes',
-                                                                                    'manywho-dialog-title',
-                                                                                    null,
-                                                                                    null,
-                                                                                    true);
+                                           // Call the OK callback
+                                           okCallback.call(this, authenticationToken);
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
 
                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true });
                                },

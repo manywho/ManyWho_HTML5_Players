@@ -19,7 +19,7 @@ var ManyWhoTagFormButtonEditor = {
         $('#' + domId).append('<div id="' + domId + '-form-editor"></div>');
         $('#' + domId + '-form-editor').manywhoFormEditor({ isButtonMode: true });
     },
-    setValue: function (domId, value, objectData) {
+    setValue: function (domId, value, objectData, tags) {
         $('#' + domId + '-form-editor').manywhoFormEditor('setValue', objectData);
     },
     getValue: function (domId) {

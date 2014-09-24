@@ -36,11 +36,11 @@ permissions and limitations under the License.
                 opts.register['init'].call(this, domId);
             }
         },
-        setValue: function (value, objectData) {
+        setValue: function (value, objectData, tags) {
             var domId = $(this).attr('id');
             var component = $('#' + domId + '-component').data('implementation');
 
-            return component['setValue'].call(this, domId, value, objectData);
+            return component['setValue'].call(this, domId, value, objectData, tags);
         },
         getValue: function () {
             var domId = $(this).attr('id');

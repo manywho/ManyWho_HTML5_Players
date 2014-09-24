@@ -2418,7 +2418,7 @@ permissions and limitations under the License.
                         "media table contextmenu paste"
 					],
 					external_plugins: {
-						"moxiemanager": "/extensions/moxiemanager/plugin.js"
+					    "moxiemanager": "https://flow.manywho.com/extensions/moxiemanager/plugin.js"
 					},
 					moxiemanager_title: 'Flow Assets',
 					moxiemanager_fullscreen: false,

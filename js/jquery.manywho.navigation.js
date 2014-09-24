@@ -173,12 +173,9 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
             $('#manywho-navigation-data').data('stateToken', opts.stateToken);
             $('#manywho-navigation-data').data('navigationElementId', opts.navigationElementId);
             $('#manywho-navigation-data').data('navigateFunction', opts.navigateFunction);
-
-            if (opts.isFullWidth == true) {
-                $('#manywho-navigation-data').data('containerCss', 'container-fluid');
-            } else {
-                $('#manywho-navigation-data').data('containerCss', 'container');
-            }
+            $('#manywho-navigation-data').data('isFullWidth', opts.isFullWidth);
+            $('#manywho-navigation-data').data('isFixedToTop', opts.isFixedToTop);
+            
         },
         refresh: function () {
             // Grab the dom id so we can get our values
@@ -190,7 +187,7 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
             var stateToken = $('#manywho-navigation-data').data('stateToken');
             var navigationElementId = $('#manywho-navigation-data').data('navigationElementId');
             var navigationFunction = $('#manywho-navigation-data').data('navigateFunction');
-            var containerCss = $('#manywho-navigation-data').data('containerCss');
+            var isFixedToTop = $('#manywho-navigation-data').data('isFixedToTop');
 
             // Add the tenant to the header so we have it in the request
             var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
@@ -205,7 +202,11 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
                                         var html = '';
                                         
                                         html += '<div class="navbar-inner">';
-                                        html +=     '<div class="' + containerCss + '">';
+
+                                        if (isFixedToTop)
+                                        {
+                                            html += '<div class="container" style="width: auto; padding: 0 20px;">';
+                                        }
 
                                         // The scaffolding to support a collapsing menu
                                         html +=         '<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">';
@@ -228,9 +229,13 @@ function createNavigationItems(root, navigationItems, navigationItemDataResponse
 
                                         html +=         '</div>';
  
+                                        if (isFixedToTop) {
+                                            html += '</div>';
+                                        }
+
                                         // Finish up the navigation
                                         html +=     '</div>';
-                                        html += '</div>';
+                                        
                                                                                             
                                         // Print the html to the document
                                         $('#manywho-navigation').html(html);

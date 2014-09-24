@@ -15,7 +15,7 @@
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/ace/mode-json.js" charset="utf-8"></script>
 
-    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/jquery/extensions/jquery.query-2.1.7.js"></script>
 
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/json2/json2.js"></script>
@@ -29,7 +29,7 @@
 
     <script type="text/javascript" src="https://cdn.manywho.com/build/js/manywho.sharedServices.js"></script>
 
-    <script type="text/javascript" src="https://flow.manywho.com/js/constants"></script>
+    <script type="text/javascript" src="/js/constants"></script>
 
     <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.logging.js"></script>
     <script type="text/javascript" src="https://cdn.manywho.com/js/manywho.ajax.js"></script>
@@ -376,6 +376,9 @@
             var source = null;
 
             source = [
+                    'api/admin/1/directory/{directoryId}/users/password',
+                    'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=',
+                    'api/admin/1/tenant',
                     'api/run/1/authentication',
                     'api/run/1/flow/name/{flowName}',
                     'api/run/1/flow/' + getFlowId(),
@@ -424,6 +427,7 @@
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group/{groupElementId}',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group?filter=',
                     'api/draw/1/flow/' + getFlowId() + '/' + getEditingToken() + '/element/group',
+																				'api/draw/1/flow/revert/' + getFlowId() + '/{flowVersionId}',
                     'api/translate/1/culture/{cultureId}',
                     'api/translate/1/culture?filter=',
                     'api/translate/1/culture',
@@ -458,6 +462,15 @@
                 requestContent += '  "password":null,\n';
                 requestContent += '  "token":null\n';
                 requestContent += '}';
+            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+                // action = "ResetPassword"
+                requestContent = '';
+            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+                // action = "ChangePassword"
+                requestContent = '';
+            } else if (requestUrl == 'api/admin/1/tenant') {
+                // action = "LoadTenant or SaveTenant"
+                requestContent = '';
             } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
                 // action = "LoadFlowByName"
                 requestContent = '';
@@ -791,6 +804,19 @@
                     // action = "Login"
                     // POST only
                     $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+                    // action = "ResetPassword"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+                    // action = "ChangePassword"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="POST">POST</option>');
+                } else if (requestUrl == 'api/admin/1/tenant') {
+                    // action = "LoadTenant or SaveTenant"
+                    $('#request-type').html('');
+                    $('#request-type').append('<option value="GET">GET</option>');
                     $('#request-type').append('<option value="POST">POST</option>');
                 } else if (requestUrl.indexOf('api/run/1/flow/name/') == 0) {
                     // action = "LoadFlowByName"

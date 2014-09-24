@@ -1151,7 +1151,7 @@ permissions and limitations under the License.
                     // Reset the paging
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                         // Dispatch the file population as the user has hit enter
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     } else {
@@ -1165,7 +1165,7 @@ permissions and limitations under the License.
                 // Reset the paging
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
-                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                     // Dispatch the file population as the user has hit enter
                     dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 } else {
@@ -1188,13 +1188,14 @@ permissions and limitations under the License.
                         xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
                     },
                     add: function (e, data) {
-                        data.context = $('<p/>').text('Uploading...').appendTo(document.body);
                         data.submit();
                     },
                     done: function (e, data) {
                         $.each(data.result.files, function (index, file) {
                             $('<p/>').text(file.name).appendTo('#files');
                         });
+
+                        dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     },
                     progressall: function (e, data) {
                         var progress = parseInt(data.loaded / data.total * 100, 10);
@@ -1226,7 +1227,7 @@ permissions and limitations under the License.
                 // Apply the change
                 $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                     // Dispatch the file population as the user has hit enter
                     dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                 } else {
@@ -1247,7 +1248,7 @@ permissions and limitations under the License.
                     // Apply the change
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', page);
 
-                    if (field.fieldType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
+                    if (field.componentType == ManyWhoConstants.COMPONENT_TYPE_FILES) {
                         // Dispatch the file population as the user has hit enter
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     } else {
@@ -1491,6 +1492,7 @@ permissions and limitations under the License.
         var outcomeDomId = null;
         var buttonClass = 'btn';
         var optimizeForMobile = false;
+        var outcomeLabelOutsideButton = false;
 
         // Check to see if the user wants the outcomes to be printed somewhere else
         if (formElementBindingId != null &&
@@ -1505,6 +1507,9 @@ permissions and limitations under the License.
 
         // Get the mobile optimization status
         optimizeForMobile = ManyWhoUtils.getBooleanValue($('#' + domId + '-optimize-for-mobile').val());
+
+        // Determine if the outcome content should be inside the button or not
+        outcomeLabelOutsideButton = ManyWhoUtils.getBooleanValue($('#' + domId + '-outcome-label-outside-button').val());
 
         if (formActionBinding == ManyWhoConstants.ACTION_BINDING_SAVE ||
             (formElementBindingId != null &&
@@ -1528,15 +1533,21 @@ permissions and limitations under the License.
             }
 
             if (formActionType != 'LINK') {
-                // Print the outcome button
-                $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</button>');
+                if (outcomeLabelOutsideButton == true) {
+                    // Print the outcome button with the content beside it rather than inside the button
+                    $('#' + outcomeDomId).append('<div class="row-fluid"><div class="span12"><button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">&nbsp;</button> ' + label + '</div></div>');
+                } else {
+                    // Print the outcome button
+                    $('#' + outcomeDomId).append('<button class="' + buttonClass + ' manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</button>');
+                }
             } else {
                 // Print the outcome link
                 $('#' + outcomeDomId).append('<p class="manywho-outcome-link" align="center"><a href="#" class="manywho-outcome-button" id="' + outcomeId + '" data-actionbinding="' + formActionBinding + '" data-isout="' + isOut + '">' + label + '</a></p>');
             }
 
             // If we're not optimizing for mobile, we add a space to the end
-            if (optimizeForMobile == false) {
+            if (optimizeForMobile == false &&
+                outcomeLabelOutsideButton == false) {
                 $('#' + outcomeDomId).append('&nbsp;');
             }
 
@@ -1922,7 +1933,7 @@ permissions and limitations under the License.
 
     // This method is used to set the actual field for the field type.
     //
-    var setFieldValue = function (domId, fieldId, fieldType, value, objectData) {
+    var setFieldValue = function (domId, fieldId, fieldType, value, objectData, tags) {
         var valueType = null;
 
         fieldType = $('#' + domId + '-' + fieldId + '-properties').attr('data-fieldtype');
@@ -1968,7 +1979,7 @@ permissions and limitations under the License.
             $('#' + domId + '-' + fieldId + '-field').html(value);
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_TAG) {
             // Defer the value setting to the tag component implementation
-            $('#' + domId + '-' + fieldId + '-field').manywhoTagComponent('setValue', value, objectData);
+            $('#' + domId + '-' + fieldId + '-field').manywhoTagComponent('setValue', value, objectData, tags);
         }
     };
 
@@ -2420,6 +2431,7 @@ permissions and limitations under the License.
                 if (formMetaDataEntry.objectData != null &&
                     formMetaDataEntry.objectData.length > 0 &&
                     formMetaDataEntry.objectDataRequest == null &&
+                    storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_FILES &&
                     storageObject.field.componentType != ManyWhoConstants.COMPONENT_TYPE_TAG) {
                     var found = false;
 
@@ -2447,7 +2459,7 @@ permissions and limitations under the License.
                         setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.content);
                     } else {
                         // We have a content value to apply
-                        setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.contentValue, formMetaDataEntry.objectData);
+                        setFieldValue(domId, formMetaDataEntry.pageComponentId, storageObject.field.componentType, formMetaDataEntry.contentValue, formMetaDataEntry.objectData, formMetaDataEntry.tags);
                     }
                 }
             }
@@ -2703,6 +2715,7 @@ permissions and limitations under the License.
             $(this).append('<input type="hidden" id="' + domId + '-state-id" value="' + opts.stateId + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-add-social" value="' + opts.addRealtime + '" />');
             $(this).append('<input type="hidden" id="' + domId + '-optimize-for-mobile" value="' + opts.optimizeForMobile + '" />');
+            $(this).append('<input type="hidden" id="' + domId + '-outcome-label-outside-button" value="' + opts.outcomeLabelOutsideButton + '" />');
 
             $(this).append('<div id="' + domId + '-registry" style="display:none;"></div>');
             $(this).append('<div id="' + domId + '-manywho-runtime-form-event-data" style="display:none;"></div>');
@@ -3074,22 +3087,25 @@ permissions and limitations under the License.
                     width: parseInt(widthAttr),
                     selector: 'textarea#' + $(this).attr('id'),
                     plugins: [
+																								"importcss",
                         "advlist autolink lists link image charmap anchor",
                         "searchreplace visualblocks code",
                         "media table contextmenu paste fullscreen",
-                        "manywho_elements"
+                        "manywho_elements",
                     ],
                     external_plugins: {
                         "moxiemanager": "https://flow.manywho.com/extensions/moxiemanager/plugin.js",
                         "nanospell": "https://flow.manywho.com/extensions/nanospell/plugin.js",
                     },
-                    content_css: "https://cdn.manywho.com/css/tinymce.css",
+                    content_css: ["https://cdn.manywho.com/css/tinymce.css", "/css/tenant/" + ManyWhoSharedServices.getTenantId() + "/customstyles"],
                     nanospell_server: "asp.net",
                     style_formats: editorFormats,
                     moxiemanager_title: 'Flow Assets',
                     moxiemanager_fullscreen: false,
                     menubar: "edit insert view format table tools",
-                    toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | manywho_elements"
+                    toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | manywho_elements",
+                    importcss_append: true,
+                    importcss_file_filter: "/css/tenant/" + ManyWhoSharedServices.getTenantId() + "/customstyles",
                 });
             });
         }
@@ -3107,6 +3123,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false };
+    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false };
 
 })(jQuery);
