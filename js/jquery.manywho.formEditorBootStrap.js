@@ -1107,7 +1107,7 @@ permissions and limitations under the License.
             html += '        <td width="90%" valign="top">';
 
             html += '            <div class="row-fluid">';
-            html += '                <div class="span1"><img src="/extensions/glyphicons/page_element_small.png" height="48" width="48" alt="Page Layout" style="padding-bottom: 10px;" /></div>';
+            html += '                <div class="span1"><img src="https://cdn.manywho.com/extensions/glyphicons/page_element_small.png" height="48" width="48" alt="Page Layout" style="padding-bottom: 10px;" /></div>';
             html += '                <div class="span11">Use the editor below to build your Page Layout. Simply drag Layout Container or Components from the left and drop them on the right. We recommend you start by setting out your Layout Containers, then add your Components. Once a Layout Container or Component has been placed, it cannot be moved outside of its immediate parent.</div>';
             html += '            </div>';
 
