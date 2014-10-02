@@ -465,9 +465,12 @@ permissions and limitations under the License.
                     pageComponentType = ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType');
 
                     // If we have a table, we use a different configuration
-                    if (pageComponentType != null &&
-                        pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
-                        specificDialog = '_TABLE';
+                    if (pageComponentType != null) {
+                        if (pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
+                            specificDialog = '_TABLE';
+                        } else if (pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX.toLowerCase()) {
+                            specificDialog = '_COMBO';
+                        }
                     }
 
                     inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
@@ -898,8 +901,12 @@ permissions and limitations under the License.
                         inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainerId', $(this).parent().attr('id'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
                         // If we have a table, we use a different configuration
-                        if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                            specificDialog = '_TABLE';
+                        if (componentType != null) {
+                            if (componentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
+                                specificDialog = '_TABLE';
+                            } else if (componentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX.toLowerCase()) {
+                                specificDialog = '_COMBO';
+                            }
                         }
 
                         // Open the dialog for creating a new form field
@@ -1084,13 +1091,13 @@ permissions and limitations under the License.
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '">Checkbox</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
                 html += '        </div>';
 
                 html += '        <p>&nbsp;</p>';
 
                 html += '        <div>';
                 html += '            <h5>Coming soon!</h5>';
-                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
                 html += '        </div>';
@@ -1216,13 +1223,13 @@ permissions and limitations under the License.
                     scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
                 });
 
-                //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
-                //    connectToSortable: '.page-sortable',
-                //    helper: 'clone',
-                //    scroll: true, // Scroll the page if we hit the edge
-                //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-                //});
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
                 $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable').draggable({
                     connectToSortable: '.page-sortable',
