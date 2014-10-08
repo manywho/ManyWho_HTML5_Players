@@ -376,8 +376,8 @@
             var source = null;
 
             source = [
-                    'api/admin/1/directory/{directoryId}/users/password',
-                    'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=',
+                    'api/admin/1/directory/{directoryId}/user/password?username=',
+                    'api/admin/1/directory/{directoryId}/user/credentials/{resetToken}?password=',
                     'api/admin/1/tenant',
                     'api/run/1/authentication',
                     'api/run/1/flow/name/{flowName}',
@@ -462,10 +462,10 @@
                 requestContent += '  "password":null,\n';
                 requestContent += '  "token":null\n';
                 requestContent += '}';
-            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+            } else if (requestUrl.indexOf('api/admin/1/directory/{directoryId}/user/password') == 0) {
                 // action = "ResetPassword"
                 requestContent = '';
-            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+            } else if (requestUrl == 'api/admin/1/directory/{directoryId}/user/credentials/{resetToken}?password=') {
                 // action = "ChangePassword"
                 requestContent = '';
             } else if (requestUrl == 'api/admin/1/tenant') {
@@ -805,11 +805,11 @@
                     // POST only
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
-                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/password') {
+                } else if (requestUrl.indexOf('api/admin/1/directory/{directoryId}/user/password') == 0) {
                     // action = "ResetPassword"
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
-                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/users/credentials/{resetToken}?password=') {
+                } else if (requestUrl == 'api/admin/1/directory/{directoryId}/user/credentials/{resetToken}?password=') {
                     // action = "ChangePassword"
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
