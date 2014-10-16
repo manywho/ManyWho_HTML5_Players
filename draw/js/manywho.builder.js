@@ -157,7 +157,7 @@ function configurePage(options) {
         }
     };
 
-    var openFlow = function(flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
+    var openFlow = function (flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
         // If we have a flow loaded already, we save any changes - everything is on the service - so we don't need to wait for this to complete
         if (ManyWhoSharedServices.getFlowId() != null &&
             ManyWhoSharedServices.getFlowId().trim().length > 0) {
@@ -378,11 +378,11 @@ function configurePage(options) {
     });
 
     $("#manage-assets").click(function (event) {
-    				event.preventDefault();
-    				moxman.browse({
-    								title: "Assets",
-												leftpanel: false
-    				});
+        event.preventDefault();
+        moxman.browse({
+            title: "Assets",
+            leftpanel: false
+        });
     });
 
     // Set up the flow graph
@@ -478,6 +478,76 @@ function configurePage(options) {
         }
     });
 
+    // Function that creates an html file out of the Flow's content
+    $('#print-flow').click(function (event) {
+        var flowId = ManyWhoSharedServices.getFlowId();
+        var tenantId = ManyWhoSharedServices.getTenantId();
+        if (flowId != null && flowId.trim().length > 0) {
+            var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId;
+            var html = '<!DOCTYPE html>';
+            html += '<html>';
+            html += '<head>';
+            // Fetch the Flow data
+            try {
+                ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
+                    var flowTitle = data.developerName;
+                    html += '<title>' + data.developerName + '</title>';
+                    html += '<style type="text/css"> td { font-family: Verdana; font-size: 12pt; } body { font-family: Verdana; font-size: 12pt; } p { font-family: Verdana; font-size: 12pt; margin-top: 0; margin-bottom: 0; } a { font-family: Verdana; font-size: 12pt; margin-top: 0; margin-bottom: 0; } .credit { font-family: Verdana; font-size: 8pt; color: #000000; } h1 {font-family: Verdana; font-size: 16pt; font-weight: bold; margin-top: 0; margin-bottom: 0; } </style>';
+                    html += '</head>';
+                    html += '<body>';
+                    html += '<h1>' + data.developerName + '</h1>';
+                    html += 'Description: ' + data.developerSummary + ' <br/>';
+                    html += 'Author: ' + data.whoCreated + ' <br/>';
+                    html += 'Date Created: ' + data.dateCreated + '<br/>';
+                    html += '<p>&nbsp</p>';
+                    var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/' + ManyWhoSharedServices.getEditingToken() + '/element/map/';
+                    var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
+                    // Get data of every step and outcome in the flow to build the HTML
+                    try {
+                        ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
+                            if (data != null &&
+                                data.length > 0) {
+                                for (var i = 0; i < data.length; i++) {
+                                    var element = {};
+                                    if (data[i].developerName != "Start" && data[i].userContent != "null") {
+                                        element.developerName = data[i].developerName;
+                                        element.id = data[i].id;
+                                        element.content = data[i].userContent;
+                                        html += '<div id="' + data[i].id + '"><h3>Element Title: ' + data[i].developerName + '</h3>';
+                                        html += 'Content: ' + data[i].userContent + '</div>';
+                                        html += '<p>&nbsp;</p>';
+                                        if (data[i].outcomes != null && data[i].outcomes.length > 0) {
+                                            for (var j = 0; j < data[i].outcomes.length; j++) {
+                                                for (var k = 0; k < data.length; k++) {
+                                                    if (data[k].id === data[i].outcomes[j].nextMapElementId) {
+                                                        html += '<p>Outcome: <a href="#' + data[i].outcomes[j].nextMapElementId + '"> ' + data[k].developerName + '</a></p>';
+                                                    }
+                                                }
+                                            }
+                                            html += '<p>&nbsp;</p>';
+                                        }
+                                    }
+                                }
+                                for (var j = 0; j < 20; j++) {
+                                    html += '<p>&nbsp;</p>';
+                                }
+                                var newWindow = window.open(flowTitle, '_newtab');
+                                newWindow.document.write(html);
+                            }
+                        }, null, headers);
+                    } catch (e) {
+                        alert('Whoops - something went wrong!');
+                    }
+                }, null, headers);
+            } catch (e) {
+                alert('Whoops - something went wrong!');
+            }
+        } else {
+            alert('Please open a Flow!');
+        }
+    });
+
     $('#sign-out').click(function (event) {
         event.preventDefault();
 
@@ -539,24 +609,24 @@ function configurePage(options) {
 
     // Set the timer to check if any changes to loaded flows have been made
     setInterval(function () {
-            if (ManyWhoSharedServices.getFlowId() != null &&
-                ManyWhoSharedServices.getFlowId().trim().length > 0) {
-                ManyWhoFlow.changeAvailable('ManyWhoBuilder.configurePage',
-                                            ManyWhoSharedServices.getFlowId(),
-                                            ManyWhoSharedServices.getEditingToken(),
-                                            ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                                            null,
-                                            function (data, status, xhr) {
-                                                // Clear any errors as we're now successfully managing to reach the backend
-                                                $('#flow-error').html('');
+        if (ManyWhoSharedServices.getFlowId() != null &&
+            ManyWhoSharedServices.getFlowId().trim().length > 0) {
+            ManyWhoFlow.changeAvailable('ManyWhoBuilder.configurePage',
+                                        ManyWhoSharedServices.getFlowId(),
+                                        ManyWhoSharedServices.getEditingToken(),
+                                        ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                        null,
+                                        function (data, status, xhr) {
+                                            // Clear any errors as we're now successfully managing to reach the backend
+                                            $('#flow-error').html('');
 
-                                                if (data != null &&
-                                                    data == true) {
-                                                    // Sync the graph so we have the necessary changes
-                                                    //$('#flow-graph').manywhoMxGraph('syncGraph', null);
-                                                }
-                                            },
-                                            createErrorAlert);
-            }
-        }, 10000);
+                                            if (data != null &&
+                                                data == true) {
+                                                // Sync the graph so we have the necessary changes
+                                                //$('#flow-graph').manywhoMxGraph('syncGraph', null);
+                                            }
+                                        },
+                                        createErrorAlert);
+        }
+    }, 10000);
 }
