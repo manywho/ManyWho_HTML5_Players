@@ -190,9 +190,6 @@ function configurePage(options) {
         // Populate the list of navigation elements
         populateNavigationElements();
 
-        // Populate the select box of flow versions
-        fetchFlowVersions(flowId);
-
         // Show the user the "flow loading" screen
         setFlowLoader(true);
 
@@ -334,68 +331,6 @@ function configurePage(options) {
         // Tell the designer to update the tools - which will prompt the login
         updateTools.call(this);
     };
-
-    var fetchFlowVersions = function (flowId) {
-        // Call the API to get all versions data of the current flow
-        var versionUrl = 'http://localhost:22935/api/draw/1/flow/snap/' + flowId;
-        var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
-        ManyWhoAjax.callRestApi('REST.executeREST', versionUrl, 'GET', '', null, function (data, status, xhr) {
-            // Sort the modified dates so we display the latest versions on top
-            data.sort(function (version1, version2) {
-                if (version1.dateModified < version2.dateModified) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            });
-            // Get the flow version id and finally populate the version dropdown box
-            ManyWhoAjax.callRestApi('REST.executeREST', '/api/draw/1/flow/' + flowId, 'GET', '', null, function (flowData, flowStatus, flowXHR) {
-                $('#version-select').html('');
-                var flowVersionId = flowData.id.versionId;
-                createFlowDataElements(flowId, flowVersionId, flowData.developerName, flowData.developerSummary, flowData.startMapElementId);
-                for (var i = 0; i < data.length; i++) {
-                    var modifiedDate = data[i].dateModified.replace('T', '  ');
-                    if (flowVersionId === data[i].id.versionId) {
-                        modifiedDate += ' <i class="icon-ok"></i>';
-                    }
-                    var versionOption = '<option value="' + data[i].id.versionId + '">' + modifiedDate + '</option>';
-                    $('#version-select').append(versionOption);
-                }
-            }, null, headers);
-        }, null, headers);
-    };
-
-    // Store flow data needed to load multiple versions
-    var createFlowDataElements = function (flowId, flowVersionId, developerName, developerSummary, startMapElementId) {
-        if ($('#manywho-flow-id').val() != null) {
-            $('#manywho-flow-id').val(flowId);
-            $('#manywho-flow-version-id').val(flowVersionId);
-            $('#manywho-flow-developer-name').val(developerName);
-            $('#manywho-flow-developer-summary').val(developerSummary);
-            $('#manywho-flow-start-map-element').val(startMapElementId);
-        } else {
-            $('#manywho-shared-services-data').append($('<input type="hidden" id="manywho-flow-id" value="' + flowId + '">'));
-            $('#manywho-shared-services-data').append($('<input type="hidden" id="manywho-flow-version-id" value="' + flowVersionId + '">'));
-            $('#manywho-shared-services-data').append($('<input type="hidden" id="manywho-flow-developer-name" value="' + developerName + '">'));
-            $('#manywho-shared-services-data').append($('<input type="hidden" id="manywho-flow-developer-summary" value="' + developerSummary + '">'));
-            $('#manywho-shared-services-data').append($('<input type="hidden" id="manywho-flow-start-map-element" value="' + startMapElementId + '">'));
-        }
-    };
-
-    $("#open-version-tools").click(function (event) {
-        // Revert the flow to the selected version
-        var flowId = $('#manywho-flow-id').val();
-        var developerName = $('#manywho-flow-developer-name').val();
-        var flowVersionId = $('#version-select').val();
-        var developerSummary = $('#manywho-flow-developer-summary').val();
-        var startMapElementId = $('#manywho-flow-start-map-element').val();
-        var revertlink = "http://localhost:22935/api/draw/1/flow/revert/" + flowId + "/" + flowVersionId;
-        var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
-        ManyWhoAjax.callRestApi('REST.executeREST', revertlink, 'POST', '', null, function (data, status, xhr) {
-            // Reloads the selected version of the flow in the graph tool
-            openFlow(ManyWhoSharedServices.getEditingToken(), flowId, developerName, developerSummary, startMapElementId);
-        }, null, headers);
-    });
 
     $("#manage-flows").click(function (event) {
         event.preventDefault();
@@ -543,16 +478,17 @@ function configurePage(options) {
         }
     });
 
+    // Function that creates an html file out of the Flow's content
     $('#print-flow').click(function (event) {
-        var flowId = $('#manywho-flow-id').val();
+        var flowId = ManyWhoSharedServices.getFlowId();
         var tenantId = ManyWhoSharedServices.getTenantId();
         if (flowId != null && flowId.trim().length > 0) {
             var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', tenantId);
-            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/run/1/flow/' + flowId;
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId;
             var html = '<!DOCTYPE html>';
             html += '<html>';
             html += '<head>';
-
+            // Fetch the Flow data
             try {
                 ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
                     var flowTitle = data.developerName;
@@ -567,6 +503,7 @@ function configurePage(options) {
                     html += '<p>&nbsp</p>';
                     var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/' + ManyWhoSharedServices.getEditingToken() + '/element/map/';
                     var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
+                    // Get data of every step and outcome in the flow to build the HTML
                     try {
                         ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
                             if (data != null &&
@@ -595,10 +532,8 @@ function configurePage(options) {
                                 for (var j = 0; j < 20; j++) {
                                     html += '<p>&nbsp;</p>';
                                 }
-                                var htmlDownload = document.createElement('a');
-                                htmlDownload.setAttribute('href', 'data:text/html;charset=utf-8,' + html);
-                                htmlDownload.setAttribute('download', flowTitle);
-                                htmlDownload.click();
+                                var newWindow = window.open(flowTitle, '_newtab');
+                                newWindow.document.write(html);
                             }
                         }, null, headers);
                     } catch (e) {
