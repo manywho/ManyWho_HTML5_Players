@@ -1391,6 +1391,7 @@ permissions and limitations under the License.
             var parentContainerId = null;
             var inputs = null;
             var isButtonMode = null;
+            var developerName = null;
 
             // Get the button mode from the settings
             isButtonMode = $('#' + domId + '-page-settings').data('isButtonMode');
@@ -1433,6 +1434,7 @@ permissions and limitations under the License.
                             $('#' + domId + '-page-element-id').val(page.properties[a].contentValue);
                         } else if (page.properties[a].developerName.toLowerCase() == 'developername') {
                             $('#' + domId + '-page-element-developername').val(page.properties[a].contentValue);
+                            developerName = page.properties[a].contentValue;
                         } else if (page.properties[a].developerName.toLowerCase() == 'developersummary') {
                             $('#' + domId + '-page-element-developersummary').val(page.properties[a].contentValue);
                         }
@@ -1450,8 +1452,7 @@ permissions and limitations under the License.
             }
 
             if (isButtonMode == false) {
-                if ($('#' + domId + '-page-element-label').html() == null ||
-                    $('#' + domId + '-page-element-label').html().trim().length == 0) {
+                if (developerName == null || developerName.trim() == "") {
                     // We don't have an existing page element, so we should load the dialog immediately so the user is prompted to add the info
                     // Wrap the page in an array (there will be an empty one in the dom)
                     page = [$('#' + domId + '-page-element').data('page')];
