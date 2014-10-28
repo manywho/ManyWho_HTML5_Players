@@ -493,7 +493,7 @@ var ManyWhoSharedServices = {
                                    ManyWhoSharedServices.showLoadingDialog(false);
 
                                    // Show the authentication dialog
-                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true });
+                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true, keyboard: false});
                                },
                                null);
     },
