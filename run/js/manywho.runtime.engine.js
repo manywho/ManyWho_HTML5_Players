@@ -466,16 +466,38 @@ permissions and limitations under the License.
                     }
                 }
 
-                // Get the log file for this debug session and print to the UI
-                $.getJSON('https://s3.amazonaws.com/logs-manywho/' + $('#' + domId + '-tenant-id').val() + '/' + $('#' + domId + '-flow-id').val() + '/' + $('#' + domId + '-state-id').val() + '.md', function (logData) {
-                    var items = [];
+                // Create a header for the tenant id
+                var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
 
-                    $.each(logData.Entries, function (key, val) {
-                        items.push("<p>" + val.TimeStamp + ", " + val.Message + ", " + val.Data + "</p>");
-                    });
+                // Execute the log load
+                ManyWhoAjax.callRestApi('ManyWhoRuntimeEngine.LoadLog',
+                                        ManyWhoConstants.BASE_PATH_URL + '/api/log/' + $('#' + domId + '-flow-id').val() + '/' + $('#' + domId + '-state-id').val(),
+                                        'GET',
+                                        '',
+                                        null,
+                                        function (logData, status, xhr) {
+                                            var items = [];
 
-                    $('#' + domId + '-debug-state-log').html(items.join(""));
-                });
+                                            // Print the log entries
+                                            $.each(logData.entries, function (key, val) {
+                                                var viewValue = '(Empty)';
+
+                                                // Escape the string so we can store the content on the dom properly
+                                                if (val.data != null) {
+                                                    viewValue = viewValue.replace(/(['"])/g, "\\$1");
+                                                }
+
+                                                items.push('<tr><td>' + val.timeStamp + '</td><td>' + val.message + '</td><td><span class="manywho-debug-log-entry" data-content="' + viewValue + '">view</span></td></tr>');
+                                            });
+
+                                            // Print the full table into the dom
+                                            $('#' + domId + '-debug-state-log').html('<table class="table table-condensed"><thead><tr><th>Timestamp</th><th>Message</th><th>Data</th></thead><tbody>' + items.join("") + '</tbody></table>');
+
+                                            // Add the popovers for the data
+                                            $('.manywho-debug-log-entry').popover({ 'trigger': 'hover', 'placement': 'top' });
+                                        },
+                                        null,
+                                        headers);
 
                 // Check to see if we have any map element invoke responses
                 if (data.mapElementInvokeResponses != null &&
