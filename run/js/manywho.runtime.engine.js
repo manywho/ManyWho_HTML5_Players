@@ -487,7 +487,7 @@ permissions and limitations under the License.
                                                     viewValue = viewValue.replace(/(['"])/g, "\\$1");
                                                 }
 
-                                                items.push('<tr><td>' + val.timeStamp + '</td><td>' + val.message + '</td><td><span class="manywho-debug-log-entry" data-content="' + viewValue + '">view</span></td></tr>');
+                                                items.push('<tr><td>' + val.timestamp + '</td><td>' + val.message + '</td><td><span class="manywho-debug-log-entry" data-content="' + viewValue + '">view</span></td></tr>');
                                             });
 
                                             // Print the full table into the dom
