@@ -466,6 +466,17 @@ permissions and limitations under the License.
                     }
                 }
 
+                // Get the log file for this debug session and print to the UI
+                $.getJSON('https://s3.amazonaws.com/logs-manywho/' + $('#' + domId + '-tenant-id').val() + '/' + $('#' + domId + '-flow-id').val() + '/' + $('#' + domId + '-state-id').val() + '.md', function (logData) {
+                    var items = [];
+
+                    $.each(logData.Entries, function (key, val) {
+                        items.push("<p>" + val.TimeStamp + ", " + val.Message + ", " + val.Data + "</p>");
+                    });
+
+                    $('#' + domId + '-debug-state-log').html(items.join(""));
+                });
+
                 // Check to see if we have any map element invoke responses
                 if (data.mapElementInvokeResponses != null &&
                     data.mapElementInvokeResponses.length > 0) {
@@ -1197,6 +1208,8 @@ permissions and limitations under the License.
         html += '<div id="' + domId + '-debug-precommit-state-values"></div>';
         html += '<h5>State Values</h5>';
         html += '<div id="' + domId + '-debug-state-values"></div>';
+        html += '<h5>Execution Log</h5>';
+        html += '<div id="' + domId + '-debug-state-log"></div>';
         html += '</div>';
 
         return html;
