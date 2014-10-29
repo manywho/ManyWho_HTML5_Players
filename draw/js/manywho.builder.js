@@ -332,12 +332,66 @@ function configurePage(options) {
         updateTools.call(this);
     };
 
+    // This function will launch the build modal and snap the Flow Version
+    // Added as a separate function because it will be bound to both the Activate button and Enter key
+    var launchBuildWithComment = function (event) {
+        event.preventDefault();
+
+        // Hide the Comment dialog and show the Build one to progress
+        ManyWhoSharedServices.showCommentDialog(false);
+        ManyWhoSharedServices.showBuildDialog(true);
+
+        // Get the version comment from the input to send as a parameter
+        var versionComment = $('#version-comment').val();
+        ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
+                               ManyWhoSharedServices.getFlowId(),
+                               ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                               versionComment,
+                               null,
+                               function (data, status, xhr) {
+                                   var location = null;
+
+                                   ManyWhoSharedServices.showBuildDialog(false);
+                                   $('#version-comment').val('');
+
+                                   // Assign the location
+                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
+
+                                   // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
+                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
+
+                                   // Check to see if the navigation has any entries for the user to select from
+                                   if ($('#manywho-model-select-run-navigation').html() != null &&
+                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                       // Show the navigation selection menu
+                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, null);
+                                   } else {
+                                       // Show the dialog, but no need to have navigation selection
+                                       ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, null);
+                                   }
+                               },
+                               createErrorAlert);
+    };
+
     $("#manage-flows").click(function (event) {
         event.preventDefault();
         ManyWhoSharedServices.showFlowConfigDialog(null,
                                                    openFlow,
                                                    null,
                                                    createErrorAlert);
+    });
+
+    $("#manage-versions").click(function (event) {
+        event.preventDefault();
+        var flowId = ManyWhoSharedServices.getFlowId();
+        if (flowId != null && flowId.trim().length > 0) {
+            ManyWhoSharedServices.showFlowVersionConfigDialog(null,
+                                                   openFlow,
+                                                   null,
+                                                   createErrorAlert);
+        } else {
+            alert('Please open a Flow!');
+        }
     });
 
     $("#manage-navigations").click(function (event) {
@@ -402,6 +456,7 @@ function configurePage(options) {
             ManyWhoFlow.snapAndRun('ManyWhoBuilder.RunFlow',
                                    ManyWhoSharedServices.getFlowId(),
                                    ManyWhoSharedServices.getAuthorAuthenticationToken(),
+                                   '',
                                    null,
                                    function (data, status, xhr) {
                                        var location = null;
@@ -430,35 +485,15 @@ function configurePage(options) {
         event.preventDefault();
 
         if ($(this).attr('disabled') != 'disabled') {
-            ManyWhoSharedServices.showBuildDialog(true);
-            ManyWhoFlow.snapAndRun('ManyWhoBuilder.ActivateFlow',
-                                   ManyWhoSharedServices.getFlowId(),
-                                   ManyWhoSharedServices.getAuthorAuthenticationToken(),
-                                   null,
-                                   function (data, status, xhr) {
-                                       var location = null;
-
-                                       ManyWhoSharedServices.showBuildDialog(false);
-
-                                       // Assign the location
-                                       location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
-
-                                       // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
-                                       ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
-
-                                       // Check to see if the navigation has any entries for the user to select from
-                                       if ($('#manywho-model-select-run-navigation').html() != null &&
-                                           $('#manywho-model-select-run-navigation').html().trim().length > 0) {
-                                           // Show the navigation selection menu
-                                           ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, null);
-                                       } else {
-                                           // Show the dialog, but no need to have navigation selection
-                                           ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, null);
-                                       }
-                                   },
-                                   createErrorAlert);
+            ManyWhoSharedServices.showCommentDialog(true);
         }
     });
+
+    // Button to save the version comment before the build dialog comes up.
+    $('#manywho-dialog-version-ok').click(launchBuildWithComment);
+
+    // Add an enter key event to the Version dialog
+    $('#version-comment').keypress(launchBuildWithComment);
 
     $('#open-developer-tools').click(function (event) {
         event.preventDefault();
@@ -518,10 +553,11 @@ function configurePage(options) {
                                         html += 'Content: ' + data[i].userContent + '</div>';
                                         html += '<p>&nbsp;</p>';
                                         if (data[i].outcomes != null && data[i].outcomes.length > 0) {
+                                            html += 'Outcomes';
                                             for (var j = 0; j < data[i].outcomes.length; j++) {
                                                 for (var k = 0; k < data.length; k++) {
                                                     if (data[k].id === data[i].outcomes[j].nextMapElementId) {
-                                                        html += '<p>Outcome: <a href="#' + data[i].outcomes[j].nextMapElementId + '"> ' + data[k].developerName + '</a></p>';
+                                                        html += '<p>' + data[i].outcomes[j].developerName + ': <a href="#' + data[i].outcomes[j].nextMapElementId + '"> ' + data[k].developerName + '</a></p>';
                                                     }
                                                 }
                                             }

@@ -181,6 +181,25 @@ var ManyWhoSharedServices = {
             dialogHtml += '    </div>';
             dialogHtml += '</div>';
 
+            dialogHtml += '<div id="manywho-dialog-comment" class="modal hide fade">';
+            dialogHtml += '    <div class="modal-header">';
+            dialogHtml += '        <button id="manywho-dialog-close-button-build" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
+            dialogHtml += '        <h3 id="manywho-dialog-title-comment">New Flow Version</h3>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    <div id="manywho-model-run-flow-version-comment" class="modal-body">';
+            dialogHtml += '    <div class="row-fluid">';
+            dialogHtml += '        <div class="span12">';
+            dialogHtml += '            <label class="muted"><strong>Add a comment for this Flow Version:</strong><br/>';
+            dialogHtml += '                <input type="text" id="version-comment" />';
+            dialogHtml += '            </label>';
+            dialogHtml += '        </div>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    </div>';
+            dialogHtml += '    <div class="modal-footer">';
+            dialogHtml += '        <button id="manywho-dialog-version-ok" type="button" class="btn btn-primary">Activate</button>';
+            dialogHtml += '    </div>';
+            dialogHtml += '</div>';
+
             dialogHtml += '<div id="manywho-dialog-build" class="modal hide fade">';
             dialogHtml += '    <div class="modal-header">';
             dialogHtml += '        <button id="manywho-dialog-close-button-build" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
@@ -249,6 +268,7 @@ var ManyWhoSharedServices = {
             $('#' + reference).append(dialogHtml);
             $('#manywho-dialog').modalmanager();
             $('#manywho-dialog-developer').modalmanager();
+            $('#manywho-dialog-comment').modalmanager();
             $('#manywho-dialog-sub').modalmanager();
             $('#manywho-dialog-build').modalmanager();
             $('#manywho-dialog-select-navigation').modalmanager();
@@ -342,6 +362,13 @@ var ManyWhoSharedServices = {
                 $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('clear');
                 $('#manywho-dialog-title-fullscreen').html('Loading...');
             });
+        }
+    },
+    showCommentDialog: function (show) {
+        if (show == true) {
+            $('#manywho-dialog-comment').modal('show');
+        } else {
+            $('#manywho-dialog-comment').modal('hide');
         }
     },
     showBuildDialog: function (show) {
@@ -1075,6 +1102,76 @@ var ManyWhoSharedServices = {
                                            if (flowOutcome == null ||
                                                flowOutcome.toLowerCase() != 'cancel') {
                                                okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
+                                           } else {
+                                               if (cancelCallback != null) {
+                                                   cancelCallback.call(this);
+                                               }
+                                           }
+                                       }
+                                   }
+
+                                   $('#manywho-model-runtime').manywhoRuntimeEngine('execute', options);
+
+                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true });
+                               },
+                               errorFunction);
+    },
+    showFlowVersionConfigDialog: function (elementId, okCallback, cancelCallback, errorFunction) {
+        ManyWhoSharedServices.adjustDialog(475, null, true);
+
+        $('#manywho-dialog').off('hidden');
+        $('#manywho-dialog').on('hidden', function () {
+            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+            $('#manywho-dialog-title').html('Loading...');
+        });
+        var flowId = ManyWhoSharedServices.getFlowId();
+        var authenticationToken = ManyWhoSharedServices.getAuthorAuthenticationToken();
+        var inputs = ManyWhoSharedServices.createInput(inputs, 'FlowId', flowId, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'AuthenticationToken', authenticationToken, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        ManyWhoFlow.loadByName('ManyWhoSharedServices.ShowFlowVersionConfigDialog',
+                               ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID,
+                               'MANYWHO__FLOW__VERSION__DEFAULT__FLOW',
+                               null,
+                               null,
+                               function (data, status, xhr) {
+
+                                   var options = {
+                                       flowId: data.id.id,
+                                       flowVersionId: data.id.versionId,
+                                       inputs: inputs,
+                                       outcomePanel: 'manywho-model-outcomes',
+                                       formLabelPanel: 'manywho-dialog-title',
+                                       annotations: null,
+                                       mode: ManyWhoSharedServices.getEditorModeId(),
+                                       doneCallbackFunction: function (outputValues) {
+                                           var flowOutcome = null;
+                                           var flowEditingToken = null;
+                                           var flowId = null;
+                                           var flowDeveloperName = null;
+                                           var flowDeveloperSummary = null;
+                                           var flowStartMapElementId = null;
+
+                                           // Hide the dialog
+                                           $('#manywho-dialog').modal('hide');
+                                           $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                           $('#manywho-dialog-title').html('Loading...');
+                                           
+                                           flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+
+                                           if (flowOutcome == null ||
+                                               flowOutcome.toLowerCase() != 'cancel') {
+                                               // Get the values out of the outputs
+                                               flowId = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'Id');
+                                               flowDeveloperName = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'DeveloperName');
+                                               flowDeveloperSummary = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'DeveloperSummary');
+                                               flowEditingToken = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'EditingToken');
+                                               flowStartMapElementId = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'StartMapElementId');
+                                               flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
+                                               flowVersionId = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow Version To Activate', 'Id');
+                                               var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+                                               ManyWhoFlow.revertVersion('ManyWhoSharedServices.ShowFlowVersionConfigDialog', flowId, flowVersionId, flowEditingToken, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, function (data) {
+                                                   okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
+                                               }, null, headers);
                                            } else {
                                                if (cancelCallback != null) {
                                                    cancelCallback.call(this);
