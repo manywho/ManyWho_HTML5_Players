@@ -493,7 +493,11 @@ function configurePage(options) {
     $('#manywho-dialog-version-ok').click(launchBuildWithComment);
 
     // Add an enter key event to the Version dialog
-    $('#version-comment').keypress(launchBuildWithComment);
+    $('#version-comment').keypress(function (e) {
+        if (e.which == 13) {
+            launchBuildWithComment();
+        }
+    });
 
     $('#open-developer-tools').click(function (event) {
         event.preventDefault();
