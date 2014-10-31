@@ -180,7 +180,9 @@ function configurePage(options) {
         $('#flow-getting-started').hide();
 
         // Assign the relevant information here to the various designer properties
-        ManyWhoSharedServices.setEditingToken(flowEditingToken);
+        if (flowEditingToken != null && flowEditingToken.trim().length > 0) {
+            ManyWhoSharedServices.setEditingToken(flowEditingToken);
+        }
         ManyWhoSharedServices.setFlowId(flowId);
 
         $('#flow-developer-name').html(flowDeveloperName);
