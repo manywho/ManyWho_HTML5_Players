@@ -465,9 +465,12 @@ permissions and limitations under the License.
                     pageComponentType = ManyWhoUtils.getObjectAPIPropertyValue(pageComponents, 'PageComponent', 'ComponentType');
 
                     // If we have a table, we use a different configuration
-                    if (pageComponentType != null &&
-                        pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
-                        specificDialog = '_TABLE';
+                    if (pageComponentType != null) {
+                        if (pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
+                            specificDialog = '_TABLE';
+                        } else if (pageComponentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX.toLowerCase()) {
+                            specificDialog = '_COMBO';
+                        }
                     }
 
                     inputs = ManyWhoSharedServices.createInput(inputs, 'Command', 'edit', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
@@ -898,8 +901,12 @@ permissions and limitations under the License.
                         inputs = ManyWhoSharedServices.createInput(inputs, 'PageContainerId', $(this).parent().attr('id'), ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
                         // If we have a table, we use a different configuration
-                        if (componentType == ManyWhoConstants.COMPONENT_TYPE_TABLE) {
-                            specificDialog = '_TABLE';
+                        if (componentType != null) {
+                            if (componentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_TABLE.toLowerCase()) {
+                                specificDialog = '_TABLE';
+                            } else if (componentType.toLowerCase() == ManyWhoConstants.COMPONENT_TYPE_COMBOBOX.toLowerCase()) {
+                                specificDialog = '_COMBO';
+                            }
                         }
 
                         // Open the dialog for creating a new form field
@@ -1084,13 +1091,13 @@ permissions and limitations under the License.
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CONTENT + '">Rich Text</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_CHECKBOX + '">Checkbox</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '">Table</div>';
+                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
                 html += '        </div>';
 
                 html += '        <p>&nbsp;</p>';
 
                 html += '        <div>';
                 html += '            <h5>Coming soon!</h5>';
-                html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '">Combobox</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_IMAGE + '">Image</div>';
                 html += '            <div id="' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TAG + '-component-draggable" disabled="disabled" class="btn manywho-page-component ' + ManyWhoConstants.COMPONENT_TYPE_TAG + '">Tag</div>';
                 html += '        </div>';
@@ -1100,7 +1107,7 @@ permissions and limitations under the License.
             html += '        <td width="90%" valign="top">';
 
             html += '            <div class="row-fluid">';
-            html += '                <div class="span1"><img src="/extensions/glyphicons/page_element_small.png" height="48" width="48" alt="Page Layout" style="padding-bottom: 10px;" /></div>';
+            html += '                <div class="span1"><img src="https://cdn.manywho.com/extensions/glyphicons/page_element_small.png" height="48" width="48" alt="Page Layout" style="padding-bottom: 10px;" /></div>';
             html += '                <div class="span11">Use the editor below to build your Page Layout. Simply drag Layout Container or Components from the left and drop them on the right. We recommend you start by setting out your Layout Containers, then add your Components. Once a Layout Container or Component has been placed, it cannot be moved outside of its immediate parent.</div>';
             html += '            </div>';
 
@@ -1216,13 +1223,13 @@ permissions and limitations under the License.
                     scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
                 });
 
-                //$('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
-                //    connectToSortable: '.page-sortable',
-                //    helper: 'clone',
-                //    scroll: true, // Scroll the page if we hit the edge
-                //    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
-                //    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
-                //});
+                $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_COMBOBOX + '-component-draggable').draggable({
+                    connectToSortable: '.page-sortable',
+                    helper: 'clone',
+                    scroll: true, // Scroll the page if we hit the edge
+                    scrollSensitivity: 10, // Set the sensitivity of the scroll to 10 (check the JQuery Docs for what this number means)
+                    scrollSpeed: 40 // Set the scrolling speed to 40 (again, check the docs)
+                });
 
                 $('#' + domId + '-' + ManyWhoConstants.COMPONENT_TYPE_TABLE + '-component-draggable').draggable({
                     connectToSortable: '.page-sortable',
@@ -1384,6 +1391,7 @@ permissions and limitations under the License.
             var parentContainerId = null;
             var inputs = null;
             var isButtonMode = null;
+            var developerName = null;
 
             // Get the button mode from the settings
             isButtonMode = $('#' + domId + '-page-settings').data('isButtonMode');
@@ -1426,6 +1434,7 @@ permissions and limitations under the License.
                             $('#' + domId + '-page-element-id').val(page.properties[a].contentValue);
                         } else if (page.properties[a].developerName.toLowerCase() == 'developername') {
                             $('#' + domId + '-page-element-developername').val(page.properties[a].contentValue);
+                            developerName = page.properties[a].contentValue;
                         } else if (page.properties[a].developerName.toLowerCase() == 'developersummary') {
                             $('#' + domId + '-page-element-developersummary').val(page.properties[a].contentValue);
                         }
@@ -1443,8 +1452,7 @@ permissions and limitations under the License.
             }
 
             if (isButtonMode == false) {
-                if ($('#' + domId + '-page-element-label').html() == null ||
-                    $('#' + domId + '-page-element-label').html().trim().length == 0) {
+                if (developerName == null || developerName.trim() == "") {
                     // We don't have an existing page element, so we should load the dialog immediately so the user is prompted to add the info
                     // Wrap the page in an array (there will be an empty one in the dom)
                     page = [$('#' + domId + '-page-element').data('page')];

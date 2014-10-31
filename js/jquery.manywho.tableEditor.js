@@ -254,8 +254,10 @@ permissions and limitations under the License.
             var objectData = null;
             var html = '';
 
-            // Load the type element as we need that to load the list
-            loadTypeElement('setValue',
+            // Load the type element as we need that to load the list if there is contentValue in tags[0]
+            if(tags[0].contentValue != null &&
+                tags[0].contentValue != "") {
+                loadTypeElement('setValue',
                             tags[0].contentValue,
                             null,
                             function (data, status, xhr) {
@@ -291,6 +293,7 @@ permissions and limitations under the License.
                                 }
                             },
                             null);
+            }
         }
     };
 

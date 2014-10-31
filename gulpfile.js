@@ -25,6 +25,7 @@ gulp.task('default', function () {
 
     gulp.src('js/**/*.*')
 		.pipe(replace('cdn.manywho.com', argv.cdn, { skipBinary: true }))
+		.pipe(replace('flow.manywho.com', argv.baseurl, { skipBinary: true }))
         .pipe(gulp.dest('dist/js'));
 
     gulp.src('run/**/*.*')

@@ -109,12 +109,13 @@ var ManyWhoFlow = {
     snapAndRun: function (callingFunctionName,
                           flowId,
                           authenticationToken,
+                          versionComment,
                           runBeforeSend,
                           runSuccessCallback,
                           runErrorCallback) {
         var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/snap/' + flowId;
         var requestType = 'POST';
-        var requestData = '';
+        var requestData = '"' + versionComment + '"';
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SnapAndRun', requestUrl, requestType, requestData, runBeforeSend, runSuccessCallback, runErrorCallback, null, null, authenticationToken);
     },
@@ -281,5 +282,20 @@ var ManyWhoFlow = {
         var requestData = '';
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.ChangeAvailable', requestUrl, requestType, requestData, changeBeforeSend, changeSuccessCallback, changeErrorCallback, null, null, authenticationToken);
+    },
+    revertVersion: function(callingFunctionName,
+                                flowId,
+                                flowVersionId,
+                                editingToken,
+                                authenticationToken,
+                                loadBeforeSend,
+                                successCallback,
+                                errorCallback,
+                                headers) {
+        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/revert/' + flowId + '/' + flowVersionId;
+        var requestType = 'POST';
+        var requestData = '';
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.RevertVersion', requestUrl, requestType, requestData, loadBeforeSend, successCallback, errorCallback, headers, null, authenticationToken);
     }
 }

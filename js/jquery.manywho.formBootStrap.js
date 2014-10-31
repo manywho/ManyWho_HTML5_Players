@@ -1946,8 +1946,15 @@ permissions and limitations under the License.
             if (valueType.toLowerCase() == 'date') {
                 if (value != null &&
                     value.trim().length > 0) {
-                    // Format the date using something that's acceptable to most!
-                    value = moment(value).format('YYYY-MM-DD');
+                    // Check to make sure we have a date that's non-zero
+                    if (value == "0" ||
+                        value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase()) {
+                        // Set the date to now
+                        value = moment().format('YYYY-MM-DD');
+                    } else {
+                        // Format the date using something that's acceptable to most!
+                        value = moment(value).format('YYYY-MM-DD');
+                    }
                 } else {
                     // Blank out the date if it isn't valid
                     value = '';
