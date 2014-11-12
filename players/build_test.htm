@@ -326,7 +326,8 @@
 
             // If we're running a runtime rest call, we use the user credentials stored on this page
             if (requestUrl.indexOf('api/run/1') >= 0 &&
-                requestUrl.indexOf('api/run/1/state/package') < 0) {
+                requestUrl.indexOf('api/run/1/state/package') < 0 &&
+                requestType.toLowerCase() != 'delete') {
                 // Grab the builder authentication token
                 builderAuthenticationToken = ManyWhoSharedServices.getAuthenticationToken();
 
@@ -341,7 +342,8 @@
             }
 
             if (requestUrl.indexOf('api/run/1') >= 0 &&
-                requestUrl.indexOf('api/run/1/state/package') < 0) {
+                requestUrl.indexOf('api/run/1/state/package' &&
+                requestType.toLowerCase() != 'delete') < 0) {
                 // Set the account credentials back
                 ManyWhoSharedServices.setAuthenticationToken(builderAuthenticationToken);
             }
@@ -850,6 +852,7 @@
                     $('#request-type').html('');
                     $('#request-type').append('<option value="POST">POST</option>');
                     $('#request-type').append('<option value="GET">GET</option>');
+                    $('#request-type').append('<option value="DELETE">DELETE</option>');
                 } else if (requestUrl == 'api/run/1') {
                     // action = "Initialize"
                     // POST ONLY
