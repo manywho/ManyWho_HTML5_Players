@@ -563,7 +563,7 @@ function configurePage(options) {
                                             for (var j = 0; j < data[i].outcomes.length; j++) {
                                                 for (var k = 0; k < data.length; k++) {
                                                     if (data[k].id === data[i].outcomes[j].nextMapElementId) {
-                                                        html += '<p>' + data[i].outcomes[j].developerName + ': <a href="#' + data[i].outcomes[j].nextMapElementId + '"> ' + data[k].developerName + '</a></p>';
+                                                        html += '<p>' + data[i].outcomes[j].label + ': <a href="#' + data[i].outcomes[j].nextMapElementId + '"> ' + data[k].developerName + '</a></p>';
                                                     }
                                                 }
                                             }
