@@ -1948,7 +1948,8 @@ permissions and limitations under the License.
                     value.trim().length > 0) {
                     // Check to make sure we have a date that's non-zero
                     if (value == "0" ||
-                        value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase()) {
+                        value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase() ||
+                        value.toLowerCase() == "01/01/0001 00:00:00".toLowerCase()) {
                         // Set the date to now
                         value = moment().format('YYYY-MM-DD');
                     } else {
