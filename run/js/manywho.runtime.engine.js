@@ -80,6 +80,28 @@ permissions and limitations under the License.
         $('#' + domId + '-wait-indicator').show();
     };
 
+    var showVoteContent = function (domId, voteResponse) {
+        var html = '';
+
+        html += '<p align="center"><img src="https://cdn.manywho.com/images/spinner.gif" height="180" width="180" alt="Please wait..." /></p>';
+        html += '<h4 align="center" class="muted">Waiting on Votes</h4>';
+
+        // Check to see if we have a vote response and if there are any user votes registered
+        if (voteResponse != null &&
+            voteResponse.userVotes != null &&
+            voteResponse.userVotes.length > 0) {
+            if (voteResponse.userVotes.length == 1) {
+                html += '<p align="center" class="muted">You are the only person who has voted.</p>';
+            } else if (voteResponse.userVotes.length == 2) {
+                html += '<p align="center" class="muted">You and one other have voted.</p>';
+            } else {
+                html += '<p align="center" class="muted">You and ' + voteResponse.userVotes.length + ' others have voted.</p>';
+            }
+        }
+
+        $('#' + domId + '-screen-content').html(html);
+    }
+
     var showWaitContent = function (domId, message) {
         var html = '';
 
@@ -491,6 +513,7 @@ permissions and limitations under the License.
             applyParentLink(domId, data);
 
             if (data.invokeType != 'STATUS' &&
+                data.invokeType != 'WAITING_ON_VOTES' &&
                 data.invokeType != 'SYNC') {
                 // Clear the toolbar buttons for navigation
                 // Blank out the outcome buttons
@@ -520,6 +543,7 @@ permissions and limitations under the License.
                 data.invokeType != 'STATUS' &&
                 data.invokeType != 'SAVE' &&
                 data.invokeType != 'DONE' &&
+                data.invokeType != 'WAITING_ON_VOTES' &&
                 data.mapElementInvokeResponses != null &&
                 data.mapElementInvokeResponses.length > 0) {
                 // Get the first map element invoke response out of the list - we only support 1
@@ -527,6 +551,7 @@ permissions and limitations under the License.
 
                 // We don't want to clear the form if we're simply doing a status update
                 if (data.invokeType != 'STATUS' &&
+                    data.invokeType != 'WAITING_ON_VOTES' &&
                     data.invokeType != 'SYNC') {
                     // Check our register for any components to pass through to the form
                     var registry = $('#' + domId + '-registry-database').data('registry');
@@ -604,15 +629,19 @@ permissions and limitations under the License.
                 // We don't want to finish if we've already painted the form
                 // We also don't want to recreate the outcome responses
                 if (data.invokeType != 'STATUS' &&
+                    data.invokeType != 'WAITING_ON_VOTES' &&
                     data.invokeType != 'SYNC') {
                     $('#' + domId + '-screen-content').manywhoFormBootStrap('finish');
                 }
             }
 
             if (data.invokeType == 'WAIT' ||
+                data.invokeType == 'WAITING_ON_VOTES' ||
                 data.invokeType == 'STATUS') {
                 if (data.invokeType == 'WAIT') {
                     showWaitContent(domId, data.waitMessage);
+                } else if (data.invokeType == 'WAITING_ON_VOTES') {
+                    showVoteContent(domId, data.voteResponse);
                 } else {
                     showWaitContent(domId, data.notAuthorizedMessage);
                 }
@@ -777,6 +806,7 @@ permissions and limitations under the License.
                     $('#' + domId + '-screen-content').manywhoFormBootStrap('destroy');
                 }
             } else if (data.invokeType == 'WAIT' ||
+                       data.invokeType == 'WAITING_ON_VOTES' ||
                        data.invokeType == 'STATUS') {
                 // We need to assign this as it may be different from what we thought
                 $('#' + domId + '-element-id').val(data.currentMapElementId);
@@ -790,6 +820,8 @@ permissions and limitations under the License.
                 // No need to call the execute success callback - we just show the wait content
                 if (data.invokeType == 'WAIT') {
                     showWaitContent(domId, data.waitMessage);
+                } else if (data.invokeType == 'WAITING_ON_VOTES') {
+                    showVoteContent(domId, data.voteResponse);
                 } else {
                     showWaitContent(domId, data.notAuthorizedMessage);
                 }
