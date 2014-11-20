@@ -1389,7 +1389,7 @@ permissions and limitations under the License.
             if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_NUMBER.toLowerCase()) {
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_DATETIME.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="date" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + ' datepicker" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_PASSWORD.toLowerCase()) {
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             } else {
@@ -1943,7 +1943,7 @@ permissions and limitations under the License.
             valueType = $('#' + domId + '-' + fieldId + '-field').attr('type');
 
             // If this is a date, we don't want to write the ECMA format - it's too much!
-            if (valueType.toLowerCase() == 'date') {
+            if (valueType.toLowerCase() == 'text') {
                 if (value != null &&
                     value.trim().length > 0) {
                     // Check to make sure we have a date that's non-zero
@@ -2349,6 +2349,15 @@ permissions and limitations under the License.
                     // Create the field in our form
                     fieldId = createField(domId, pageComponentResponse, pageComponentData, outcomeResponses, eventCallback, outcomeFunction);
                 }
+
+                // After rendering all of components add the datepicker plugin to each datetime elements rendered
+                for (var i = 0; i < $('.datepicker').length; i++) {
+                    var picker = new Pikaday({
+                                                field: $('.datepicker')[i],
+                                                defaultDate: new Date()
+                                            });
+                }
+                
             }
 
             // Finally, we print our the outcome responses for the user actions
