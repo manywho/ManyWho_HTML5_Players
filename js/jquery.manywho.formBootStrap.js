@@ -1943,7 +1943,7 @@ permissions and limitations under the License.
             valueType = $('#' + domId + '-' + fieldId + '-field').attr('type');
 
             // If this is a date, we don't want to write the ECMA format - it's too much!
-            if (valueType.toLowerCase() == 'text') {
+            if (valueType.toLowerCase() == 'text' && $('#' + domId + '-' + fieldId + '-field').hasClass('datepicker')) {
                 if (value != null &&
                     value.trim().length > 0) {
                     // Check to make sure we have a date that's non-zero
@@ -1951,10 +1951,10 @@ permissions and limitations under the License.
                         value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase() ||
                         value.toLowerCase() == "01/01/0001 00:00:00".toLowerCase()) {
                         // Set the date to now
-                        value = moment().format('YYYY-MM-DD');
+                        value = moment().format('DD-MM-YYYY');
                     } else {
                         // Format the date using something that's acceptable to most!
-                        value = moment(value).format('YYYY-MM-DD');
+                        value = moment(value).format('DD-MM-YYYY');
                     }
                 } else {
                     // Blank out the date if it isn't valid
@@ -2354,7 +2354,8 @@ permissions and limitations under the License.
                 for (var i = 0; i < $('.datepicker').length; i++) {
                     var picker = new Pikaday({
                                                 field: $('.datepicker')[i],
-                                                defaultDate: new Date()
+                                                defaultDate: new Date(),
+                                                format: 'DD-MM-YYYY'
                                             });
                 }
                 
