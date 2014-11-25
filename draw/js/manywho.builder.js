@@ -496,6 +496,7 @@ function configurePage(options) {
 
     // Add an enter key event to the Version dialog
     $('#version-comment').keypress(function (e) {
+        e.preventDefault();
         if (e.which == 13) {
             launchBuildWithComment();
         }
