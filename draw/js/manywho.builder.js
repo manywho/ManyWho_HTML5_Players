@@ -219,7 +219,7 @@ function configurePage(options) {
                                    replaceEnd = '+' + data.developerName.substring(1);
 
                                    // Add the beginning piece
-                                   subtenantInfo += '<a tabindex="-1" href="#"><i class="icon-chevron-right"></i> Sub-Tenants</a><ul class="dropdown-menu">';
+                                   subtenantInfo += '<a tabindex="-1" href="#"><i class="icon-chevron-right"></i> Sub-Tenants</a><ul class="dropdown-menu scroll-menu">';
 
                                    // Check to see if we have any sub tenants for this main tenant
                                    if (data.subTenants != null &&
