@@ -809,26 +809,10 @@ var ManyWhoSharedServices = {
                                errorFunction);
     },
     showMapElementConfigDialog: function (elementType, elementId, groupElementId, graphId, operation, locationX, locationY, okCallback, cancelCallback) {
-        var doDelete = false;
+        var operationType = operation;
         var inputs = null;
 
-        if (elementId == null ||
-            (operation != null &&
-             operation.toLowerCase() == 'delete')) {
-            doDelete = true;
-        }
-
         $('#manywho-dialog').off('hidden');
-        $('#manywho-dialog').on('hidden', function () {
-            if ($('#manywho-dialog').attr('data-keep') != 'true') {
-                cancelCallback.call(this, graphId, doDelete);
-            }
-
-            // Clear the 'keep' data so it doesn't bleed between calls
-            $('#manywho-dialog').attr('data-keep', '');
-            $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
-            $('#manywho-dialog-title').html('Loading...');
-        });
 
         inputs = ManyWhoSharedServices.getGeneralFlowInputs(true, elementId, groupElementId, elementType, locationX, locationY);
         inputs = ManyWhoSharedServices.createInput(inputs, 'Command', operation, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
@@ -867,7 +851,12 @@ var ManyWhoSharedServices = {
                                                 $('#manywho-dialog').attr('data-keep', 'true');
                                                 okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
                                             } else {
-                                                cancelCallback.call(this, graphId, doDelete);
+                                                cancelCallback.call(this, graphId, operationType, flowOutcome);
+
+                                                // Clear the 'keep' data so it doesn't bleed between calls
+                                                $('#manywho-dialog').attr('data-keep', '');
+                                                $('#manywho-model-runtime').manywhoRuntimeEngine('clear');
+                                                $('#manywho-dialog-title').html('Loading...');
                                             }
 
                                             // Hide the dialog

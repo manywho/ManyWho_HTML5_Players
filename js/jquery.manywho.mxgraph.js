@@ -89,8 +89,8 @@ permissions and limitations under the License.
                                                                               alert('Whoops! Something bad happened - check the console logs in the browser for details');
                                                                           });
                                                                   },
-                                                                  function (graphId, doDelete) {
-                                                                      cancelMapElement(graphId, doDelete);
+                                                                  function (graphId, operationType, flowOutcome) {
+                                                                      cancelMapElement(graphId, operationType, flowOutcome);
                                                                       editing(false);
                                                                   });
         } else {
@@ -111,8 +111,8 @@ permissions and limitations under the License.
                                                                  }
                                                                  editing(false);
                                                              },
-                                                             function (graphId, doDelete) {
-                                                                 cancelMapElement(graphId, doDelete);
+                                                             function (graphId, operationType, flowOutcome) {
+                                                                 cancelMapElement(graphId, operationType, flowOutcome);
                                                                  editing(false);
                                                              });
         }
@@ -926,8 +926,8 @@ permissions and limitations under the License.
 
     // Generic method to cancel the dialog page for map elements.
     //
-    var cancelMapElement = function (graphId, doDelete) {
-        if (doDelete == true) {
+    var cancelMapElement = function (graphId, operationType, flowOutcome) {
+        if (operationType != null && operationType.toLowerCase() == 'delete' && flowOutcome != null && flowOutcome.toLowerCase() != 'cancel') {
             deleteMapElement(graphId);
         }
     }
