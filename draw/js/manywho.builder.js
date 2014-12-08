@@ -337,7 +337,6 @@ function configurePage(options) {
     // This function will launch the build modal and snap the Flow Version
     // Added as a separate function because it will be bound to both the Activate button and Enter key
     var launchBuildWithComment = function (event) {
-        event.preventDefault();
 
         // Hide the Comment dialog and show the Build one to progress
         ManyWhoSharedServices.showCommentDialog(false);
@@ -496,7 +495,6 @@ function configurePage(options) {
 
     // Add an enter key event to the Version dialog
     $('#version-comment').keypress(function (e) {
-        e.preventDefault();
         if (e.which == 13) {
             launchBuildWithComment();
         }
