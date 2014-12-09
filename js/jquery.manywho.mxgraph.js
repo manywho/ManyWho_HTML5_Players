@@ -91,7 +91,6 @@ permissions and limitations under the License.
                                                                   },
                                                                   function (graphId, doDelete) {
                                                                       cancelMapElement(graphId, doDelete);
-                                                                      editing(false);
                                                                   });
         } else {
             // Load the flow for the appropriate element type
@@ -113,7 +112,6 @@ permissions and limitations under the License.
                                                              },
                                                              function (graphId, doDelete) {
                                                                  cancelMapElement(graphId, doDelete);
-                                                                 editing(false);
                                                              });
         }
     }

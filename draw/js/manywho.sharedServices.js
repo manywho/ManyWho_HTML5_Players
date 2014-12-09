@@ -823,7 +823,7 @@ var ManyWhoSharedServices = {
             if ($('#manywho-dialog').attr('data-keep') != 'true') {
                 cancelCallback.call(this, graphId, doDelete);
             }
-
+            
             // Clear the 'keep' data so it doesn't bleed between calls
             $('#manywho-dialog').attr('data-keep', '');
             $('#manywho-model-runtime').manywhoRuntimeEngine('clear');

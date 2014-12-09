@@ -488,6 +488,39 @@ permissions and limitations under the License.
                     }
                 }
 
+                // Create a header for the tenant id
+                var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', $('#' + domId + '-tenant-id').val());
+
+                // Execute the log load
+                ManyWhoAjax.callRestApi('ManyWhoRuntimeEngine.LoadLog',
+                                        ManyWhoConstants.BASE_PATH_URL + '/api/log/' + $('#' + domId + '-flow-id').val() + '/' + $('#' + domId + '-state-id').val(),
+                                        'GET',
+                                        '',
+                                        null,
+                                        function (logData, status, xhr) {
+                                            var items = [];
+
+                                            // Print the log entries
+                                            $.each(logData.entries, function (key, val) {
+                                                var viewValue = '(Empty)';
+
+                                                // Escape the string so we can store the content on the dom properly
+                                                if (val.data != null) {
+                                                    viewValue = viewValue.replace(/(['"])/g, "\\$1");
+                                                }
+
+                                                items.push('<tr><td>' + val.timestamp + '</td><td>' + val.message + '</td><td><span class="manywho-debug-log-entry" data-content="' + viewValue + '">view</span></td></tr>');
+                                            });
+
+                                            // Print the full table into the dom
+                                            $('#' + domId + '-debug-state-log').html('<table class="table table-condensed"><thead><tr><th>Timestamp</th><th>Message</th><th>Data</th></thead><tbody>' + items.join("") + '</tbody></table>');
+
+                                            // Add the popovers for the data
+                                            $('.manywho-debug-log-entry').popover({ 'trigger': 'hover', 'placement': 'top' });
+                                        },
+                                        null,
+                                        headers);
+
                 // Check to see if we have any map element invoke responses
                 if (data.mapElementInvokeResponses != null &&
                     data.mapElementInvokeResponses.length > 0) {
@@ -1229,6 +1262,8 @@ permissions and limitations under the License.
         html += '<div id="' + domId + '-debug-precommit-state-values"></div>';
         html += '<h5>State Values</h5>';
         html += '<div id="' + domId + '-debug-state-values"></div>';
+        html += '<h5>Execution Log</h5>';
+        html += '<div id="' + domId + '-debug-state-log"></div>';
         html += '</div>';
 
         return html;
