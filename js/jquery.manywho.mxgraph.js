@@ -89,8 +89,8 @@ permissions and limitations under the License.
                                                                               alert('Whoops! Something bad happened - check the console logs in the browser for details');
                                                                           });
                                                                   },
-                                                                  function (graphId, doDelete) {
-                                                                      cancelMapElement(graphId, doDelete);
+                                                                  function (graphId, operation, flowOutcome) {
+                                                                      cancelMapElement(graphId, operation, flowOutcome);
                                                                   });
         } else {
             // Load the flow for the appropriate element type
@@ -110,8 +110,8 @@ permissions and limitations under the License.
                                                                  }
                                                                  editing(false);
                                                              },
-                                                             function (graphId, doDelete) {
-                                                                 cancelMapElement(graphId, doDelete);
+                                                             function (graphId, operation, flowOutcome) {
+                                                                 cancelMapElement(graphId, operation, flowOutcome);
                                                              });
         }
     }
@@ -924,8 +924,8 @@ permissions and limitations under the License.
 
     // Generic method to cancel the dialog page for map elements.
     //
-    var cancelMapElement = function (graphId, doDelete) {
-        if (doDelete == true) {
+    var cancelMapElement = function (graphId, operation, flowOutcome) {
+        if ((operation.toLowerCase() == 'create' && flowOutcome.toLowerCase() == 'cancel') || (operation.toLowerCase() == 'delete' && flowOutcome.toLowerCase() != 'cancel')) {
             deleteMapElement(graphId);
         }
     }
@@ -1399,7 +1399,7 @@ permissions and limitations under the License.
             }
 
             // Show the map element dialog - using the latest cell coordinates - which will have shifted if inserting into a group
-            showMapElementDialog(cell.id, 'edit', cell.getGeometry().getPoint().x, cell.getGeometry().getPoint().y, elementType, null, groupElementId);
+            showMapElementDialog(cell.id, 'create', cell.getGeometry().getPoint().x, cell.getGeometry().getPoint().y, elementType, null, groupElementId);
         }
 
         // Creates a drag effect for the map element
