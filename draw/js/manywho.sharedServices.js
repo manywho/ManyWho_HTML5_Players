@@ -809,7 +809,6 @@ var ManyWhoSharedServices = {
                                errorFunction);
     },
     showMapElementConfigDialog: function (elementType, elementId, groupElementId, graphId, operation, locationX, locationY, okCallback, cancelCallback) {
-        var operationType = operation;
         var inputs = null;
 
         $('#manywho-dialog').off('hidden');
@@ -851,7 +850,7 @@ var ManyWhoSharedServices = {
                                                 $('#manywho-dialog').attr('data-keep', 'true');
                                                 okCallback.call(this, elementType, elementId, graphId, elementDeveloperName, flowOutcome);
                                             } else {
-                                                cancelCallback.call(this, graphId, operationType, flowOutcome);
+                                                cancelCallback.call(this, graphId, operation, flowOutcome);
 
                                                 // Clear the 'keep' data so it doesn't bleed between calls
                                                 $('#manywho-dialog').attr('data-keep', '');
