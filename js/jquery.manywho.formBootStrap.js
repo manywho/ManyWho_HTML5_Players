@@ -1951,10 +1951,10 @@ permissions and limitations under the License.
                         value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase() ||
                         value.toLowerCase() == "01/01/0001 00:00:00".toLowerCase()) {
                         // Set the date to now
-                        value = moment().format('DD-MM-YYYY');
+                        value = moment().format('DD MMM YYYY');
                     } else {
                         // Format the date using something that's acceptable to most!
-                        value = moment(value).format('DD-MM-YYYY');
+                        value = moment(value).format('DD MMM YYYY');
                     }
                 } else {
                     // Blank out the date if it isn't valid
@@ -2355,7 +2355,7 @@ permissions and limitations under the License.
                     var picker = new Pikaday({
                                                 field: $('.datepicker')[i],
                                                 defaultDate: new Date(),
-                                                format: 'DD-MM-YYYY'
+                                                format: 'DD MMM YYYY'
                                             });
                 }
                 
