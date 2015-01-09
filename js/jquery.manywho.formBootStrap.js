@@ -1191,10 +1191,7 @@ permissions and limitations under the License.
                         data.submit();
                     },
                     done: function (e, data) {
-                        $.each(data.result.files, function (index, file) {
-                            $('<p/>').text(file.name).appendTo('#files');
-                        });
-
+                        // Repopulate the file listing now the file listing
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     },
                     progressall: function (e, data) {
