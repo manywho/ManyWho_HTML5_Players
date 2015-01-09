@@ -1061,8 +1061,8 @@ permissions and limitations under the License.
             html += '</span>';
             html += '<br>';
             html += '<br>';
-            html += '<div id="progress" class="progress">';
-            html += '<div class="progress-bar progress-bar-success"></div>';
+            html += '<div id="progress" class="progress progress-striped active">';
+            html += '<div class="bar bar-success"></div>';
             html += '</div>';
             html += '<div id="files" class="files"></div>';
 
@@ -1183,6 +1183,8 @@ permissions and limitations under the License.
                     url: ManyWhoConstants.BASE_PATH_URL + '/api/service/1/file/content',
                     dataType: 'json',
                     beforeSend: function (xhr, data) {
+                        $('#progress').addClass('progress-striped active');
+
                         // Add the user authorization header to the request so the service knows who they are
                         xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
                         xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
@@ -1192,11 +1194,31 @@ permissions and limitations under the License.
                     },
                     done: function (e, data) {
                         // Repopulate the file listing now the file listing
+                        //$.each(data.result.files, function (index, file) {
+                        //    $('<p/>').text(file.name).appendTo('#files');
+                        //});
+
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
+                    },
+                    always: function (e, data) {
+                        $('#progress .bar').css('width', '0%');
+                        $('#progress').removeClass('progress-striped active');
+                        $('#progress .bar').addClass('bar-success');
+                    },
+                    fail: function (e, data) {
+                        var message = "An error occurred while uploading the file";
+
+                        switch (data.jqXHR.status) {
+                            case 409:
+                                message = "A file with this name already exists";
+                                break;
+                        }
+
+                        alert(message);
                     },
                     progressall: function (e, data) {
                         var progress = parseInt(data.loaded / data.total * 100, 10);
-                        $('#progress .progress-bar').css(
+                        $('#progress .bar').css(
                             'width',
                             progress + '%'
                         );
@@ -3102,7 +3124,7 @@ permissions and limitations under the License.
                     width: parseInt(widthAttr),
                     selector: 'textarea#' + $(this).attr('id'),
                     plugins: [
-																								"importcss",
+                                                                                                "importcss",
                         "advlist autolink lists link image charmap anchor",
                         "searchreplace visualblocks code",
                         "media table contextmenu paste fullscreen",
