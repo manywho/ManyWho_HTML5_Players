@@ -1183,7 +1183,8 @@ permissions and limitations under the License.
                     url: ManyWhoConstants.BASE_PATH_URL + '/api/service/1/file/content',
                     dataType: 'json',
                     beforeSend: function (xhr, data) {
-                        $('#progress').addClass('progress-striped active');
+                        $('#progress').addClass('progress-striped');
+                        $('#progress .bar').css('width', '0%');
 
                         // Add the user authorization header to the request so the service knows who they are
                         xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
@@ -1201,8 +1202,7 @@ permissions and limitations under the License.
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     },
                     always: function (e, data) {
-                        $('#progress .bar').css('width', '0%');
-                        $('#progress').removeClass('progress-striped active');
+                        $('#progress').removeClass('progress-striped');
                         $('#progress .bar').addClass('bar-success');
                     },
                     fail: function (e, data) {
