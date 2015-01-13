@@ -158,9 +158,14 @@ function configurePage(options) {
     };
 
     var openFlow = function (flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
+
+        var currentFlowId = ManyWhoSharedServices.getFlowId();
+
         // If we have a flow loaded already, we save any changes - everything is on the service - so we don't need to wait for this to complete
-        if (ManyWhoSharedServices.getFlowId() != null &&
-            ManyWhoSharedServices.getFlowId().trim().length > 0) {
+        if (currentFlowId != null
+            && currentFlowId.trim().length > 0
+            && currentFlowId != flowId)
+        {
             // Save the currently cached model so we have all of the changes
             ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
                                     ManyWhoSharedServices.getEditingToken(),
@@ -173,7 +178,7 @@ function configurePage(options) {
                                     },
                                     createErrorAlert);
         }
-
+        
         // Clear the graph of any current flow
         $('#flow-graph').manywhoMxGraph('clear', null);
         $('#flow-graph-wrapper').show();
