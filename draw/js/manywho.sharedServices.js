@@ -1326,5 +1326,12 @@ var ManyWhoSharedServices = {
                 ]
             }
         ];
-    }
+    },
+    setIsLoadingFlow: function (isLoadingFlow) {
+        $('#manywho-shared-services-data').data('is-loading-flow', isLoadingFlow);
+    },
+    getIsLoadingFlow: function () {
+        return $('#manywho-shared-services-data').data('is-loading-flow');
+    },
+
 }
