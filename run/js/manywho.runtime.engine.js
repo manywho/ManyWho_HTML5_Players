@@ -199,6 +199,15 @@ permissions and limitations under the License.
                              },
                              manageError(domId));
         } else {
+            // Get the player uri from the system and path
+            var playerUri = ManyWhoConstants.BASE_PATH_URL + location.pathname;
+
+            // Check to see if the user has provided uri for the player manually
+            if ($('#' + domId + '-player-uri').val() != null &&
+                $('#' + domId + '-player-uri').val().trim().length > 0) {
+                playerUri = $('#' + domId + '-player-uri').val();
+            }
+
             // We have the fully versioned flow, we can initialize and start moving
             var requestUrl = $('#' + domId + '-engine-url').val();
             var requestType = 'POST';
@@ -210,8 +219,8 @@ permissions and limitations under the License.
                                   '"initializationValues":null,' +
                                   '"inputs":' + JSON.stringify(inputs) + ',' +
                                   '"annotations":' + JSON.stringify(annotations) + ',' +
-                                  '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
-                                  '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
+                                  '"playerUrl":"' + playerUri + '",' +
+                                  '"joinPlayerUrl":"' + playerUri + '",' +
                                   '"mode":"' + $('#' + domId + '-mode').val() + '",' +
                                   '"reportingMode":"' + $('#' + domId + '-reporting-mode').val() + '"' +
                           '}';
@@ -1024,8 +1033,8 @@ permissions and limitations under the License.
         navigator.geolocation.getCurrentPosition(function (position) {
             assignUserPosition(domId, position);
         },
-                                                 null,
-                                                 { timeout: 60000 });
+        null,
+        { timeout: 60000 });
     };
 
     var runFlow = function (domId) {
@@ -1084,6 +1093,7 @@ permissions and limitations under the License.
         $('#' + options.domId + '-outcome-panel').val('');
         $('#' + options.domId + '-form-label-panel').val('');
         $('#' + options.domId + '-mode').val('');
+        $('#' + options.domId + '-player-uri').val('')
 
         // Store the values in the dom
         $('#' + options.domId + '-state-id').val(options.stateId);
@@ -1094,6 +1104,7 @@ permissions and limitations under the License.
         $('#' + options.domId + '-mode').val(options.mode);
         $('#' + options.domId + '-session-id').val(options.sessionId);
         $('#' + options.domId + '-session-url').val(options.sessionUrl);
+        $('#' + options.domId + '-player-uri').val(opts.playerUri != null ? opts.playerUri : '');
 
         // Apply the sync timing if a value has been provided
         if (options.syncTiming != null) {
@@ -1137,39 +1148,17 @@ permissions and limitations under the License.
         }
 
         // Finally, we grab the geo location - commented out as we have this turned off by default
-        //if (navigator.geolocation){
-        //    // timeout at 60000 milliseconds (60 seconds)
-        //    var options = {timeout:1000};
+        if (opts.enableLocation == true &&
+            navigator.geolocation) {
+            // Get the navigator current position
+            navigator.geolocation.getCurrentPosition(function (position) {
+                // Grab the position data so we have the geo location of our user
+                assignUserPosition(domId, position);
+            });
+        }
 
-        //    // Tell the user we're trying to find their location                
-        //    showWait(domId, 'Finding your location...');
-
-        //    // Get the navigator current position
-        //    navigator.geolocation.getCurrentPosition(function (position) {
-        //                                                 // Hide the finding wait message
-        //                                                 hideWait(domId);
-
-        //                                                 // Grab the position data so we have the geo location of our user
-        //                                                 assignUserPosition(domId, position);
-
-        //                                                 // Run the requested flow
-        //                                                 runFlow(domId);
-
-        //                                                 // Kick off a thread to keep the location data up-to-date
-        //                                                 $('#' + domId + '-location-thread-id').val(setInterval(function () { trackUserPosition(domId); }, 60000));
-        //                                             }, 
-        //                                             function () {
-        //                                                 // Hide the finding wait message
-        //                                                 hideWait(domId);
-
-        //                                                 // Run the requested flow - we had an error grabbing geo location
-        //                                                 runFlow(domId);
-        //                                             },
-        //                                             options);
-        //} else {
-        // Run the requested flow - geo location is not supported just yet
+        // Run the flow
         runFlow(options.domId);
-        //}
     };
 
     // Create the setup function
@@ -1453,6 +1442,7 @@ permissions and limitations under the License.
             html += '<input type="hidden" id="' + domId + '-select-size" value="10" />';
             html += '<input type="hidden" id="' + domId + '-optimize-for-mobile" value="false" />';
             html += '<input type="hidden" id="' + domId + '-outcome-label-outside-button" value="false" />';
+            html += '<input type="hidden" id="' + domId + '-player-uri" value="" />';
 
             html += '<div id="' + domId + '-debug" class="' + containerCss + ' manywho-debug-info">';
             html += '</div>';
@@ -1628,7 +1618,9 @@ permissions and limitations under the License.
         sessionUrl: null,
         updateCallbackFunction: null,
         syncTiming: null,
-        navigationElementId: null
+        navigationElementId: null,
+        enableLocation: false,
+        playerUri: null
     }
 
 })(jQuery);
