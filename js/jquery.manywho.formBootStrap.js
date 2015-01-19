@@ -1061,8 +1061,8 @@ permissions and limitations under the License.
             html += '</span>';
             html += '<br>';
             html += '<br>';
-            html += '<div id="progress" class="progress">';
-            html += '<div class="progress-bar progress-bar-success"></div>';
+            html += '<div id="progress" class="progress progress-striped active">';
+            html += '<div class="bar bar-success"></div>';
             html += '</div>';
             html += '<div id="files" class="files"></div>';
 
@@ -1183,6 +1183,9 @@ permissions and limitations under the License.
                     url: ManyWhoConstants.BASE_PATH_URL + '/api/service/1/file/content',
                     dataType: 'json',
                     beforeSend: function (xhr, data) {
+                        $('#progress').addClass('progress-striped');
+                        $('#progress .bar').css('width', '0%');
+
                         // Add the user authorization header to the request so the service knows who they are
                         xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
                         xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
@@ -1191,15 +1194,31 @@ permissions and limitations under the License.
                         data.submit();
                     },
                     done: function (e, data) {
-                        $.each(data.result.files, function (index, file) {
-                            $('<p/>').text(file.name).appendTo('#files');
-                        });
+                        // Repopulate the file listing now the file listing
+                        //$.each(data.result.files, function (index, file) {
+                        //    $('<p/>').text(file.name).appendTo('#files');
+                        //});
 
                         dispatchAsyncFilePopulation(domId, field, formMetaData, outcomeResponses, onClickFunction);
                     },
+                    always: function (e, data) {
+                        $('#progress').removeClass('progress-striped');
+                        $('#progress .bar').addClass('bar-success');
+                    },
+                    fail: function (e, data) {
+                        var message = "An error occurred while uploading the file";
+
+                        switch (data.jqXHR.status) {
+                            case 409:
+                                message = "A file with this name already exists";
+                                break;
+                        }
+
+                        alert(message);
+                    },
                     progressall: function (e, data) {
                         var progress = parseInt(data.loaded / data.total * 100, 10);
-                        $('#progress .progress-bar').css(
+                        $('#progress .bar').css(
                             'width',
                             progress + '%'
                         );
@@ -1951,10 +1970,10 @@ permissions and limitations under the License.
                         value.toLowerCase() == "1/1/0001 12:00:00 AM".toLowerCase() ||
                         value.toLowerCase() == "01/01/0001 00:00:00".toLowerCase()) {
                         // Set the date to now
-                        value = moment().format('DD-MM-YYYY');
+                        value = moment().format('DD MMM YYYY');
                     } else {
                         // Format the date using something that's acceptable to most!
-                        value = moment(value).format('DD-MM-YYYY');
+                        value = moment(value).format('DD MMM YYYY');
                     }
                 } else {
                     // Blank out the date if it isn't valid
@@ -2355,7 +2374,7 @@ permissions and limitations under the License.
                     var picker = new Pikaday({
                                                 field: $('.datepicker')[i],
                                                 defaultDate: new Date(),
-                                                format: 'DD-MM-YYYY'
+                                                format: 'DD MMM YYYY'
                                             });
                 }
                 
@@ -3105,7 +3124,7 @@ permissions and limitations under the License.
                     width: parseInt(widthAttr),
                     selector: 'textarea#' + $(this).attr('id'),
                     plugins: [
-																								"importcss",
+                                                                                                "importcss",
                         "advlist autolink lists link image charmap anchor",
                         "searchreplace visualblocks code",
                         "media table contextmenu paste fullscreen",

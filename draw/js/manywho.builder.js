@@ -158,9 +158,16 @@ function configurePage(options) {
     };
 
     var openFlow = function (flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId) {
+
+        ManyWhoSharedServices.setIsLoadingFlow(true);
+
+        var currentFlowId = ManyWhoSharedServices.getFlowId();
+
         // If we have a flow loaded already, we save any changes - everything is on the service - so we don't need to wait for this to complete
-        if (ManyWhoSharedServices.getFlowId() != null &&
-            ManyWhoSharedServices.getFlowId().trim().length > 0) {
+        if (currentFlowId != null
+            && currentFlowId.trim().length > 0
+            && currentFlowId != flowId)
+        {
             // Save the currently cached model so we have all of the changes
             ManyWhoFlow.saveFlow('ManyWhoBuilder.CloseFlow',
                                     ManyWhoSharedServices.getEditingToken(),
@@ -173,7 +180,7 @@ function configurePage(options) {
                                     },
                                     createErrorAlert);
         }
-
+        
         // Clear the graph of any current flow
         $('#flow-graph').manywhoMxGraph('clear', null);
         $('#flow-graph-wrapper').show();
@@ -199,6 +206,7 @@ function configurePage(options) {
         $('#flow-graph').manywhoMxGraph('syncGraph', function () {
             // Update the tools once the sync is complete
             updateTools.call(this);
+            ManyWhoSharedServices.setIsLoadingFlow(false);
         });
     };
 
@@ -651,7 +659,8 @@ function configurePage(options) {
     // Set the timer to check if any changes to loaded flows have been made
     setInterval(function () {
         if (ManyWhoSharedServices.getFlowId() != null &&
-            ManyWhoSharedServices.getFlowId().trim().length > 0) {
+            ManyWhoSharedServices.getFlowId().trim().length > 0 &&
+            !ManyWhoSharedServices.getIsLoadingFlow()) {
             ManyWhoFlow.changeAvailable('ManyWhoBuilder.configurePage',
                                         ManyWhoSharedServices.getFlowId(),
                                         ManyWhoSharedServices.getEditingToken(),
