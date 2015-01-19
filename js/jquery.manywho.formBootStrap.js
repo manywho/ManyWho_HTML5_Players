@@ -1148,6 +1148,10 @@ permissions and limitations under the License.
             $('#' + domId + '-' + field.id + '-field-search').keypress(function (event) {
                 // Check to see if this is the enter key
                 if (event.which == 13) {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     // Reset the paging
                     $('#' + domId + '-' + field.id + '-field').attr('data-page', 0);
 
