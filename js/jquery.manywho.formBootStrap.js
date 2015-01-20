@@ -1409,13 +1409,18 @@ permissions and limitations under the License.
         }
 
         if (fieldType == ManyWhoConstants.COMPONENT_TYPE_INPUTBOX.toUpperCase()) {
-            if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_NUMBER.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
-            } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_DATETIME.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + ' datepicker" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
-            } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_PASSWORD.toLowerCase()) {
-                fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
-            } else {
+            if (uiDataType) {
+                if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_NUMBER.toLowerCase()) {
+                    fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="number" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_DATETIME.toLowerCase()) {
+                    fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + ' datepicker" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                } else if (uiDataType.toLowerCase() == ManyWhoConstants.CONTENT_TYPE_PASSWORD.toLowerCase()) {
+                    fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="password" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                } else {
+                    fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
+                }
+            }
+            else {
                 fieldHtml = '<input id="' + domId + '-' + field.id + '-field" type="text" class="manywho-runtime-inputbox-field' + fieldSize + '" placeholder="' + field.hintValue + '" maxsize="' + field.maxSize + '" size="' + field.size + '" value="' + formMetaData.contentValue + '" />';
             }
         } else if (fieldType == ManyWhoConstants.COMPONENT_TYPE_CONTENT.toUpperCase()) {
