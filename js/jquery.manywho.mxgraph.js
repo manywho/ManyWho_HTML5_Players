@@ -204,6 +204,7 @@ permissions and limitations under the License.
 
         $('#flow-developer-name').html('');
         $('#flow-developer-summary').html('');
+        $('#flow-allow-jumping').html('');
         $('#flow-start-map-element-id').val('');
     }
 

@@ -230,6 +230,7 @@ var ManyWhoFlow = {
                         flowId,
                         flowName,
                         flowSummary,
+                        allowJumping,
                         authenticationToken,
                         syncBeforeSend,
                         syncSuccessCallback,
@@ -251,7 +252,8 @@ var ManyWhoFlow = {
                     '"editingToken":"' + editingToken + '",' +
                     '"id":{"id":"' + flowId + '"},' +
                     '"developerName":"' + ManyWhoAjax.cleanJson(flowName) + '",' +
-                    '"developerSummary":"' + ManyWhoAjax.cleanJson(flowSummary) + '"' +
+                    '"developerSummary":"' + ManyWhoAjax.cleanJson(flowSummary) + '",' +
+                    '"allowJumping":' + allowJumping.toLowerCase() +
             '}';
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoFlow.SaveFlow', requestUrl, requestType, requestData, syncBeforeSend, syncSuccessCallback, syncErrorCallback, null, null, authenticationToken);
