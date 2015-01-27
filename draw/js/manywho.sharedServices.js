@@ -470,7 +470,7 @@ var ManyWhoSharedServices = {
         // We want the user to authenticate against the draw plugin API
         inputs = ManyWhoSharedServices.createInput(inputs, 'LoginUrl', ManyWhoConstants.LOGIN_PATH_URL + '/plugins/manywho/api/draw/1/authentication', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
         // Also set the directory name so we have it
-        inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', 'ManyWho', ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
+        inputs = ManyWhoSharedServices.createInput(inputs, 'DirectoryName', ManyWhoConstants.MANYWHO_DIRECTORY_NAME, ManyWhoConstants.CONTENT_TYPE_STRING, null, null);
 
         username = ManyWhoUtils.getCookie('AuthorUsername');
 
@@ -520,7 +520,7 @@ var ManyWhoSharedServices = {
                                    ManyWhoSharedServices.showLoadingDialog(false);
 
                                    // Show the authentication dialog
-                                   $('#manywho-dialog').modal({ backdrop: 'static', show: true, keyboard: false});
+                                    $('#manywho-dialog').modal({ backdrop: 'static', show: true, keyboard: false });
                                },
                                null);
     },
@@ -1085,11 +1085,12 @@ var ManyWhoSharedServices = {
                                            flowDeveloperSummary = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'DeveloperSummary');
                                            flowEditingToken = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'EditingToken');
                                            flowStartMapElementId = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'StartMapElementId');
+                                           flowAllowJumping = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'AllowJumping');
                                            flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
 
                                            if (flowOutcome == null ||
                                                flowOutcome.toLowerCase() != 'cancel') {
-                                               okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
+                                               okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId, flowAllowJumping);
                                            } else {
                                                if (cancelCallback != null) {
                                                    cancelCallback.call(this);
@@ -1154,11 +1155,12 @@ var ManyWhoSharedServices = {
                                                flowDeveloperSummary = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'DeveloperSummary');
                                                flowEditingToken = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'EditingToken');
                                                flowStartMapElementId = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow To Open', 'StartMapElementId');
+                                               flowAllowJumping = ManyWhoUtils.getOutcomeValue(outputValues, 'FLOW', 'AllowJumping');
                                                flowOutcome = ManyWhoUtils.getOutcomeValue(outputValues, 'FlowOutcome', null);
                                                flowVersionId = ManyWhoUtils.getOutcomeValue(outputValues, 'Flow Version To Activate', 'Id');
                                                var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
                                                ManyWhoFlow.revertVersion('ManyWhoSharedServices.ShowFlowVersionConfigDialog', flowId, flowVersionId, flowEditingToken, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, function (data) {
-                                                   okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId);
+                                                   okCallback.call(this, flowEditingToken, flowId, flowDeveloperName, flowDeveloperSummary, flowStartMapElementId, flowAllowJumping);
                                                }, null, headers);
                                            } else {
                                                if (cancelCallback != null) {
