@@ -17,7 +17,7 @@ permissions and limitations under the License.
 (function ($) {
 
     var TABLE_RESULT_LIMIT = 10;
-    var SELECT_RESULT_LIMIT = 10;
+    var SELECT_RESULT_LIMIT = -1;
 
     // This method works out if the action type should be shown inline with table records or not. The decision will determine if the outcome
     // button is displayed at the top of the table or if it's shown as a link against each record in the table
@@ -2754,7 +2754,6 @@ permissions and limitations under the License.
 
             // Assign the resultset sizes
             TABLE_RESULT_LIMIT = opts.tableResultSetSize;
-            SELECT_RESULT_LIMIT = opts.selectResultSetSize;
 
             $(this).append('<input type="hidden" id="' + domId + '-form-outcome-reference" value="" />');
             $(this).append('<input type="hidden" id="' + domId + '-tenant-id" value="' + opts.tenantId + '" />');
