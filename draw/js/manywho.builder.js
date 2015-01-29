@@ -470,21 +470,21 @@ function configurePage(options) {
                                    '',
                                    null,
                                    function (data, status, xhr) {
-                                       var location = null;
+                                       var flowLink = null;
 
                                        ManyWhoSharedServices.showBuildDialog(false);
 
-                                       // Assign the location
-                                       location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+                                       // Assign the flowLink
+                                       flowLink = location.protocol + '//' + location.host + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
 
                                        // Check to see if the navigation has any entries for the user to select from
                                        if ($('#manywho-model-select-run-navigation').html() != null &&
                                            $('#manywho-model-select-run-navigation').html().trim().length > 0) {
                                            // Show the navigation selection menu
-                                           ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, data.id.versionId);
+                                           ManyWhoSharedServices.showSelectNavigationDialog(true, flowLink, data.id.id, data.id.versionId);
                                        } else {
                                            // Show the dialog, but no need to have navigation selection
-                                           ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, data.id.versionId);
+                                           ManyWhoSharedServices.showSelectNavigationDialog(false, flowLink, data.id.id, data.id.versionId);
                                        }
                                    },
                                    createErrorAlert);

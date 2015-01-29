@@ -1502,7 +1502,7 @@ permissions and limitations under the License.
             // Start by hiding the wait
             hideWait(domId);
 
-            $('#' + domId + '-engine-url').val(ManyWhoConstants.BASE_PATH_URL + '/api/run/1');
+            $('#' + domId + '-engine-url').val(location.protocol + '//' + location.host + '/api/run/1');
             $('#' + domId + '-tenant-id').val(opts.tenantId);
             $('#' + domId + '-rewrite-url').val(opts.rewriteUrl);
             $('#' + domId + '-reporting-mode').val(opts.reportingMode != null ? opts.reportingMode : '');

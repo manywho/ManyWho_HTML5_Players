@@ -20,7 +20,7 @@ var ManyWhoTenant = {
                     loadBeforeSend,
                     loadSuccessCallback,
                     loadErrorCallback) {
-        var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/admin/1/tenant?includeSubTenants=' + includeSubTenants;
+        var requestUrl = '/api/admin/1/tenant?includeSubTenants=' + includeSubTenants;
         var requestType = 'GET';
         var requestData = '';
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
