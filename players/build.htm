@@ -27,6 +27,8 @@
 
     <script type="text/javascript" src="https://cdn.manywho.com/extensions/cookie/jquery.cookie.js"></script>
 
+    <script type="text/javascript" src="https://cdn.manywho.com/extensions/filesaver/FileSaver.js"></script>
+
     <script type="text/javascript" src="https://cdn.manywho.com/build/js/manywho.sharedServices.js"></script>
 
     <script type="text/javascript" src="/js/constants"></script>
@@ -369,8 +371,12 @@
                 refreshTypeAheadSource();
             }
 
-            restResponse.setValue(JSON.stringify(data, undefined, 4));
-            restResponse.gotoLine(0);
+            if (typeof saveTextAs == 'function' && $('#request-url').val().indexOf('api/package/1/flow') != -1) {
+                saveTextAs(data, "package.txt");
+            } else {
+                restResponse.setValue(JSON.stringify(data, undefined, 4));
+                restResponse.gotoLine(0);
+            }
         }
 
         function refreshTypeAheadSource() {
