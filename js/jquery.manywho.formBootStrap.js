@@ -17,7 +17,7 @@ permissions and limitations under the License.
 (function ($) {
 
     var TABLE_RESULT_LIMIT = 10;
-    var SELECT_RESULT_LIMIT = 10;
+    var SELECT_RESULT_LIMIT = 250;
 
     // This method works out if the action type should be shown inline with table records or not. The decision will determine if the outcome
     // button is displayed at the top of the table or if it's shown as a link against each record in the table
@@ -3169,6 +3169,6 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false };
+    $.fn.manywhoFormBootStrap.defaults = { addRealtime: false, label: '', sectionFormat: 'tabs', columnFormat: 'accordian', toggleHtml: null, register: null, tableResultSetSize: 10, selectResultSetSize: 250, optimizeForMobile: false, outcomeLabelOutsideButton: false };
 
 })(jQuery);

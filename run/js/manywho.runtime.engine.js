@@ -1601,7 +1601,7 @@ permissions and limitations under the License.
     };
 
     // Option default values
-    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 10, optimizeForMobile: false, outcomeLabelOutsideButton: false, register: null };
+    $.fn.manywhoRuntimeEngine.defaults = { rewriteUrl: true, authorization: null, tenantId: null, culture: null, reportingMode: null, isFullWidth: true, tableResultSetSize: 10, selectResultSetSize: 250, optimizeForMobile: false, outcomeLabelOutsideButton: false, register: null };
 
     $.fn.manywhoRuntimeEngine.runDefaults = {
         domId: null, 
