@@ -1908,7 +1908,7 @@ permissions and limitations under the License.
 
             // Sets the graph container and configures the editor
             editor.setGraphContainer(container);
-            var config = mxUtils.load('graph/config/keyhandler-commons.xml').getDocumentElement();
+            var config = mxUtils.load(ManyWhoConstants.CDN_PATH_URL + '/extensions/mxgraph/config/keyhandler-commons.xml').getDocumentElement();
             editor.configure(config);
 
             // Defines the default group to be used for grouping. The
