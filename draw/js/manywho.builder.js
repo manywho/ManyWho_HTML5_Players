@@ -204,6 +204,8 @@ function configurePage(options) {
         // Show the user the "flow loading" screen
         setFlowLoader(true);
 
+        $('#is-editing').val(false);
+
         // Synchronize the graph to load all of the elements
         $('#flow-graph').manywhoMxGraph('syncGraph', function () {
             // Update the tools once the sync is complete
