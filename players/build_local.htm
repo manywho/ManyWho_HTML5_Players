@@ -371,8 +371,8 @@
                 refreshTypeAheadSource();
             }
 
-            if (typeof saveTextAs == 'function' && $('#request-url').val().indexOf('api/package/1/flow') != -1) {
-                saveTextAs(data, "package.txt");
+            if (typeof saveTextAs == 'function' && $('#request-url').val().indexOf('api/package/1/flow') != -1 && $('#request-type').val() == 'GET') {
+                saveTextAs(JSON.stringify(data), "package.txt");
             } else {
                 restResponse.setValue(JSON.stringify(data, undefined, 4));
                 restResponse.gotoLine(0);
