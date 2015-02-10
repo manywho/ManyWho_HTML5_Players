@@ -204,6 +204,8 @@ function configurePage(options) {
         // Show the user the "flow loading" screen
         setFlowLoader(true);
 
+        $('#is-editing').val(false);
+
         // Synchronize the graph to load all of the elements
         $('#flow-graph').manywhoMxGraph('syncGraph', function () {
             // Update the tools once the sync is complete
@@ -548,7 +550,7 @@ function configurePage(options) {
                     html += '<body>';
                     html += '<h1>' + data.developerName + '</h1>';
                     html += 'Description: ' + data.developerSummary + ' <br/>';
-                    html += 'Author: ' + data.whoCreated + ' <br/>';
+                    html += 'Author: ' + data.whoCreated.firstName + ' ' + data.whoCreated.lastName + '<br/>';
                     html += 'Date Created: ' + data.dateCreated + '<br/>';
                     html += '<p>&nbsp</p>';
                     var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/' + ManyWhoSharedServices.getEditingToken() + '/element/map/';
