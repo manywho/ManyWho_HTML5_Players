@@ -174,7 +174,7 @@ function configurePage(options) {
                                     ManyWhoSharedServices.getFlowId(),
                                     $('#flow-developer-name').html(),
                                     $('#flow-developer-summary').html(),
-                                    $('#flow-allow-jumping').html(),
+                                    $('#flow-allow-jumping').val(),
                                     ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                     null,
                                     function (data, status, xhr) {
@@ -196,7 +196,7 @@ function configurePage(options) {
         $('#flow-developer-name').html(flowDeveloperName);
         $('#flow-developer-summary').html(flowDeveloperSummary);
         $('#flow-start-map-element-id').val(flowStartMapElementId);
-        $('#flow-allow-jumping').html(flowAllowJumping);
+        $('#flow-allow-jumping').val(flowAllowJumping);
 
         // Populate the list of navigation elements
         populateNavigationElements();
@@ -628,7 +628,7 @@ function configurePage(options) {
                                  ManyWhoSharedServices.getFlowId(),
                                  $('#flow-developer-name').html(),
                                  $('#flow-developer-summary').html(),
-                                 $('#flow-allow-jumping').html(),
+                                 $('#flow-allow-jumping').val(),
                                  ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                  null,
                                  function (data, status, xhr) {
