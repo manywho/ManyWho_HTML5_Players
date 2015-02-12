@@ -248,6 +248,10 @@ var ManyWhoFlow = {
             requestType = 'POST';
         }
 
+        if (allowJumping == null || allowJumping == "") {
+            allowJumping = "false";
+        }
+
         requestData = '{' +
                     '"editingToken":"' + editingToken + '",' +
                     '"id":{"id":"' + flowId + '"},' +
