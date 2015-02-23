@@ -244,9 +244,7 @@
 
 				var that = this;
 
-				$.support.transition && modal.$element.hasClass('fade')?
-					modal.$backdrop.one($.support.transition.end, function () { that.removeBackdrop(modal) }) :
-					that.removeBackdrop(modal);
+				that.removeBackdrop(modal);
 
 			} else if (callback) {
 				callback();
