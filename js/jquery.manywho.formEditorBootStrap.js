@@ -1047,7 +1047,7 @@ permissions and limitations under the License.
             html += '<div id="' + domId + '-page-settings" style="display: none;"></div>';
 
             html += '    <div class="row-fluid">';
-            html += '        <table width="100%"><tr><td id="' + domId + '-page-builder-toolbar" width="10%" valign="top">';
+            html += '        <table width="100%"><tr><td id="' + domId + '-page-builder-toolbar" class="fixed-container" width="10%" valign="top">';
 
             if (opts.isButtonMode == true) {
                 html += '        <div>';
