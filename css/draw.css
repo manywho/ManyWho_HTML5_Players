@@ -45,6 +45,10 @@ ul.scroll-menu {
     margin-bottom: 0px !important;
 }
 
+.fixed-container {
+    position: fixed;
+}
+
 .manywho-toolbar-section {
 }
 
