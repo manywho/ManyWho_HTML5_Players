@@ -368,7 +368,7 @@ function configurePage(options) {
                                    $('#version-comment').val('');
 
                                    // Assign the location
-                                   location = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
+                                   location = ManyWhoConstants.BASE_PATH_URL + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
 
                                    // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
                                    ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
@@ -476,8 +476,8 @@ function configurePage(options) {
 
                                        ManyWhoSharedServices.showBuildDialog(false);
 
-                                       // Assign the flowLink
-                                       flowLink = location.protocol + '//' + location.host + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+                                       // Assign the location
+                                       location = ManyWhoConstants.BASE_PATH_URL + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
 
                                        // Check to see if the navigation has any entries for the user to select from
                                        if ($('#manywho-model-select-run-navigation').html() != null &&
