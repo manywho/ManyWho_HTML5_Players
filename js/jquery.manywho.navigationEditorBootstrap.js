@@ -376,7 +376,7 @@ permissions and limitations under the License.
             navigationItems = new Array();
 
             // Find all the elements at the root and iterate over those to get children
-            $('.manywho-navigation-editor-sortable > .manywho-navigation-item').siblings().each(function (index, value) {
+            $('.manywho-navigation-editor-sortable > .manywho-navigation-item').each(function (index, value) {
                 // Go through the tree of navigation items for this navigation item
                 navigationItems[navigationItems.length] = parseNavigationItem(domId, this, order++);
             });

@@ -174,7 +174,7 @@ function configurePage(options) {
                                     ManyWhoSharedServices.getFlowId(),
                                     $('#flow-developer-name').html(),
                                     $('#flow-developer-summary').html(),
-                                    $('#flow-allow-jumping').html(),
+                                    $('#flow-allow-jumping').val(),
                                     ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                     null,
                                     function (data, status, xhr) {
@@ -196,13 +196,15 @@ function configurePage(options) {
         $('#flow-developer-name').html(flowDeveloperName);
         $('#flow-developer-summary').html(flowDeveloperSummary);
         $('#flow-start-map-element-id').val(flowStartMapElementId);
-        $('#flow-allow-jumping').html(flowAllowJumping);
+        $('#flow-allow-jumping').val(flowAllowJumping);
 
         // Populate the list of navigation elements
         populateNavigationElements();
 
         // Show the user the "flow loading" screen
         setFlowLoader(true);
+
+        $('#is-editing').val(false);
 
         // Synchronize the graph to load all of the elements
         $('#flow-graph').manywhoMxGraph('syncGraph', function () {
@@ -548,7 +550,7 @@ function configurePage(options) {
                     html += '<body>';
                     html += '<h1>' + data.developerName + '</h1>';
                     html += 'Description: ' + data.developerSummary + ' <br/>';
-                    html += 'Author: ' + data.whoCreated + ' <br/>';
+                    html += 'Author: ' + data.whoCreated.firstName + ' ' + data.whoCreated.lastName + '<br/>';
                     html += 'Date Created: ' + data.dateCreated + '<br/>';
                     html += '<p>&nbsp</p>';
                     var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/draw/1/flow/' + flowId + '/' + ManyWhoSharedServices.getEditingToken() + '/element/map/';
@@ -626,7 +628,7 @@ function configurePage(options) {
                                  ManyWhoSharedServices.getFlowId(),
                                  $('#flow-developer-name').html(),
                                  $('#flow-developer-summary').html(),
-                                 $('#flow-allow-jumping').html(),
+                                 $('#flow-allow-jumping').val(),
                                  ManyWhoSharedServices.getAuthorAuthenticationToken(),
                                  null,
                                  function (data, status, xhr) {
