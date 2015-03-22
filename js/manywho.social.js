@@ -28,7 +28,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.shareMessage', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -45,7 +46,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.postNewMessage', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -62,7 +64,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.deleteMessage', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -80,7 +83,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.likeMessage', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -97,7 +101,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.followStream', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -114,7 +119,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.searchUsersByName', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -130,7 +136,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.getMyUserInfo', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -147,7 +154,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.getUserInfo', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -163,7 +171,8 @@ var ManyWhoSocial = {
         var headers = null;
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.getStreamFollowers', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     },
@@ -189,7 +198,8 @@ var ManyWhoSocial = {
         }
 
         // Create a header for the state id
-        headers = ManyWhoAjax.createHeader(null, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoState', stateId);
+        headers = ManyWhoAjax.createHeader(headers, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoSocial.getStreamMessages', requestUrl + urlParameters, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers);
     }
