@@ -1265,6 +1265,7 @@ permissions and limitations under the License.
                     dataType: 'json',
                     url: ManyWhoConstants.BASE_PATH_URL + '/api/social/1/stream/' + currentOptions.streamId + '/file',
                     beforeSend: function (xhr) {
+                        xhr.setRequestHeader('ManyWhoTenant', ManyWhoSharedServices.getTenantId());
                         xhr.setRequestHeader('Authorization', ManyWhoSharedServices.getAuthenticationToken());
                     },
                     maxFileSize: 104857600, // 100MB
