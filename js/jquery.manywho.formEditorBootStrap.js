@@ -126,7 +126,7 @@ permissions and limitations under the License.
         }
     };
 
-    var pageElementContainerOkCallback = function (domId, elementId, formElementId, doDelete, outputValues) {
+    var pageElementContainerOkCallback = function (domId, elementId, formElementId, doDelete, outputValues, cancelParent) {
         var pageLabel = null;
         var page = null;
         var outcome = null;
@@ -142,6 +142,12 @@ permissions and limitations under the License.
         if (outcome.toLowerCase() != 'cancel') {
             $('#' + domId + '-page-element').data('page', page[0]);
             $('#' + domId + '-page-element-label').html(pageLabel);
+        } else {
+            if (cancelParent) {
+                $('#manywho-dialog-fullscreen').fadeOut('slow');
+                $('#manywho-model-runtime-fullscreen').manywhoRuntimeEngine('clear');
+                $('#manywho-dialog-title-fullscreen').html('Loading...');
+            }
         }
     };
 
@@ -1461,7 +1467,7 @@ permissions and limitations under the License.
                     inputs = ManyWhoSharedServices.createInput(inputs, 'PAGE_LAYOUT', null, ManyWhoConstants.CONTENT_TYPE_OBJECT, page, 'PageElement');
 
                     // Open the dialog for creating a new form field
-                    ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true);
+                    ManyWhoSharedServices.showSubConfigDialog(PAGE_ELEMENT_CONTAINER_DIALOG_HEIGHT, PAGE_ELEMENT_CONTAINER_DIALOG_WIDTH, 'PAGEELEMENTCONTAINER', domId, page.externalId, null, inputs, false, pageElementContainerOkCallback, true, true);
                 }
             }
         }

@@ -164,6 +164,15 @@ permissions and limitations under the License.
             annotations = null;
         }
 
+        // Get the player uri from the system and path
+        var playerUri = ManyWhoConstants.BASE_PATH_URL + location.pathname;
+
+        // Check to see if the user has provided uri for the player manually
+        if ($('#' + domId + '-player-uri').val() != null &&
+            $('#' + domId + '-player-uri').val().trim().length > 0) {
+            playerUri = $('#' + domId + '-player-uri').val();
+        }
+
         if ($('#' + domId + '-flow-version-id').val() == null ||
             $('#' + domId + '-flow-version-id').val().trim().length == 0) {
             // We need to grab the fully versioned flow from the system before we can initialize
@@ -186,8 +195,8 @@ permissions and limitations under the License.
                                                        '"initializationValues":null,' +
                                                        '"inputs":' + JSON.stringify(inputs) + ',' +
                                                        '"annotations":' + JSON.stringify(annotations) + ',' +
-                                                       '"playerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
-                                                       '"joinPlayerUrl":"' + ManyWhoConstants.BASE_PATH_URL + location.pathname + '",' +
+                                                       '"playerUrl":"' + playerUri + '",' +
+                                                       '"joinPlayerUrl":"' + playerUri + '",' +
                                                        '"mode":"' + $('#' + domId + '-mode').val() + '",' +
                                                        '"reportingMode":"' + $('#' + domId + '-reporting-mode').val() + '"' +
                                                '}';
@@ -199,15 +208,6 @@ permissions and limitations under the License.
                              },
                              manageError(domId));
         } else {
-            // Get the player uri from the system and path
-            var playerUri = ManyWhoConstants.BASE_PATH_URL + location.pathname;
-
-            // Check to see if the user has provided uri for the player manually
-            if ($('#' + domId + '-player-uri').val() != null &&
-                $('#' + domId + '-player-uri').val().trim().length > 0) {
-                playerUri = $('#' + domId + '-player-uri').val();
-            }
-
             // We have the fully versioned flow, we can initialize and start moving
             var requestUrl = $('#' + domId + '-engine-url').val();
             var requestType = 'POST';
