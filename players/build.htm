@@ -162,7 +162,7 @@
                                         alert('Make sure you give your Macro a name before saving');
 
                                         // Save the object to the dom
-                                        $('#manywho-macro').data('macro', macro);
+                                        $('#manywho-macro').data('macro', data);
 
                                         // Set our example code into the editor
                                         macroEditor.setValue('// Create functions like this\nfunction hello() {\n    // Some code here\n}\n\n// Call functions like this\nhello();\n\n// Set values in the state like this\nstate.setStringValue("{![My String Value]}", "The value I want it to be");\n\n// Get values in the state like this\nvar val = state.getNumberValue("{![My Number Value]}");\n\n// It\'s JavaScript!');
