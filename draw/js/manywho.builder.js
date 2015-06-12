@@ -476,18 +476,37 @@ function configurePage(options) {
 
                                        ManyWhoSharedServices.showBuildDialog(false);
 
-                                       // Assign the location
-                                       location = ManyWhoConstants.BASE_PATH_URL + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id + '&flow-version-id=' + data.id.versionId;
+                                       // Get the tenant's subdomain
+                                       var subdomain = null;
+                                       ManyWhoTenant.getSubdomain("ManyWhoBuilder.RunFlow", null, function (response) {
+                                           if (response != null) {
+                                               subdomain = response;
+                                           }
 
-                                       // Check to see if the navigation has any entries for the user to select from
-                                       if ($('#manywho-model-select-run-navigation').html() != null &&
-                                           $('#manywho-model-select-run-navigation').html().trim().length > 0) {
-                                           // Show the navigation selection menu
-                                           ManyWhoSharedServices.showSelectNavigationDialog(true, flowLink, data.id.id, data.id.versionId);
-                                       } else {
-                                           // Show the dialog, but no need to have navigation selection
-                                           ManyWhoSharedServices.showSelectNavigationDialog(false, flowLink, data.id.id, data.id.versionId);
-                                       }
+                                           // Assign the location
+
+                                           if (subdomain == null) {
+                                               flowLink = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play';
+                                           } else {
+                                               if ([80, 443].indexOf(window.location.port) >= 0) {
+                                                   flowLink = "https://" + subdomain + ".manywho.com/play";
+                                               } else {
+                                                   flowLink = window.location.protocol + '//' + subdomain + ".manywho.com:" + window.location.port + "/play";
+                                               }
+                                           }
+
+                                           // Check to see if the navigation has any entries for the user to select from
+                                           if ($('#manywho-model-select-run-navigation').html() != null &&
+                                               $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                               // Show the navigation selection menu
+                                               ManyWhoSharedServices.showSelectNavigationDialog(true, flowLink, data.id.id, data.id.versionId);
+                                           } else {
+                                               // Show the dialog, but no need to have navigation selection
+                                               ManyWhoSharedServices.showSelectNavigationDialog(false, flowLink, data.id.id, data.id.versionId);
+                                           }
+                                       });
+
+                                       
                                    },
                                    createErrorAlert);
         }

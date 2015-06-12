@@ -26,5 +26,17 @@ var ManyWhoTenant = {
         var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
 
         ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoTenant.Load', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers, null, ManyWhoSharedServices.getAuthorAuthenticationToken());
+    },
+
+    getSubdomain: function (callingFunctionName,
+                    loadBeforeSend,
+                    loadSuccessCallback,
+                    loadErrorCallback) {
+        var requestUrl = '/api/admin/1/tenant/' + ManyWhoSharedServices.getTenantId() + '/subdomain';
+        var requestType = 'GET';
+        var requestData = '';
+        var headers = ManyWhoAjax.createHeader(null, 'ManyWhoTenant', ManyWhoSharedServices.getTenantId());
+
+        ManyWhoAjax.callRestApi(callingFunctionName + ' -> ManyWhoTenant.GetSubdomain', requestUrl, requestType, requestData, loadBeforeSend, loadSuccessCallback, loadErrorCallback, headers, null, ManyWhoSharedServices.getAuthorAuthenticationToken());
     }
 }

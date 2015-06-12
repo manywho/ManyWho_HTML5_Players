@@ -22,7 +22,7 @@ var ManyWhoPlayer = {
                        loadErrorCallback) {
         if (tenantId != null &&
             tenantId.trim().length > 0) {
-            var requestUrl = '/player';
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/' + tenantId + '/player';
             var requestType = 'GET';
             var requestData = '';
 
