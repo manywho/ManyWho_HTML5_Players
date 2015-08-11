@@ -574,7 +574,7 @@ var ManyWhoSharedServices = {
                                },
                                null);
     },
-    showSubConfigDialog: function (height, width, elementType, domId, elementId, formElementId, inputs, doDelete, okCallback, enableClose) {
+    showSubConfigDialog: function (height, width, elementType, domId, elementId, formElementId, inputs, doDelete, okCallback, enableClose, cancelParent) {
         ManyWhoSharedServices.adjustSubDialog(height, width, enableClose);
 
         if (ManyWhoSharedServices.getEditingToken() != null &&
@@ -600,7 +600,7 @@ var ManyWhoSharedServices = {
                                        formLabelPanel: 'manywho-dialog-title-sub',
                                        mode: ManyWhoSharedServices.getEditorModeId(),
                                        doneCallbackFunction: function (outputValues) {
-                                           okCallback.call(this, domId, elementId, formElementId, doDelete, outputValues);
+                                           okCallback.call(this, domId, elementId, formElementId, doDelete, outputValues, cancelParent);
 
                                            $('#manywho-dialog-sub').modal('hide');
                                            $('#manywho-model-runtime-sub').manywhoRuntimeEngine('clear');
