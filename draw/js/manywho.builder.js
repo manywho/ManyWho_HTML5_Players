@@ -489,9 +489,9 @@ function configurePage(options) {
                                                flowLink = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play';
                                            } else {
                                                if ([80, 443].indexOf(window.location.port) >= 0) {
-                                                   flowLink = "https://" + subdomain + ".manywho.com/play";
+                                                   flowLink = "https://" + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + "/play";
                                                } else {
-                                                   flowLink = window.location.protocol + '//' + subdomain + ".manywho.com:" + window.location.port + "/play";
+                                                   flowLink = window.location.protocol + '//' + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + ":" + window.location.port + "/play";
                                                }
                                            }
 
