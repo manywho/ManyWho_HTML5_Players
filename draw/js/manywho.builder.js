@@ -488,7 +488,7 @@ function configurePage(options) {
                                            if (subdomain == null) {
                                                flowLink = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play';
                                            } else {
-                                               if ([80, 443].indexOf(window.location.port) >= 0) {
+                                               if ([80, 443].indexOf(window.location.port) >= 0 || window.location.port === '') {
                                                    flowLink = "https://" + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + "/play";
                                                } else {
                                                    flowLink = window.location.protocol + '//' + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + ":" + window.location.port + "/play";
