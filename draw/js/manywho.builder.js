@@ -479,7 +479,7 @@ function configurePage(options) {
                                        // Get the tenant's subdomain
                                        var subdomain = null;
                                        ManyWhoTenant.getSubdomain("ManyWhoBuilder.RunFlow", null, function (response) {
-                                           if (response != null) {
+                                           if (response != null && response !== "null") {
                                                subdomain = response;
                                            }
 
