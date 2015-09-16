@@ -362,26 +362,41 @@ function configurePage(options) {
                                versionComment,
                                null,
                                function (data, status, xhr) {
-                                   var location = null;
-
                                    ManyWhoSharedServices.showBuildDialog(false);
                                    $('#version-comment').val('');
 
-                                   // Assign the location
-                                   location = ManyWhoConstants.BASE_PATH_URL + '/play'; // + getSelectedPlayer() + '?flow-id=' + data.id.id;
+                                   // Get the tenant's subdomain
+                                   var subdomain = null;
+                                   ManyWhoTenant.getSubdomain("ManyWhoBuilder.RunFlow", null, function (response) {
+                                       if (response != null && response !== "null") {
+                                           subdomain = response;
+                                       }
 
-                                   // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
-                                   ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
+                                       // Assign the location
 
-                                   // Check to see if the navigation has any entries for the user to select from
-                                   if ($('#manywho-model-select-run-navigation').html() != null &&
-                                       $('#manywho-model-select-run-navigation').html().trim().length > 0) {
-                                       // Show the navigation selection menu
-                                       ManyWhoSharedServices.showSelectNavigationDialog(true, location, data.id.id, null);
-                                   } else {
-                                       // Show the dialog, but no need to have navigation selection
-                                       ManyWhoSharedServices.showSelectNavigationDialog(false, location, data.id.id, null);
-                                   }
+                                       if (subdomain == null) {
+                                           flowLink = ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoSharedServices.getTenantId() + '/play';
+                                       } else {
+                                           if ([80, 443].indexOf(window.location.port) >= 0 || window.location.port === '') {
+                                               flowLink = "https://" + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + "/play";
+                                           } else {
+                                               flowLink = window.location.protocol + '//' + subdomain + "." + ManyWhoConstants.MANYWHO_DOMAIN + ":" + window.location.port + "/play";
+                                           }
+                                       }
+
+                                       // In addition to opening the flow, we also hit the activation API marking this as an official distribution build - we do this as a fire and forget
+                                       ManyWhoFlow.activateFlow('ManyWhoBuilder.ActivateFlow', data.id.id, data.id.versionId, ManyWhoSharedServices.getAuthorAuthenticationToken(), null, null, null);
+
+                                       // Check to see if the navigation has any entries for the user to select from
+                                       if ($('#manywho-model-select-run-navigation').html() != null &&
+                                           $('#manywho-model-select-run-navigation').html().trim().length > 0) {
+                                           // Show the navigation selection menu
+                                           ManyWhoSharedServices.showSelectNavigationDialog(true, flowLink, data.id.id, null);
+                                       } else {
+                                           // Show the dialog, but no need to have navigation selection
+                                           ManyWhoSharedServices.showSelectNavigationDialog(false, flowLink, data.id.id, null);
+                                       }
+                                   });
                                },
                                createErrorAlert);
     };
