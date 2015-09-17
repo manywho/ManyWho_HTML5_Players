@@ -573,6 +573,15 @@ permissions and limitations under the License.
                     $('#' + domId + '-root-faults').show();
 
                     for (var rootFault in mapElementInvokeResponse.rootFaults) {
+                        var message = null;
+                        try {
+                            message = JSON.parse(mapElementInvokeResponse.rootFaults[rootFault]).message;
+                        }
+                        catch (ex) { }
+
+                        if (message == null || typeof message == 'undefined')
+                            mapElementInvokeResponse.rootFaults[rootFault];
+
                         $('#' + domId + '-root-faults').append('<div class="alert alert-error"><strong>' + rootFault + '</strong> ' + mapElementInvokeResponse.rootFaults[rootFault] + '</div>');
                     }
                 } else {
