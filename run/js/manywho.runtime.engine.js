@@ -582,7 +582,7 @@ permissions and limitations under the License.
                         if (message == null || typeof message == 'undefined')
                             mapElementInvokeResponse.rootFaults[rootFault];
 
-                        $('#' + domId + '-root-faults').append('<div class="alert alert-error"><strong>' + rootFault + '</strong> ' + mapElementInvokeResponse.rootFaults[rootFault] + '</div>');
+                        $('#' + domId + '-root-faults').append('<div class="alert alert-error"><strong>' + rootFault + '</strong> ' + message + '</div>');
                     }
                 } else {
                     $('#' + domId + '-root-faults').html('');
