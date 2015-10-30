@@ -248,6 +248,7 @@ var ManyWhoSharedServices = {
             dialogHtml += '                    <li><a href="#" id="manywho-model-select-run-debug-option-run" data-mode="">Run</a></li>';
             dialogHtml += '                    <li><a href="#" id="manywho-model-select-run-debug-option-debug" data-mode="DEBUG">Debug</a></li>';
             dialogHtml += '                    <li><a href="#" id="manywho-model-select-run-debug-option-debug-stepthrough" data-mode="DEBUG_STEPTHROUGH">Debug Step-by-Step</a></li>';
+            dialogHtml += '                    <li><a href="#" id="manywho-model-select-run-debug-option-record" data-mode="RECORD">Record</a></li>';
             dialogHtml += '                </ul>';
             dialogHtml += '            </div>';
             dialogHtml += '        </div>';
@@ -315,6 +316,12 @@ var ManyWhoSharedServices = {
             // User clicks on debug step through
             $('#manywho-model-select-run-debug-option-debug-stepthrough').on('click', function (event) {
                 // Grab the location stored in the dialog and debug
+                window.open(ManyWhoSharedServices.constructRunUrl() + '&mode=' + $(this).attr('data-mode'));
+            });
+
+            // User clicks on record
+            $('#manywho-model-select-run-debug-option-record').on('click', function (event) {
+                // Grab the location stored in the dialog and record
                 window.open(ManyWhoSharedServices.constructRunUrl() + '&mode=' + $(this).attr('data-mode'));
             });
 
