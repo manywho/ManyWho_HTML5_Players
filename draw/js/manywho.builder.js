@@ -585,20 +585,8 @@ function configurePage(options) {
                                 for (var j = 0; j < 20; j++) {
                                     html += '<p>&nbsp;</p>';
                                 }
-                                var mainTag = document.querySelector('html');
-                                if (mainTag.classList.contains('ie8')) {
-                                    var newWindow = window.open(flowTitle, '_newtab');
-                                    newWindow.document.write(html);
-                                } else {
-                                    var link = document.createElement('a');
-                                    link.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html));
-                                    link.setAttribute('download', flowTitle + '.html');
-                                    link.setAttribute('target', '_blank');
-                                    link.style.display = 'none';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                }
+                                var blob = new Blob([html], {type: "text/html; charset=utf-8"});
+                                saveAs(blob, flowTitle + '.html');
                             }
                         }, null, headers);
                     } catch (e) {
