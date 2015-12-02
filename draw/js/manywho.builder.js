@@ -530,6 +530,38 @@ function configurePage(options) {
         }
     });
 
+    $('#package-flow').click(function (event) {
+        event.preventDefault();
+
+        var flowId = ManyWhoSharedServices.getFlowId();
+
+        if (flowId != null && flowId.length > 0) {
+
+            var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/package/1/flow/' + flowId;
+
+            ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
+
+                if ($('#flow-developer-name').html() && $('#flow-developer-name').html().length > 0) {
+
+                    saveTextAs(JSON.stringify(data), $('#flow-developer-name').html() + '.txt');
+
+                } else {
+
+                    saveTextAs(JSON.stringify(data), "package.txt");
+
+                }
+
+            }, null, headers);
+
+        } else {
+
+            alert('You can only package Flows if you have a Flow open in the graph');
+
+        }
+
+    });
+
     // Function that creates an html file out of the Flow's content
     $('#print-flow').click(function (event) {
         var flowId = ManyWhoSharedServices.getFlowId();
