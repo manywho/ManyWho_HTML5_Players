@@ -530,6 +530,38 @@ function configurePage(options) {
         }
     });
 
+    $('#package-flow').click(function (event) {
+        event.preventDefault();
+
+        var flowId = ManyWhoSharedServices.getFlowId();
+
+        if (flowId != null && flowId.length > 0) {
+
+            var headers = ManyWhoAjax.createHeader(null, 'Authorization', ManyWhoSharedServices.getAuthorAuthenticationToken());
+            var requestUrl = ManyWhoConstants.BASE_PATH_URL + '/api/package/1/flow/' + flowId;
+
+            ManyWhoAjax.callRestApi('REST.executeREST', requestUrl, 'GET', null, null, function (data, status, xhr) {
+
+                if ($('#flow-developer-name').html() && $('#flow-developer-name').html().length > 0) {
+
+                    saveTextAs(JSON.stringify(data), $('#flow-developer-name').html() + '.txt');
+
+                } else {
+
+                    saveTextAs(JSON.stringify(data), "package.txt");
+
+                }
+
+            }, null, headers);
+
+        } else {
+
+            alert('You can only package Flows if you have a Flow open in the graph');
+
+        }
+
+    });
+
     // Function that creates an html file out of the Flow's content
     $('#print-flow').click(function (event) {
         var flowId = ManyWhoSharedServices.getFlowId();
@@ -585,20 +617,8 @@ function configurePage(options) {
                                 for (var j = 0; j < 20; j++) {
                                     html += '<p>&nbsp;</p>';
                                 }
-                                var mainTag = document.querySelector('html');
-                                if (mainTag.classList.contains('ie8')) {
-                                    var newWindow = window.open(flowTitle, '_newtab');
-                                    newWindow.document.write(html);
-                                } else {
-                                    var link = document.createElement('a');
-                                    link.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html));
-                                    link.setAttribute('download', flowTitle + '.html');
-                                    link.setAttribute('target', '_blank');
-                                    link.style.display = 'none';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                }
+                                var blob = new Blob([html], {type: "text/html; charset=utf-8"});
+                                saveAs(blob, flowTitle + '.html');
                             }
                         }, null, headers);
                     } catch (e) {
