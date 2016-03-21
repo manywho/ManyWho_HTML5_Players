@@ -40,7 +40,6 @@ function configurePage(options) {
     }
 
     // Grab the authentication token from the authentication cookie
-    ManyWhoSharedServices.setAuthorAuthenticationToken(ManyWhoUtils.getCookie('authentication-token'));
     ManyWhoSharedServices.setTenantId(ManyWhoUtils.getCookie('tenant-id'));
 
     // If we have the authentication and tenant information being provided in the options, we use that instead
