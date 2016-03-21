@@ -734,7 +734,6 @@
             var manywhoTenantId = null;
 
             // Grab any existing information from the cookie
-            authenticationToken = ManyWhoUtils.getCookie('authentication-token');
             manywhoTenantId = ManyWhoUtils.getCookie('tenant-id');
 
             // Set the page information to that stored in the cookie (as they user may have logged into the designer already or refreshed the page
@@ -758,7 +757,6 @@
                     $('#manywho-tenant-id').html(manywhoTenantId);
 
                     // Set the authentication token into the cookie also
-                    ManyWhoUtils.setCookie('authentication-token', authenticationToken, true);
                     ManyWhoUtils.setCookie('tenant-id', manywhoTenantId);
                 },
                 ManyWhoSharedServices.getTenantId());

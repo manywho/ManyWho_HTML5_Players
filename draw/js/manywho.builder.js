@@ -142,7 +142,6 @@ function configurePage(options) {
                 ManyWhoSharedServices.setTenantId(manywhoTenantId);
 
                 // Set the authentication token into the cookie also
-                ManyWhoUtils.setCookie('authentication-token', authenticationToken, true);
                 ManyWhoUtils.setCookie('tenant-id', manywhoTenantId);
 
                 // Set the cookie for moxie manager
@@ -334,7 +333,6 @@ function configurePage(options) {
         ManyWhoSharedServices.setTenantId('');
 
         // Set the authentication token and tenant to blank in the cookie
-        ManyWhoUtils.setCookie('authentication-token', '');
         ManyWhoUtils.setCookie('tenant-id', '');
 
         // Clear the graph also so we don't have any data lying around
@@ -550,7 +548,6 @@ function configurePage(options) {
         event.preventDefault();
 
         if ($(this).attr('disabled') != 'disabled') {
-            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken(), true);
             window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/build?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
         }
     });
@@ -559,7 +556,6 @@ function configurePage(options) {
         event.preventDefault();
 
         if ($(this).attr('disabled') != 'disabled') {
-            ManyWhoUtils.setCookie('authentication-token', ManyWhoSharedServices.getAuthorAuthenticationToken(), true);
             window.open(ManyWhoConstants.BASE_PATH_URL + '/' + ManyWhoConstants.MANYWHO_ADMIN_TENANT_ID + '/play/translate?editing-token=' + ManyWhoSharedServices.getEditingToken() + '&flow-id=' + ManyWhoSharedServices.getFlowId());
         }
     });
